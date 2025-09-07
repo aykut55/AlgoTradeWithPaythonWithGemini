@@ -1,0 +1,106 @@
+from src.Signals import CSignals
+from src.KarAlZararKes import CKarAlZararKes
+
+class CTrader:
+    def __init__(self, Index):
+        self.Signals = CSignals()
+        self.KarAlZararKes = CKarAlZararKes()
+        self.StartDateTimeStr = ""
+        self.StopDateTimeStr = ""
+        self.StartDateStr = ""
+        self.StopDateStr = ""
+        self.StartTimeStr = ""
+        self.StopTimeStr = ""
+
+    def initialize(self, V, Open, High, Low, Close, Volume, Lot, myVarlik):
+        pass
+
+    def reset(self):
+        pass
+
+    def reset_date_times(self):
+        pass
+
+    def set_date_times(self, dt1, dt2):
+        pass
+
+    def is_son_yon_a(self):
+        pass
+
+    def is_son_yon_s(self):
+        pass
+
+    def is_son_yon_f(self):
+        pass
+    
+    def dongu_basi_degiskenleri_resetle(self, i):
+        pass
+        
+    def dongu_basi_degiskenleri_guncelle(self, i):
+        pass
+        
+    def anlik_kar_zarar_hesapla(self, i):
+        pass
+        
+    def emirleri_resetle(self, i):
+        pass
+        
+    def gun_sonu_poz_kapat(self, i, enabled):
+        pass
+        
+    def emirleri_uygula(self, i):
+        pass
+        
+    def sistem_yon_listesini_guncelle(self, i):
+        pass
+        
+    def sistem_seviye_listesini_guncelle(self, i):
+        pass
+        
+    def sinyal_listesini_guncelle(self, i):
+        pass
+        
+    def islem_listesini_guncelle(self, i):
+        pass
+        
+    def komisyon_listesini_guncelle(self, i):
+        pass
+        
+    def bakiye_listesini_guncelle(self, i):
+        pass
+        
+    def dongu_sonu_degiskenleri_setle(self, i):
+        pass
+        
+    def start(self):
+        pass
+        
+    def stop(self):
+        pass
+        
+    def ideal_getiri_hesapla(self):
+        pass
+        
+    def istatistikleri_hesapla(self):
+        pass
+        
+    def istatistikleri_ekrana_yaz(self, val):
+        pass
+        
+    def getiri_istatistikleri_ekrana_yaz(self, val):
+        pass
+        
+    def istatistikleri_dosyaya_yaz(self, filename):
+        pass
+        
+    def sinyalleri_ekrana_ciz(self, k):
+        return k
+        
+    def optimizasyon_istatistiklerinin_basliklarini_dosyaya_yaz(self, filename):
+        pass
+        
+    def optimizasyon_istatistiklerini_dosyaya_yaz(self, filename, run_index, total_runs):
+        pass
+
+    def emirleri_setle(self, i, al, sat, flatol, pasgec, karal, zararkes):
+        pass
