@@ -2,6 +2,12 @@ class CKarZarar:
     def __init__(self):
         self.Trader = None
 
+        self.AnlikFiyat = 0.0
+        self.AnlikKarZararHesaplaEnabled = False
+        self.SonYon = ""
+        self.SonFiyat = 0.0
+        self.VarlikAdedSayisi = 0
+
     def __del__(self):
         pass
 
@@ -15,8 +21,7 @@ class CKarZarar:
     def anlik_kar_zarar_hesapla(self, BarIndex, Type="C"):
         result = 0
         i = BarIndex
-        AnlikFiyat = self.Close[i]
-
+        AnlikFiyat = self.Trader.Close[i]
         AnlikKarZararHesaplaEnabled = self.Trader.Flags.AnlikKarZararHesaplaEnabled
         SonYon = self.Trader.Signals.SonYon
         SonFiyat = self.Trader.Signals.SonFiyat

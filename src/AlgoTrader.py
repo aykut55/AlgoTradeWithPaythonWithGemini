@@ -13,6 +13,9 @@ class AlgoTrader:
         self.dataPlotter = DataPlotter()
         self.mySystem = SystemWrapper()
         self.myUtils = CUtils()
+        self.KarZararPuanList = []
+        self.KarZararFiyatList = []
+        self.BakiyeFiyatList = []
         pass
 
     def create_level_series(self,bar_count: int, level_value: float) -> np.ndarray:
@@ -77,12 +80,45 @@ class AlgoTrader:
         )
         self.dataPlotter.show()
 
+        # --------------------------------------------------------------
+        self.dataPlotter.plot_series(
+            timestamps=self.Time,
+            series_data={
+                'Close Price': self.KarZararPuanList,
+                'Level': self.LevelZero
+            },
+            title="Trading Analysis - KarZararPuanList"
+        )
+        self.dataPlotter.show()
+
+        # --------------------------------------------------------------
+        self.dataPlotter.plot_series(
+            timestamps=self.Time,
+            series_data={
+                'Close Price': self.KarZararFiyatList,
+                'Level': self.LevelZero
+            },
+            title="Trading Analysis - KarZararFiyatList"
+        )
+        self.dataPlotter.show()
+
+        # --------------------------------------------------------------
+        self.dataPlotter.plot_series(
+            timestamps=self.Time,
+            series_data={
+                'Close Price': self.BakiyeFiyatList
+            },
+            title="Trading Analysis - BakiyeFiyatList"
+        )
+        self.dataPlotter.show()
+
+
     def trader_0_run_func(self):
         DateTimes = ["25.05.2025 14:30:00", "02.06.2025 14:00:00"]
         Dates = ["01.01.1900", "01.01.2100"]
         Times = ["09:30:00", "11:59:00"]
 
-        self.mySystem.get_trader().reset_date_times()
+        self.mySystem.get_trader().reset_date_times
         self.mySystem.get_trader().set_date_times(DateTimes[0], DateTimes[1])
 
         self.mySystem.get_trader().Signals.KarAlEnabled = False
@@ -168,7 +204,19 @@ class AlgoTrader:
 
         # --------------------------------------------------------------
         # Create level series
+        self.LevelUp4 = self.create_level_series(self.BarCount, 6000)
+        self.LevelUp3 = self.create_level_series(self.BarCount, 5750)
+        self.LevelUp2 = self.create_level_series(self.BarCount, 5500)
+        self.LevelUp1 = self.create_level_series(self.BarCount, 5250)
+
         self.Level = self.create_level_series(self.BarCount, 5000)
+
+        self.LevelDown1 = self.create_level_series(self.BarCount, 4750)
+        self.LevelDown2 = self.create_level_series(self.BarCount, 4500)
+        self.LevelDown3 = self.create_level_series(self.BarCount, 4250)
+        self.LevelDown4 = self.create_level_series(self.BarCount, 4000)
+
+        self.LevelZero = self.create_level_series(self.BarCount, 0)
 
         # --------------------------------------------------------------
         self.mySystem.create_modules().initialize(self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
@@ -186,7 +234,7 @@ class AlgoTrader:
                 Dates = ["01.01.1900", "01.01.2100"]
                 Times = ["09:30:00", "11:59:00"]
 
-                trader.reset_date_times()
+                trader.reset_date_times
                 trader.set_date_times(DateTimes[0], DateTimes[1])
 
                 trader.Signals.KarAlEnabled = False
@@ -199,7 +247,7 @@ class AlgoTrader:
                 Dates = ["01.01.1900", "01.01.2100"]
                 Times = ["09:30:00", "11:59:00"]
 
-                trader.reset_date_times()
+                trader.reset_date_times
                 trader.set_date_times(DateTimes[0], DateTimes[1])
 
                 trader.Signals.KarAlEnabled = False
@@ -212,7 +260,7 @@ class AlgoTrader:
                 Dates = ["01.01.1900", "01.01.2100"]
                 Times = ["09:30:00", "11:59:00"]
 
-                trader.reset_date_times()
+                trader.reset_date_times
                 trader.set_date_times(DateTimes[0], DateTimes[1])
 
                 trader.Signals.KarAlEnabled = False
@@ -225,7 +273,7 @@ class AlgoTrader:
                 Dates = ["01.01.1900", "01.01.2100"]
                 Times = ["09:30:00", "11:59:00"]
 
-                trader.reset_date_times()
+                trader.reset_date_times
                 trader.set_date_times(DateTimes[0], DateTimes[1])
 
                 trader.Signals.KarAlEnabled = False
@@ -262,10 +310,10 @@ class AlgoTrader:
                 FlatOl = False
 
                 Al = True
-                Al = Al and self.myUtils.yukari_kesti(i, self.Close, self.Level)
+                Al = Al and self.myUtils.yukari_kesti(i, self.Close, self.LevelUp1)
 
                 Sat = True
-                Sat = Sat and self.myUtils.asagi_kesti(i, self.Close, self.Level)
+                Sat = Sat and self.myUtils.asagi_kesti(i, self.Close, self.LevelDown1)
 
                 KarAl = trader.Signals.KarAlEnabled
                 KarAl = KarAl and trader.KarAlZararKes.son_fiyata_gore_kar_al_seviye_hesapla(i, 5, 50, 1000) != 0
@@ -283,6 +331,7 @@ class AlgoTrader:
 
                 trader.emirleri_setle(i, Al, Sat, FlatOl, PasGec, KarAl, ZararKes)
 
+                # YAPILACAK
                 trader.islem_zaman_filtresi_uygula(i)
 
                 trader.emir_sonrasi_dongu_foksiyonlarini_calistir(i)
@@ -292,6 +341,10 @@ class AlgoTrader:
                 if Sat:
                     print(f"bar {i} : trader {trader.Id} : Signal : Sell, Close {self.Close[i]}")
 
+                self.KarZararPuanList = trader.Lists.KarZararPuanList
+                self.KarZararFiyatList = trader.Lists.KarZararFiyatList
+                self.BakiyeFiyatList = trader.Lists.BakiyeFiyatList
+
         self.mySystem.stop()
 
         for i in range(self.mySystem.get_trader_count()):
@@ -299,71 +352,87 @@ class AlgoTrader:
             trader_id = trader.Id
 
             if (trader_id == 0):
-                # if (bIdealGetiriHesapla)
-                #     myTrader.IdealGetiriHesapla(Sistem);
-                #
-                # if (bIstatistikleriHesapla)
-                #     myTrader.IstatistikleriHesapla(Sistem);
-                #
-                # if (bIstatistikleriEkranaYaz)
-                #     myTrader.IstatistikleriEkranaYaz(Sistem, 1);
-                #
-                # if (bGetiriIstatistikleriEkranaYaz)
-                #     myTrader.GetiriIstatistikleriEkranaYaz(Sistem, 2);
-                #
-                # if (bIstatistikleriDosyayaYaz)
-                #     myTrader.IstatistikleriDosyayaYaz(Sistem, IstatistiklerOutputFileName);
+                if ( self.mySystem.bIdealGetiriHesapla):
+                    trader.ideal_getiri_hesapla()
+
+                if ( self.mySystem.bIstatistikleriHesapla):
+                    # trader.istatistikleri_hesapla()
+                    pass
+
+                if ( self.mySystem.bIstatistikleriEkranaYaz):
+                    # trader.istatistikleri_ekrana_yaz(1)
+                    pass
+
+                if ( self.mySystem.bGetiriIstatistikleriEkranaYaz):
+                    # trader.istatistikleri_ekrana_yaz(2)
+                    pass
+
+                if ( self.mySystem.bIstatistikleriDosyayaYaz):
+                    # trader.IstatistikleriDosyayaYaz( self.mySystem.IstatistiklerOutputFileName)
+                    pass
                 pass
 
             elif (trader_id == 1):
-                # if (bIdealGetiriHesapla)
-                #     myTrader.IdealGetiriHesapla(Sistem);
-                #
-                # if (bIstatistikleriHesapla)
-                #     myTrader.IstatistikleriHesapla(Sistem);
-                #
-                # if (bIstatistikleriEkranaYaz)
-                #     myTrader.IstatistikleriEkranaYaz(Sistem, 1);
-                #
-                # if (bGetiriIstatistikleriEkranaYaz)
-                #     myTrader.GetiriIstatistikleriEkranaYaz(Sistem, 2);
-                #
-                # if (bIstatistikleriDosyayaYaz)
-                #     myTrader.IstatistikleriDosyayaYaz(Sistem, IstatistiklerOutputFileName);
+                if ( self.mySystem.bIdealGetiriHesapla):
+                    trader.ideal_getiri_hesapla()
+
+                if ( self.mySystem.bIstatistikleriHesapla):
+                    # trader.istatistikleri_hesapla()
+                    pass
+
+                if ( self.mySystem.bIstatistikleriEkranaYaz):
+                    # trader.istatistikleri_ekrana_yaz(1)
+                    pass
+
+                if ( self.mySystem.bGetiriIstatistikleriEkranaYaz):
+                    # trader.istatistikleri_ekrana_yaz(2)
+                    pass
+
+                if ( self.mySystem.bIstatistikleriDosyayaYaz):
+                    # trader.IstatistikleriDosyayaYaz( self.mySystem.IstatistiklerOutputFileName)
+                    pass
                 pass
 
             elif (trader_id == 2):
-                # if (bIdealGetiriHesapla)
-                #     myTrader.IdealGetiriHesapla(Sistem);
-                #
-                # if (bIstatistikleriHesapla)
-                #     myTrader.IstatistikleriHesapla(Sistem);
-                #
-                # if (bIstatistikleriEkranaYaz)
-                #     myTrader.IstatistikleriEkranaYaz(Sistem, 1);
-                #
-                # if (bGetiriIstatistikleriEkranaYaz)
-                #     myTrader.GetiriIstatistikleriEkranaYaz(Sistem, 2);
-                #
-                # if (bIstatistikleriDosyayaYaz)
-                #     myTrader.IstatistikleriDosyayaYaz(Sistem, IstatistiklerOutputFileName);
+                if ( self.mySystem.bIdealGetiriHesapla):
+                    trader.ideal_getiri_hesapla()
+
+                if ( self.mySystem.bIstatistikleriHesapla):
+                    # trader.istatistikleri_hesapla()
+                    pass
+
+                if ( self.mySystem.bIstatistikleriEkranaYaz):
+                    # trader.istatistikleri_ekrana_yaz(1)
+                    pass
+
+                if ( self.mySystem.bGetiriIstatistikleriEkranaYaz):
+                    # trader.istatistikleri_ekrana_yaz(2)
+                    pass
+
+                if ( self.mySystem.bIstatistikleriDosyayaYaz):
+                    # trader.IstatistikleriDosyayaYaz( self.mySystem.IstatistiklerOutputFileName)
+                    pass
                 pass
 
             elif (trader_id == 3):
-                # if (bIdealGetiriHesapla)
-                #     myTrader.IdealGetiriHesapla(Sistem);
-                #
-                # if (bIstatistikleriHesapla)
-                #     myTrader.IstatistikleriHesapla(Sistem);
-                #
-                # if (bIstatistikleriEkranaYaz)
-                #     myTrader.IstatistikleriEkranaYaz(Sistem, 1);
-                #
-                # if (bGetiriIstatistikleriEkranaYaz)
-                #     myTrader.GetiriIstatistikleriEkranaYaz(Sistem, 2);
-                #
-                # if (bIstatistikleriDosyayaYaz)
-                #     myTrader.IstatistikleriDosyayaYaz(Sistem, IstatistiklerOutputFileName);
+                if ( self.mySystem.bIdealGetiriHesapla):
+                    trader.ideal_getiri_hesapla()
+
+                if ( self.mySystem.bIstatistikleriHesapla):
+                    # trader.istatistikleri_hesapla()
+                    pass
+
+                if ( self.mySystem.bIstatistikleriEkranaYaz):
+                    # trader.istatistikleri_ekrana_yaz(1)
+                    pass
+
+                if ( self.mySystem.bGetiriIstatistikleriEkranaYaz):
+                    # trader.istatistikleri_ekrana_yaz(2)
+                    pass
+
+                if ( self.mySystem.bIstatistikleriDosyayaYaz):
+                    # trader.IstatistikleriDosyayaYaz( self.mySystem.IstatistiklerOutputFileName)
+                    pass
                 pass
 
             else:
@@ -377,6 +446,9 @@ class AlgoTrader:
         # Show timing reports
         self.dataManager.reportTimes()
         self.mySystem.reportTimes()
+
+        print(self.BakiyeFiyatList[0])
+        print(self.BakiyeFiyatList[1])
 
 if __name__ == "__main__":
     print("Hello, Gemini!")

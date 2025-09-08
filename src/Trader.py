@@ -107,7 +107,7 @@ class CTrader(CBase):
         self.LastExecutionTimeStop = ""
         self.LastStatisticsCalculationTime = ""
         self.ExecutionTimeInMSec = 0
-        self.reset_date_times()
+        self.reset_date_times
         return self
 
     def start(self):
@@ -229,9 +229,9 @@ class CTrader(CBase):
         self.Flags.SGerceklesti = False
         self.Flags.FGerceklesti = False
         self.Flags.PGerceklesti = False
-        AnlikKapanisFiyati = self.V[i].Close
-        AnlikYuksekFiyati = self.V[i].High
-        AnlikDusukFiyati = self.V[i].Low
+        AnlikKapanisFiyati = self.Close[i]
+        AnlikYuksekFiyati = self.High[i]
+        AnlikDusukFiyati = self.Low[i]
         if self.Signals.Al:
             self.Signals.Sinyal = "A"
             self.Signals.EmirKomut = 1
@@ -464,7 +464,7 @@ class CTrader(CBase):
     def komisyon_listesini_guncelle(self, BarIndex):
         result = 0
         i = BarIndex
-        self.Komisyon.hesapla(Sistem, i)
+        self.Komisyon.hesapla(i)
         if self.Flags.KomisyonGuncelle:
             self.Flags.KomisyonGuncelle = False
         return result
@@ -472,7 +472,7 @@ class CTrader(CBase):
     def bakiye_listesini_guncelle(self, BarIndex):
         result = 0
         i = BarIndex
-        self.Bakiye.hesapla(Sistem, i)
+        self.Bakiye.hesapla(i)
         if self.Flags.BakiyeGuncelle:
             self.Flags.BakiyeGuncelle = False
         return result
@@ -767,16 +767,16 @@ class CTrader(CBase):
         # # self.StartDateTime = self.V[0].Date
         # # YAPILACAK
         # # self.StopDateTime = self.V[Sistem.BarSayisi - 1].Date if useLastBarDateTime else datetime.datetime.now()
-        # self.StartDate = self.StartDateTime
-        # self.StopDate = self.StopDateTime
-        # self.StartTime = self.StartDateTime
-        # self.StopTime = self.StopDateTime
-        # self.StartDateTimeStr = self.StartDateTime.strftime(self.DateTimeStringFormat)
-        # self.StopDateTimeStr = self.StopDateTime.strftime(self.DateTimeStringFormat)
-        # self.StartDateStr = self.StartDate.strftime(self.DateStringFormat)
-        # self.StopDateStr = self.StopDate.strftime(self.DateStringFormat)
-        # self.StartTimeStr = self.StartTime.strftime(self.TimeStringFormat)
-        # self.StopTimeStr = self.StopTime.strftime(self.TimeStringFormat)
+        self.StartDate = self.StartDateTime
+        self.StopDate = self.StopDateTime
+        self.StartTime = self.StartDateTime
+        self.StopTime = self.StopDateTime
+        self.StartDateTimeStr = self.StartDateTime.strftime(self.DateTimeStringFormat)
+        self.StopDateTimeStr = self.StopDateTime.strftime(self.DateTimeStringFormat)
+        self.StartDateStr = self.StartDate.strftime(self.DateStringFormat)
+        self.StopDateStr = self.StopDate.strftime(self.DateStringFormat)
+        self.StartTimeStr = self.StartTime.strftime(self.TimeStringFormat)
+        self.StopTimeStr = self.StopTime.strftime(self.TimeStringFormat)
         return self
 
     def set_date_times(self, StartDateTime, StopDateTime):
@@ -928,41 +928,37 @@ class CTrader(CBase):
         return 0
 
     def emir_oncesi_dongu_foksiyonlarini_calistir(self, bar_index):
-        # int i = BarIndex;
-        #
-        # myTrader.DonguBasiDegiskenleriResetle(, i);
-        #
-        # myTrader.DonguBasiDegiskenleriGuncelle(, i);
-        #
-        # if (i < 1) return;
-        #
-        # myTrader.AnlikKarZararHesapla(, i);
-        #
-        # myTrader.EmirleriResetle(, i);
+        i = bar_index
+
+        self.dongu_basi_degiskenleri_resetle(i)
+
+        self.dongu_basi_degiskenleri_guncelle(i)
+
+        if (i < 1):
+            return 0
+
+        self.anlik_kar_zarar_hesapla(i)
+
+        self.emirleri_resetle(i)
         #
         # bool isYeniGun = (V[i].Date.Day != V[i - 1].Date.Day); if (isYeniGun) .DikeyCizgiEkle(i, Color.DimGray, 2, 2);
         #
         # bool isYeniSaat = (V[i].Date.Hour != V[i - 1].Date.Hour);  //if (isYeniSaat) .DikeyCizgiEkle(i, Color.DimGray, 2, 2);
-        #
-        # if (myTrader.Signals.GunSonuPozKapatildi)
-        # {
-        #     myTrader.Signals.GunSonuPozKapatildi = false;
-        # }
-        #
-        # if (myTrader.Signals.KarAlindi || myTrader.Signals.ZararKesildi || myTrader.Signals.FlatOlundu)
-        # {
-        #     myTrader.Signals.KarAlindi = false;
-        #     myTrader.Signals.ZararKesildi = false;
-        #     myTrader.Signals.FlatOlundu = false;
-        #     myTrader.Signals.PozAcilabilir = false;
-        # }
-        #
-        # if (myTrader.Signals.PozAcilabilir == false)
-        # {
-        #     myTrader.Signals.PozAcilabilir = true;
-        #     myTrader.Signals.PozAcildi = false;
-        # }
-        pass
+
+        if (self.Signals.GunSonuPozKapatildi):
+            self.Signals.GunSonuPozKapatildi = False
+
+        if (self.Signals.KarAlindi or self.Signals.ZararKesildi or self.Signals.FlatOlundu):
+            self.Signals.KarAlindi = False
+            self.Signals.ZararKesildi = False
+            self.Signals.FlatOlundu = False
+            self.Signals.PozAcilabilir = False
+
+        if (self.Signals.PozAcilabilir == False):
+            self.Signals.PozAcilabilir = True
+            self.Signals.PozAcildi = False
+
+        return 0
 
     def islem_zaman_filtresi_uygula(self, bar_index):
         # // Dısardan
@@ -1036,9 +1032,8 @@ class CTrader(CBase):
         pass
 
     def emir_sonrasi_dongu_foksiyonlarini_calistir(self, bar_index):
-        # int
-        # i = BarIndex;
-        #
+        i = bar_index
+
         # // KarAl = myTrader.KarAlZararKes.SonFiyataGoreKarAlSeviyeHesapla(, i, 5, 50, 1000) != 0 ? true: false;
         #
         # // ZararKes = myTrader.KarAlZararKes.SonFiyataGoreZararKesSeviyeHesapla(, i, -1, -10,
@@ -1048,31 +1043,35 @@ class CTrader(CBase):
         #
         # // ZararKes = myTrader.Signals.ZararKesEnabled ? ZararKes: false;
         #
-        # myTrader.EmirleriSetle(, i, Al, Sat, FlatOl, PasGec, KarAl, ZararKes);
-        #
-        # myTrader.Signals.GunSonuPozKapatildi = myTrader.GunSonuPozKapat(, i, myTrader.Signals.GunSonuPozKapatEnabled);
-        #
-        # myTrader.EmirleriUygula(, i);
-        #
-        # if (myTrader.Signals.KarAlindi == false & & myTrader.Signals.KarAl) {myTrader.Signals.KarAlindi = true;}
-        #
-        # if (myTrader.Signals.ZararKesildi == false & & myTrader.Signals.ZararKes) {myTrader.Signals.ZararKesildi = true;}
-        #
-        # if (myTrader.Signals.FlatOlundu == false & & myTrader.Signals.FlatOl) {myTrader.Signals.FlatOlundu = true;}
-        #
-        # myTrader.YonListesiniGuncelle(, i);
-        #
-        # myTrader.SeviyeListesiniGuncelle(, i);
-        #
-        # myTrader.SinyalListesiniGuncelle(, i);
-        #
-        # myTrader.IslemListesiniGuncelle(, i);
-        #
-        # myTrader.KomisyonListesiniGuncelle(, i);
-        #
-        # myTrader.BakiyeListesiniGuncelle(, i);
-        #
-        # myTrader.DonguSonuDegiskenleriSetle(, i);
+        # myTrader.emirleri_setle(, i, Al, Sat, FlatOl, PasGec, KarAl, ZararKes);
+
+        self.Signals.GunSonuPozKapatildi = self.gun_sonu_poz_kapat(i, self.Signals.GunSonuPozKapatEnabled)
+
+        self.emirleri_uygula(i)
+
+        if (self.Signals.KarAlindi == False and self.Signals.KarAl):
+            self.Signals.KarAlindi = True
+
+        if (self.Signals.ZararKesildi == False and self.Signals.ZararKes):
+            self.Signals.ZararKesildi = True
+
+        if (self.Signals.FlatOlundu == False and self.Signals.FlatOl):
+            self.Signals.FlatOlundu = True
+
+        self.sistem_yon_listesini_guncelle(i)
+
+        self.sistem_seviye_listesini_guncelle(i)
+
+        self.sinyal_listesini_guncelle(i)
+
+        self.islem_listesini_guncelle(i)
+
+        self.komisyon_listesini_guncelle(i)
+
+        self.bakiye_listesini_guncelle(i)
+
+        self.dongu_sonu_degiskenleri_setle(i)
+
         pass
 
     #

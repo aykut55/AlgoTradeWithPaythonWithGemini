@@ -153,23 +153,24 @@ class SystemWrapper(CBase):
         # self.ParamsInputFileName = self.InputsDir + self.SistemAdi + "_params.txt"
         # self.IstatistiklerOutputFileName = self.OutputsDir + "Istatistikler.csv"
         # self.IstatistiklerOptOutputFileName = self.OutputsDir + "IstatistiklerOpt.csv"
-        #
-        # self.bUseParamsFromInputFile = False
-        # self.bOptEnabled = False
-        # self.bIdealGetiriHesapla = True
-        # self.bIstatistikleriHesapla = True
-        # self.bIstatistikleriEkranaYaz = True
-        # self.bGetiriIstatistikleriEkranaYaz = True
-        # self.bIstatistikleriDosyayaYaz = True
-        # self.bOptimizasyonIstatistiklerininBasliklariniDosyayaYaz = False
-        # self.bOptimizasyonIstatistikleriniDosyayaYaz = False
-        # self.bSinyalleriEkranaCiz = True
-        #
-        # self.CurrentRunIndex = 0
-        # self.TotalRunCount = 1
-        #
-        # self.myVarlik.set_kontrat_params_fx_ons_altin_micro(Sistem, KontratSayisi=1, VarlikAdedCarpani=1).set_komisyon_params(Sistem, KomisyonCarpan=0.0)
-        #
+
+        self.bUseParamsFromInputFile = False
+        self.bOptEnabled = False
+        self.bIdealGetiriHesapla = True
+        self.bIstatistikleriHesapla = True
+        self.bIstatistikleriEkranaYaz = True
+        self.bGetiriIstatistikleriEkranaYaz = True
+        self.bIstatistikleriDosyayaYaz = True
+        self.bOptimizasyonIstatistiklerininBasliklariniDosyayaYaz = False
+        self.bOptimizasyonIstatistikleriniDosyayaYaz = False
+        self.bSinyalleriEkranaCiz = True
+
+        self.CurrentRunIndex = 0
+        self.TotalRunCount = 1
+
+        self.myVarlik.set_kontrat_params_fx_ons_altin_micro(KontratSayisi=1, VarlikAdedCarpani=1).set_komisyon_params(KomisyonCarpan=0.0)
+        self.myVarlik.set_bakiye_params(IlkBakiye=100000.0, IlkBakiyePuan=100000.0)
+
         for trader in self.myTraders:
             if trader:
                 trader.Signals.KarAlEnabled = False
