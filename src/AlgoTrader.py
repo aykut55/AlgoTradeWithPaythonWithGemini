@@ -112,6 +112,82 @@ class AlgoTrader:
         )
         self.dataPlotter.show()
 
+    def plotData2(self, show_moving_average=False, show_levels=False, show_balance=False, show_kar_zarar_puan=False, show_kar_zarar_fiyat=False):
+        """
+        Dual-panel plotting method with synchronized zoom functionality.
+        
+        Args:
+            show_moving_average: Show moving average on price chart
+            show_levels: Show price levels on price chart
+            show_balance: Show balance chart in bottom panel
+            show_kar_zarar_puan: Show kar/zarar puan chart in bottom panel
+            show_kar_zarar_fiyat: Show kar/zarar fiyat chart in bottom panel
+        """
+        print("=== DEBUG: plotData2 başlıyor ===")
+        print(f"Time length: {len(self.Time)}")
+        print(f"Close length: {len(self.Close)}")
+        print(f"Close type: {type(self.Close)}")
+        print(f"Time type: {type(self.Time)}")
+        print(f"Close sample: {self.Close[:5] if len(self.Close) > 5 else self.Close}")
+        print(f"Time sample: {self.Time[:5] if len(self.Time) > 5 else self.Time}")
+        
+        # Time array boşsa, basit index array oluştur
+        if len(self.Time) == 0:
+            print("=== WARNING: Time array boş! Index array oluşturuluyor ===")
+            time_array = list(range(len(self.Close)))
+        else:
+            time_array = self.Time
+            
+        print(f"Final time_array length: {len(time_array)}")
+        print(f"Final time_array sample: {time_array[:5] if len(time_array) > 5 else time_array}")
+        
+        # Sadece Close Price verisi - en basit test
+        price_data = {'Close Price': self.Close}
+        
+        # Alt panel için basit dummy data
+        bottom_data = {'Dummy': [1] * len(self.Close)}  # Time yerine Close length kullan
+        bottom_title = "Test"
+        
+        print(f"Upper panel data keys: {list(price_data.keys())}")
+        print(f"Lower panel data keys: {list(bottom_data.keys())}")
+        print("=== DEBUG: plot_dual_panel çağrılıyor ===")
+        
+        # Use multi panel plotting with synchronized zoom
+        panels = [
+            {
+                'series_data': {
+                    'Close Price': self.Close,
+                    'Level': self.Level
+                },
+                'title': 'Trading Analysis - Price Chart',
+                'height_ratio': 3
+            },
+            {
+                'series_data': {
+                    'Level': bottom_data,
+                    'Close Price': self.Close
+                },
+                'title': 'Trading Analysis - Test Panel',
+                'height_ratio': 1
+            }
+        ]
+        
+        self.dataPlotter.plot_multi_panel(
+            timestamps=time_array,
+            panels=panels,
+            synchronized_zoom=True
+        )
+        print("=== DEBUG: show çağrılıyor ===")
+        self.dataPlotter.show()
+
+
+
+
+
+
+
+
+
 
     def trader_0_run_func(self):
         DateTimes = ["25.05.2025 14:30:00", "02.06.2025 14:00:00"]
@@ -440,7 +516,8 @@ class AlgoTrader:
 
         # --------------------------------------------------------------
         print("Plotting market data...")
-        self.plotData()
+        # self.plotData()
+        self.plotData2()
 
         # --------------------------------------------------------------
         # Show timing reports

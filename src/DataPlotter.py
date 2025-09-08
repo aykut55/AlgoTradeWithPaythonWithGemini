@@ -502,7 +502,12 @@ class DataPlotter:
             print("- Mouse hover: Crosshair cursor")
             print("- Right-click: Context menu with additional options")
         
-        plt.tight_layout()
+        # Use safe tight_layout
+        try:
+            plt.tight_layout(pad=1.0)
+        except Exception:
+            plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.15, hspace=0.3)
+        
         plt.show()
     
     def close(self) -> None:
@@ -697,6 +702,345 @@ class DataPlotter:
                      labelcolor=self.colors['text_color'])
         
         plt.tight_layout()
+
+    def plot_multi_panel(self,
+                        timestamps: np.ndarray,
+                        panels: List[Dict[str, Any]],
+                        synchronized_zoom: bool = True,
+                        figsize: Optional[Tuple[int, int]] = None) -> None:
+        """
+        Plot multi-panel chart with N panels and synchronized zoom functionality.
+        
+        Args:
+            timestamps: Unix timestamps
+            panels: List of panel configs, each panel should have:
+                   - 'series_data': Dict of series name -> data
+                   - 'title': Panel title
+                   - 'height_ratio': Optional height ratio (default: 1)
+            synchronized_zoom: Enable synchronized zoom between panels
+            figsize: Figure size override
+            
+        Example:
+            panels = [
+                {
+                    'series_data': {'Close Price': self.Close, 'Level': self.Level},
+                    'title': 'Price Chart',
+                    'height_ratio': 3
+                },
+                {
+                    'series_data': {'Balance': self.BakiyeFiyatList},
+                    'title': 'Balance',
+                    'height_ratio': 1
+                }
+            ]
+        """
+        if not panels:
+            raise ValueError("At least one panel must be provided")
+            
+        # Use provided figsize or default
+        fig_size = figsize or self.figsize
+        
+        # Extract height ratios from panels or use defaults
+        height_ratios = []
+        for panel in panels:
+            ratio = panel.get('height_ratio', 1)
+            height_ratios.append(ratio)
+        
+        # Create N-panel subplots with different height ratios
+        panel_count = len(panels)
+        self.fig, self.axes = plt.subplots(panel_count, 1, figsize=fig_size, 
+                                          gridspec_kw={'height_ratios': height_ratios, 'hspace': 0.2},
+                                          facecolor=self.colors['bg_color'],
+                                          constrained_layout=True)
+        
+        # Ensure axes is always a list
+        if not isinstance(self.axes, (list, np.ndarray)):
+            self.axes = [self.axes]
+        
+        # Configure all axes
+        for ax in self.axes:
+            ax.set_facecolor(self.colors['bg_color'])
+            ax.tick_params(colors=self.colors['text_color'])
+            ax.grid(True, color=self.colors['grid_color'], alpha=0.3)
+            for spine in ax.spines.values():
+                spine.set_color(self.colors['text_color'])
+        
+        # Convert timestamps to datetime with error handling
+        x_data = []
+        for ts in timestamps:
+            try:
+                if isinstance(ts, (int, float)) and ts > 0:
+                    x_data.append(datetime.fromtimestamp(ts))
+                else:
+                    # If timestamp is invalid, use index instead
+                    break
+            except (ValueError, OSError, OverflowError):
+                # If conversion fails, use index instead
+                break
+        
+        # If timestamp conversion failed, use index-based plotting
+        if len(x_data) == 0 or len(x_data) != len(timestamps):
+            print(f"Warning: Timestamp conversion failed. Using index-based plotting.")
+            print(f"Sample timestamps: {timestamps[:5] if len(timestamps) > 0 else 'Empty'}")
+            x_data = list(range(len(timestamps)))
+            use_datetime_format = False
+        else:
+            use_datetime_format = True
+        
+        # Plot each panel
+        for panel_idx, panel in enumerate(panels):
+            if panel_idx >= len(self.axes):
+                print(f"Warning: Panel {panel_idx} skipped - not enough axes")
+                continue
+                
+            ax = self.axes[panel_idx]
+            panel_data = panel.get('series_data', {})
+            panel_title = panel.get('title', f'Panel {panel_idx}')
+            
+            color_index = 0
+            
+            # Plot all series in this panel
+            for name, data in panel_data.items():
+                try:
+                    if isinstance(data, dict):
+                        plot_data = data.get('data', [])
+                        color = data.get('color', self.colors['ma_colors'][color_index % len(self.colors['ma_colors'])])
+                        linestyle = data.get('style', '-')
+                        linewidth = data.get('width', 2)
+                        alpha = data.get('alpha', 0.8)
+                        
+                        if isinstance(plot_data, (int, float)):
+                            ax.axhline(y=plot_data, color=color, linestyle=linestyle, 
+                                     linewidth=linewidth, alpha=alpha, label=name)
+                        elif isinstance(plot_data, (np.ndarray, list)) and len(plot_data) > 0:
+                            if isinstance(plot_data, np.ndarray):
+                                valid_mask = ~np.isnan(plot_data)
+                                valid_x = [x_data[i] for i, v in enumerate(valid_mask) if v and i < len(x_data)]
+                                valid_y = plot_data[valid_mask]
+                            else:
+                                valid_x = x_data[:len(plot_data)]
+                                valid_y = plot_data
+                            
+                            ax.plot(valid_x, valid_y, color=color, linestyle=linestyle,
+                                  linewidth=linewidth, alpha=alpha, label=name)
+                    
+                    elif isinstance(data, (int, float)):
+                        color = self.colors['ma_colors'][color_index % len(self.colors['ma_colors'])]
+                        ax.axhline(y=data, color=color, linestyle='--', linewidth=2, 
+                                 alpha=0.8, label=name)
+                    
+                    elif isinstance(data, (np.ndarray, list)) and len(data) > 0:
+                        color = self.colors['ma_colors'][color_index % len(self.colors['ma_colors'])]
+                        
+                        if isinstance(data, np.ndarray):
+                            valid_mask = ~np.isnan(data)
+                            valid_x = [x_data[i] for i, v in enumerate(valid_mask) if v and i < len(x_data)]
+                            valid_y = data[valid_mask]
+                        else:
+                            valid_x = x_data[:len(data)]
+                            valid_y = data
+                        
+                        ax.plot(valid_x, valid_y, color=color, linewidth=2, 
+                              alpha=0.8, label=name)
+                    
+                    color_index += 1
+                    
+                except Exception as e:
+                    print(f"Warning: Could not plot panel {panel_idx} series '{name}': {e}")
+                    continue
+            
+            # Set panel labels and title
+            ax.set_title(panel_title, color=self.colors['text_color'], fontsize=14, fontweight='bold')
+            ax.set_ylabel('Value', color=self.colors['text_color'])
+            
+            # Add legend only if there are labeled artists
+            handles, labels = ax.get_legend_handles_labels()
+            if handles:
+                ax.legend(loc='upper left', framealpha=0.8,
+                        facecolor=self.colors['bg_color'],
+                        edgecolor=self.colors['text_color'],
+                        labelcolor=self.colors['text_color'])
+            
+            # Add x-axis label only to the bottom panel
+            if panel_idx == len(panels) - 1:
+                ax.set_xlabel('Time', color=self.colors['text_color'])
+        
+        # Format x-axis for all panels
+        from matplotlib.ticker import MaxNLocator
+        
+        data_length = len(x_data)
+        if data_length > 1000:
+            max_ticks = 10
+            date_format = '%m/%d'
+        elif data_length > 500:
+            max_ticks = 15
+            date_format = '%m/%d %H:%M'
+        elif data_length > 100:
+            max_ticks = 20
+            date_format = '%m/%d %H:%M'
+        else:
+            max_ticks = 30
+            date_format = '%H:%M'
+        
+        # Format x-axis based on whether we're using datetime or index
+        if use_datetime_format:
+            for ax in self.axes:
+                ax.xaxis.set_major_locator(MaxNLocator(nbins=max_ticks, prune='both'))
+                ax.xaxis.set_major_formatter(mdates.DateFormatter(date_format))
+                plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
+        else:
+            # Index-based formatting
+            for ax in self.axes:
+                ax.xaxis.set_major_locator(MaxNLocator(nbins=max_ticks, prune='both'))
+                # No rotation needed for index labels
+        
+        # Hide x-axis labels for all panels except the bottom one
+        for i, ax in enumerate(self.axes[:-1]):  # All except last
+            plt.setp(ax.xaxis.get_majorticklabels(), visible=False)
+        
+        # Implement synchronized zoom if requested
+        if synchronized_zoom:
+            self._setup_synchronized_zoom()
+        
+        print(f"Multi-panel chart created with {panel_count} panels")
+        if synchronized_zoom:
+            print("- Synchronized zoom enabled")
+        
+        # Layout is handled by constrained_layout=True in subplot creation
+        # No need for manual tight_layout calls
+
+    def _setup_synchronized_zoom(self) -> None:
+        """
+        Setup synchronized zoom functionality between panels.
+        """
+        if len(self.axes) < 2:
+            return
+        
+        # Store original limits for reset functionality
+        self._original_xlims = [ax.get_xlim() for ax in self.axes]
+        self._original_ylims = [ax.get_ylim() for ax in self.axes]
+        
+        def sync_x_zoom(event_ax):
+            """Synchronize X-axis zoom across all panels"""
+            if event_ax in self.axes:
+                xlim = event_ax.get_xlim()
+                for ax in self.axes:
+                    if ax != event_ax:
+                        ax.set_xlim(xlim)
+                self.fig.canvas.draw_idle()
+        
+        def on_xlims_change(ax):
+            """Callback for X-axis limit changes"""
+            sync_x_zoom(ax)
+        
+        # Connect X-axis synchronization for all axes
+        for ax in self.axes:
+            ax.callbacks.connect('xlim_changed', lambda ax_instance: on_xlims_change(ax_instance))
+        
+        # Enhanced scroll zoom with synchronization
+        def on_scroll(event):
+            if event.inaxes is None or event.inaxes not in self.axes:
+                return
+            
+            ax = event.inaxes
+            x_center = event.xdata
+            if x_center is None:
+                return
+            
+            # Get current X-axis limits
+            x_min, x_max = ax.get_xlim()
+            
+            # Zoom factor
+            zoom_factor = 1.2 if event.button == 'down' else 1/1.2
+            
+            # Calculate new X limits (only sync X-axis)
+            x_range = (x_max - x_min) * zoom_factor
+            new_x_min = x_center - x_range/2
+            new_x_max = x_center + x_range/2
+            
+            # Apply X zoom to all axes (synchronized)
+            for sync_ax in self.axes:
+                sync_ax.set_xlim(new_x_min, new_x_max)
+            
+            # Apply Y zoom only to the current axis
+            if event.ydata is not None:
+                y_center = event.ydata
+                y_min, y_max = ax.get_ylim()
+                y_range = (y_max - y_min) * zoom_factor
+                new_y_min = y_center - y_range/2
+                new_y_max = y_center + y_range/2
+                ax.set_ylim(new_y_min, new_y_max)
+            
+            self.fig.canvas.draw()
+        
+        # Connect scroll event
+        self.fig.canvas.mpl_connect('scroll_event', on_scroll)
+        
+        # Enhanced pan functionality with synchronization
+        self._pan_start = None
+        
+        def on_press(event):
+            if event.inaxes in self.axes and event.button == 1:  # Left mouse button
+                self._pan_start = {
+                    'x': event.xdata,
+                    'xlims': [ax.get_xlim() for ax in self.axes],
+                    'ylim': event.inaxes.get_ylim(),
+                    'ax': event.inaxes
+                }
+        
+        def on_motion(event):
+            if self._pan_start is None or event.inaxes != self._pan_start['ax']:
+                return
+            
+            if event.xdata is None or event.ydata is None:
+                return
+            
+            # Calculate X displacement (synchronized)
+            dx = event.xdata - self._pan_start['x']
+            
+            # Apply X pan to all axes
+            for i, ax in enumerate(self.axes):
+                old_xlim = self._pan_start['xlims'][i]
+                new_xlim = (old_xlim[0] - dx, old_xlim[1] - dx)
+                ax.set_xlim(new_xlim)
+            
+            # Apply Y pan only to current axis
+            if event.ydata is not None:
+                dy = event.ydata - self._pan_start.get('y', event.ydata)
+                ax = self._pan_start['ax']
+                old_ylim = self._pan_start['ylim']
+                new_ylim = (old_ylim[0] - dy, old_ylim[1] - dy)
+                ax.set_ylim(new_ylim)
+            
+            self.fig.canvas.draw_idle()
+        
+        def on_release(event):
+            self._pan_start = None
+        
+        # Connect pan events
+        self.fig.canvas.mpl_connect('button_press_event', on_press)
+        self.fig.canvas.mpl_connect('motion_notify_event', on_motion)
+        self.fig.canvas.mpl_connect('button_release_event', on_release)
+        
+        # Add reset zoom functionality with double-click
+        def on_double_click(event):
+            if event.inaxes in self.axes and event.dblclick:
+                # Reset to original limits
+                for i, ax in enumerate(self.axes):
+                    if i < len(self._original_xlims):
+                        ax.set_xlim(self._original_xlims[i])
+                    if i < len(self._original_ylims):
+                        ax.set_ylim(self._original_ylims[i])
+                self.fig.canvas.draw()
+        
+        # Connect double-click reset
+        self.fig.canvas.mpl_connect('button_press_event', on_double_click)
+        
+        print("Synchronized dual-panel mode enabled:")
+        print("- Mouse wheel: Zoom in/out (X-axis synchronized, Y-axis independent)")
+        print("- Left mouse drag: Pan (X-axis synchronized, Y-axis independent)")
+        print("- Double-click: Reset zoom to original view")
+        print("- Toolbar: Additional navigation controls")
 
     def __repr__(self) -> str:
         """String representation of the plotter."""
