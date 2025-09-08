@@ -502,11 +502,8 @@ class DataPlotter:
             print("- Mouse hover: Crosshair cursor")
             print("- Right-click: Context menu with additional options")
         
-        # Use safe tight_layout
-        try:
-            plt.tight_layout(pad=1.0)
-        except Exception:
-            plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.15, hspace=0.3)
+        # Layout is automatically handled by constrained_layout=True in subplot creation
+        # No manual layout adjustment needed
         
         plt.show()
     
