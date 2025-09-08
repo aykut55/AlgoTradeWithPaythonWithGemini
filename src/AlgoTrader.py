@@ -310,10 +310,10 @@ class AlgoTrader:
                 FlatOl = False
 
                 Al = True
-                Al = Al and self.myUtils.yukari_kesti(i, self.Close, self.LevelUp1)
+                Al = Al and self.myUtils.yukari_kesti(i, self.Close, self.Level)
 
                 Sat = True
-                Sat = Sat and self.myUtils.asagi_kesti(i, self.Close, self.LevelDown1)
+                Sat = Sat and self.myUtils.asagi_kesti(i, self.Close, self.Level)
 
                 KarAl = trader.Signals.KarAlEnabled
                 KarAl = KarAl and trader.KarAlZararKes.son_fiyata_gore_kar_al_seviye_hesapla(i, 5, 50, 1000) != 0

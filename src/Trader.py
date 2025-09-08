@@ -177,6 +177,10 @@ class CTrader(CBase):
             self.BakiyeInitialized = True
             self.Status.BakiyeFiyat = self.Status.IlkBakiyeFiyat
             self.Status.BakiyePuan = self.Status.IlkBakiyePuan
+            self.Lists.BakiyeFiyatList[i] = self.Status.BakiyeFiyat
+            self.Lists.GetiriFiyatList[i] = self.Lists.BakiyeFiyatList[i] - self.Status.BakiyeFiyat
+            self.Lists.BakiyePuanList[i] = self.Status.BakiyePuan
+            self.Lists.GetiriPuanList[i] = self.Lists.BakiyePuanList[i] - self.Status.BakiyePuan
         return result
 
     def anlik_kar_zarar_hesapla(self, BarIndex, Type="C"):
