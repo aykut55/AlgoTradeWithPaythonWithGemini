@@ -2,7 +2,7 @@ class CIndicatorManager:
     def __init__(self):
         pass
 
-    def initialize(self, Open, High, Low, Close, Volume, Lot):
+    def initialize(self, EpochTime, DateTime, Date, Time, Open, High, Low, Close, Volume, Lot):
         pass
 
     def reset(self):

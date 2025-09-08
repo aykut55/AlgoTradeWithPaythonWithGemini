@@ -97,10 +97,13 @@ class AlgoTrader:
         # self.dataManager.create_data(600)
         self.dataManager.set_read_mode_last_n(20000)  # Son 20000 satırı okumaya ayarla
         self.dataManager.load_prices_from_csv(r"data", "01", "BTCUSD.csv")
-
+        self.dataManager.add_time_columns()
         self.V          = self.dataManager
         self.Df         = self.dataManager.get_dataframe()
-        self.Time       = self.dataManager.get_epoch_time_array()
+        self.EpochTime  = self.dataManager.get_epoch_time_array()
+        self.DateTime   = self.dataManager.get_date_time_array()
+        self.Date       = self.dataManager.get_date_array()
+        self.Time       = self.dataManager.get_time_array()
         self.Open       = self.dataManager.get_open_array()
         self.High       = self.dataManager.get_high_array()
         self.Low        = self.dataManager.get_low_array()
@@ -109,7 +112,6 @@ class AlgoTrader:
         self.Lot        = self.dataManager.get_lot_array()
         self.BarCount   = self.dataManager.get_bar_count()
         self.ItemsCount = self.dataManager.get_items_count()
-        self.dataManager.add_time_columns()
 
         print("========================")
         print("BarCount    :", self.BarCount)
@@ -436,7 +438,7 @@ class AlgoTrader:
         self.Most, self.ExMov = self.calculate_most(period=21, percent=1.0)
 
         # --------------------------------------------------------------
-        self.mySystem.create_modules().initialize(self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
+        self.mySystem.create_modules().initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
 
         self.mySystem.reset()
         self.mySystem.initialize_params_with_defaults()

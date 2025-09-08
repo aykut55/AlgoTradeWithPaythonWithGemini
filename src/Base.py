@@ -2,6 +2,10 @@ class CBase:
     def __init__(self):
         self.Id = 0
         self.V = None
+        self.EpochTime = []
+        self.DateTime = []
+        self.Date =  []
+        self.Time = []
         self.Open = []
         self.High = []
         self.Low = []
@@ -17,7 +21,11 @@ class CBase:
     def show_message(self, Message):
         print(Message)
 
-    def set_data(self, Open, High, Low, Close, Volume, Lot):
+    def set_data(self, EpochTime, DateTime, Date, Time, Open, High, Low, Close, Volume, Lot):
+        self.EpochTime = EpochTime
+        self.DateTime = DateTime
+        self.Date = Date
+        self.Time = Time
         self.Open = Open
         self.High = High
         self.Low = Low

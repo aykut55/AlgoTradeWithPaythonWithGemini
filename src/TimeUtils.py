@@ -27,8 +27,8 @@ class CTimeUtils(CBase):
         self.ElapsedTimeInMSec = 0
         self.ExecutionTimeInMSec = 0
 
-    def initialize(self, Open, High, Low, Close, Volume, Lot):
-        self.set_data(Open, High, Low, Close, Volume, Lot)
+    def initialize(self, EpochTime, DateTime, Date, Time, Open, High, Low, Close, Volume, Lot):
+        self.set_data(EpochTime, DateTime, Date, Time, Open, High, Low, Close, Volume, Lot)
         self.reset()
         return self
 

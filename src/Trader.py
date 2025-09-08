@@ -13,6 +13,7 @@ from src.TimeFilter import CTimeFilter
 from src.TimeUtils import CTimeUtils
 from src.FileUtils import CFileUtils
 import datetime
+import pandas as pd
 
 class CTrader(CBase):
     def __init__(self,  Id=0):
@@ -68,10 +69,12 @@ class CTrader(CBase):
         self.DisableDateStr = None
         self.EnableTimeStr = None
         self.DisableTimeStr = None
+        # dataframe
+        self._df: pd.DataFrame | None = None
 
-    def initialize(self, Open, High, Low, Close, Volume, Lot, VarlikManager):
+    def initialize(self, EpochTime, DateTime, Date, Time, Open, High, Low, Close, Volume, Lot, VarlikManager):
         self.VarlikManager = VarlikManager
-        self.set_data(Open, High, Low, Close, Volume, Lot)
+        self.set_data(EpochTime, DateTime, Date, Time, Open, High, Low, Close, Volume, Lot)
         self.Signals.initialize()
         self.Status.initialize()
         self.Flags.initialize()
@@ -83,7 +86,7 @@ class CTrader(CBase):
         self.Statistics.initialize(self)
         self.KarAlZararKes.initialize(self)
         self.TimeFilter.initialize(self)
-        self.TimeUtils.initialize( Open, High, Low, Close, Volume, Lot)
+        self.TimeUtils.initialize( EpochTime, DateTime, Date, Time, Open, High, Low, Close, Volume, Lot)
         self.reset()
         self.BakiyeInitialized = False
         return self

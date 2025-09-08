@@ -76,12 +76,12 @@ class SystemWrapper(CBase):
         self.myIndicators = CIndicatorManager()
         return self
 
-    def initialize(self, Open, High, Low, Close, Volume, Lot):
+    def initialize(self, EpochTime, DateTime, Date, Time ,Open, High, Low, Close, Volume, Lot):
         # self.GrafikSembol = Sistem.Sembol
         # self.GrafikPeriyot = Sistem.Periyot
         # self.SistemAdi = Sistem.Name
 
-        self.set_data(Open, High, Low, Close, Volume, Lot)
+        self.set_data(EpochTime, DateTime, Date, Time ,Open, High, Low, Close, Volume, Lot)
 
         if self.myVarlik:
             self.myVarlik.initialize()
@@ -91,19 +91,19 @@ class SystemWrapper(CBase):
                 trader.GrafikSembol = "GrafikSembol Setlenecek"
                 trader.GrafikPeriyot = "GrafikPeriyot Setlenecek"
                 trader.SistemAdi = "SistemAdi Setlenecek"
-                trader.initialize(Open, High, Low, Close, Volume, Lot, self.myVarlik)
+                trader.initialize(EpochTime, DateTime, Date, Time, Open, High, Low, Close, Volume, Lot, self.myVarlik)
         
         if self.myUtils:
             self.myUtils.initialize()
         
         if self.myTimeUtils:
-            self.myTimeUtils.initialize(Open, High, Low, Close, Volume, Lot)
+            self.myTimeUtils.initialize(EpochTime, DateTime, Date, Time, Open, High, Low, Close, Volume, Lot)
         
         if self.myBarUtils:
-            self.myBarUtils.initialize(Open, High, Low, Close, Volume, Lot)
+            self.myBarUtils.initialize(EpochTime, DateTime, Date, Time, Open, High, Low, Close, Volume, Lot)
         
         if self.myIndicators:
-            self.myIndicators.initialize(Open, High, Low, Close, Volume, Lot)
+            self.myIndicators.initialize(EpochTime, DateTime, Date, Time, Open, High, Low, Close, Volume, Lot)
         
         return self
 
