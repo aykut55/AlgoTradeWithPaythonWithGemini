@@ -168,7 +168,7 @@ class SystemWrapper(CBase):
         self.CurrentRunIndex = 0
         self.TotalRunCount = 1
 
-        self.myVarlik.set_kontrat_params_fx_ons_altin_micro(KontratSayisi=1, VarlikAdedCarpani=1).set_komisyon_params(KomisyonCarpan=0.0)
+        self.myVarlik.set_kontrat_params_fx_ons_altin_micro(KontratSayisi=10, VarlikAdedCarpani=1).set_komisyon_params(KomisyonCarpan=0.0)
         self.myVarlik.set_bakiye_params(IlkBakiye=100000.0, IlkBakiyePuan=100000.0)
 
         for trader in self.myTraders:

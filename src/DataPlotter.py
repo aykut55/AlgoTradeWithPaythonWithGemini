@@ -4,7 +4,7 @@ Data Plotter for algorithmic trading system visualization.
 This module contains the DataPlotter class which provides comprehensive
 data visualization capabilities for OHLCV data, technical indicators, and trading signals.
 """
-
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.patches import Rectangle
@@ -13,6 +13,7 @@ import numpy as np
 from typing import Optional, List, Dict, Any, Tuple
 from datetime import datetime
 import warnings
+# mpl.use('Qt5Agg')  # or can use 'TkAgg', whatever you have/prefer
 
 # Suppress matplotlib warnings
 warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib')
@@ -711,12 +712,21 @@ class DataPlotter:
             seviye_list: Level list (price levels)
             use_datetime_format: Whether x_data is datetime format
         """
+        print(f"DEBUG: _plot_direction_levels called")
+        print(f"  yon_list length: {len(yon_list) if yon_list else 0}")
+        print(f"  seviye_list length: {len(seviye_list) if seviye_list else 0}")
+        print(f"  x_data length: {len(x_data)}")
+        
         if not yon_list or not seviye_list or len(yon_list) != len(seviye_list):
+            print(f"  ERROR: Invalid input data. Returning without plotting.")
             return
         
         current_level = None
         current_direction = None
         line_start_x = None
+        lines_drawn = 0
+        
+        print(f"  Starting direction levels plotting...")
         
         for i, (direction, level) in enumerate(zip(yon_list, seviye_list)):
             x_pos = x_data[i] if i < len(x_data) else x_data[-1]
@@ -740,6 +750,8 @@ class DataPlotter:
                     ax.hlines(y=line_y, xmin=line_start_x, xmax=x_end, 
                              colors=color, alpha=alpha, linewidth=2, 
                              linestyles='solid', label=None)
+                    lines_drawn += 1
+                    print(f"    Line drawn: {current_direction} from {line_start_x} to {x_end} at level {line_y:.2f}")
                 
                 # Start new line if direction is A or S
                 if direction in ['A', 'S']:
@@ -770,6 +782,10 @@ class DataPlotter:
             ax.hlines(y=line_y, xmin=line_start_x, xmax=x_end,
                      colors=color, alpha=alpha, linewidth=2,
                      linestyles='solid', label=None)
+            lines_drawn += 1
+            print(f"    Final line drawn: {current_direction} from {line_start_x} to {x_end} at level {line_y:.2f}")
+        
+        print(f"  Total lines drawn: {lines_drawn}")
 
     def plot_multi_panel(self,
                         timestamps: np.ndarray,

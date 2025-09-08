@@ -125,37 +125,49 @@ class AlgoTrader:
             show_kar_zarar_puan: Show kar/zarar puan chart in bottom panel
             show_kar_zarar_fiyat: Show kar/zarar fiyat chart in bottom panel
         """
-        print("=== DEBUG: plotData2 başlıyor ===")
-        print(f"Time length: {len(self.Time)}")
-        print(f"Close length: {len(self.Close)}")
-        print(f"Close type: {type(self.Close)}")
-        print(f"Time type: {type(self.Time)}")
-        print(f"Close sample: {self.Close[:5] if len(self.Close) > 5 else self.Close}")
-        print(f"Time sample: {self.Time[:5] if len(self.Time) > 5 else self.Time}")
-        
+        # print("=== DEBUG: plotData2 başlıyor ===")
+        # print(f"Time length: {len(self.Time)}")
+        # print(f"Close length: {len(self.Close)}")
+        # print(f"Close type: {type(self.Close)}")
+        # print(f"Time type: {type(self.Time)}")
+        # print(f"Close sample: {self.Close[:5] if len(self.Close) > 5 else self.Close}")
+        # print(f"Time sample: {self.Time[:5] if len(self.Time) > 5 else self.Time}")
+
         # Time array boşsa, basit index array oluştur
         if len(self.Time) == 0:
             print("=== WARNING: Time array boş! Index array oluşturuluyor ===")
             time_array = list(range(len(self.Close)))
         else:
             time_array = self.Time
-            
-        print(f"Final time_array length: {len(time_array)}")
-        print(f"Final time_array sample: {time_array[:5] if len(time_array) > 5 else time_array}")
-        
-        # Sadece Close Price verisi - en basit test
-        price_data = {'Close Price': self.Close}
-        
-        # Alt panel için basit dummy data
-        bottom_data = {'Dummy': [1] * len(self.Close)}  # Time yerine Close length kullan
-        bottom_title = "Test"
-        
-        print(f"Upper panel data keys: {list(price_data.keys())}")
-        print(f"Lower panel data keys: {list(bottom_data.keys())}")
-        print("=== DEBUG: plot_dual_panel çağrılıyor ===")
-        
-        # Use multi panel plotting with synchronized zoom
-        print(self.YonList)
+
+        # print(f"Final time_array length: {len(time_array)}")
+        # print(f"Final time_array sample: {time_array[:5] if len(time_array) > 5 else time_array}")
+        #
+        # # Sadece Close Price verisi - en basit test
+        # price_data = {'Close Price': self.Close}
+        #
+        # # Alt panel için basit dummy data
+        # bottom_data = {'Dummy': [1] * len(self.Close)}  # Time yerine Close length kullan
+        # bottom_title = "Test"
+        #
+        # print(f"Upper panel data keys: {list(price_data.keys())}")
+        # print(f"Lower panel data keys: {list(bottom_data.keys())}")
+        # print("=== DEBUG: plot_dual_panel çağrılıyor ===")
+        #
+        # # Use multi panel plotting with synchronized zoom
+        # print(f"YonList length: {len(self.YonList)}")
+        # print(f"YonList sample: {self.YonList[:20] if len(self.YonList) > 20 else self.YonList}")
+        # print(f"SeviyeList length: {len(self.SeviyeList)}")
+        # print(f"SeviyeList sample: {self.SeviyeList[:20] if len(self.SeviyeList) > 20 else self.SeviyeList}")
+        #
+        # # Check for direction changes
+        # if len(self.YonList) > 1:
+        #     direction_changes = []
+        #     for i in range(1, len(self.YonList)):
+        #         if self.YonList[i] != self.YonList[i-1]:
+        #             direction_changes.append((i, self.YonList[i-1], self.YonList[i], self.SeviyeList[i] if i < len(self.SeviyeList) else 'N/A'))
+        #     print(f"Direction changes found: {len(direction_changes)}")
+        #     print(f"First 10 changes: {direction_changes[:10]}")
 
         panels = [
             {
