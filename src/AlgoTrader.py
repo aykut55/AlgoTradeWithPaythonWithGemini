@@ -33,6 +33,65 @@ class AlgoTrader:
         """
         return np.full(bar_count, level_value, dtype=float)
 
+    def calculate_most(self, period=21, percent=1.0):
+        """
+        Calculates the MOST (Moving Stop Loss) indicator based on the provided Pine Script logic.
+
+        Args:
+            period: The period for the Exponential Moving Average (EMA).
+            percent: The percentage for the bands.
+
+        Returns:
+            A tuple containing two numpy arrays: (most, exmov)
+        """
+        close_series = pd.Series(self.Close)
+        exmov = close_series.ewm(span=period, adjust=False).mean().to_numpy()
+
+        fark = exmov * (percent / 100.0)
+        up = exmov - fark
+        down = exmov + fark
+
+        trend_up = np.zeros(self.BarCount)
+        trend_down = np.zeros(self.BarCount)
+        trend = np.zeros(self.BarCount)
+        most = np.zeros(self.BarCount)
+
+        # Initialize first values
+        trend_up[0] = up[0]
+        trend_down[0] = down[0]
+        trend[0] = 1
+        most[0] = trend_up[0]
+
+
+        for i in range(1, self.BarCount):
+            # Pine Script: TrendUp = prev(ExMov,1)>prev(TrendUp,1) ? max(Up,prev(TrendUp,1)) : Up
+            if exmov[i-1] > trend_up[i-1]:
+                trend_up[i] = max(up[i], trend_up[i-1])
+            else:
+                trend_up[i] = up[i]
+
+            # Pine Script: TrendDown = prev(ExMov,1)<prev(TrendDown,1) ? min(Down,prev(TrendDown,1)) : Down
+            if exmov[i-1] < trend_down[i-1]:
+                trend_down[i] = min(down[i], trend_down[i-1])
+            else:
+                trend_down[i] = down[i]
+
+            # Pine Script: Trend = ExMov>prev(TrendDown,1) ? 1 : ExMov<prev(TrendUp,1) ? -1 : prev(Trend,1)
+            if exmov[i] > trend_down[i-1]:
+                trend[i] = 1
+            elif exmov[i] < trend_up[i-1]:
+                trend[i] = -1
+            else:
+                trend[i] = trend[i-1]
+
+            # Pine Script: MOST = Trend==1 ? TrendUp : TrendDown
+            if trend[i] == 1:
+                most[i] = trend_up[i]
+            else:
+                most[i] = trend_down[i]
+
+        return most, exmov
+
     def loadMarketData(self):
         self.dataManager.create_data(600)
         # self.dataManager.set_read_mode_last_n(1000)  # Son 2000 satırı okumaya ayarla
@@ -171,7 +230,7 @@ class AlgoTrader:
 
         panels = [
             {
-                'series_data': {'Close Price': self.Close, 'Level': self.Level},
+                'series_data': {'Close Price': self.Close, 'Level': self.Level, 'MOST': self.Most, 'ExMov': self.ExMov},
                 'title': 'Trading Analysis - Price Chart',
                 'height_ratio': 3,  # Üst panel daha büyük
                 'yon_list': self.YonList,  # A/S/F direction data
@@ -184,7 +243,12 @@ class AlgoTrader:
             },
             {
                 'series_data': {'KarZarar': self.KarZararPuanList, 'Zero': self.LevelZero},
-                'title': 'Trading Analysis - Kar/Zarar Chart',
+                'title': 'Trading Analysis - Kar/Zarar Chart (Puan)',
+                'height_ratio': 1  # 3. panel
+            },
+            {
+                'series_data': {'KarZarar': self.KarZararFiyatList, 'Zero': self.LevelZero},
+                'title': 'Trading Analysis - Kar/Zarar Chart (Fiyat)',
                 'height_ratio': 1  # 3. panel
             }
         ]
@@ -311,6 +375,8 @@ class AlgoTrader:
 
         self.LevelZero = self.create_level_series(self.BarCount, 0)
 
+        self.Most, self.ExMov = self.calculate_most(period=21, percent=1.0)
+
         # --------------------------------------------------------------
         self.mySystem.create_modules().initialize(self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
 
@@ -402,11 +468,9 @@ class AlgoTrader:
 
                 FlatOl = False
 
-                Al = True
-                Al = Al and self.myUtils.yukari_kesti(i, self.Close, self.Level)
+                Al = self.myUtils.yukari_kesti(i, self.ExMov, self.Most)
 
-                Sat = True
-                Sat = Sat and self.myUtils.asagi_kesti(i, self.Close, self.Level)
+                Sat = self.myUtils.asagi_kesti(i, self.ExMov, self.Most)
 
                 KarAl = trader.Signals.KarAlEnabled
                 KarAl = KarAl and trader.KarAlZararKes.son_fiyata_gore_kar_al_seviye_hesapla(i, 5, 50, 1000) != 0
