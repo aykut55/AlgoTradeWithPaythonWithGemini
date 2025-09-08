@@ -153,22 +153,22 @@ class AlgoTrader:
         print("=== DEBUG: plot_dual_panel çağrılıyor ===")
         
         # Use multi panel plotting with synchronized zoom
+
         panels = [
             {
-                'series_data': {
-                    'Close Price': self.Close,
-                    'Level': self.Level
-                },
-                'title': 'Trading Analysis - Price Chart',
-                'height_ratio': 3
+                'series_data': {'Close Price': self.Close, 'Level': self.Level},
+                'title': 'Price Chart',
+                'height_ratio': 3  # Üst panel daha büyük
             },
             {
-                'series_data': {
-                    'Level': bottom_data,
-                    'Close Price': self.Close
-                },
-                'title': 'Trading Analysis - Test Panel',
-                'height_ratio': 1
+                'series_data': {'Balance': self.BakiyeFiyatList},
+                'title': 'Balance Chart',
+                'height_ratio': 1  # Alt panel daha küçük
+            },
+            {
+                'series_data': {'KarZarar': self.KarZararPuanList, 'Zero': self.LevelZero},
+                'title': 'Kar/Zarar Chart',
+                'height_ratio': 1  # 3. panel
             }
         ]
         

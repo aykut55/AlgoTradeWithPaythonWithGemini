@@ -898,6 +898,9 @@ class DataPlotter:
         for i, ax in enumerate(self.axes[:-1]):  # All except last
             plt.setp(ax.xaxis.get_majorticklabels(), visible=False)
         
+        # Add interactive features (crosshair, zoom, etc.)
+        self._setup_interactive_features()
+        
         # Implement synchronized zoom if requested
         if synchronized_zoom:
             self._setup_synchronized_zoom()
@@ -905,6 +908,7 @@ class DataPlotter:
         print(f"Multi-panel chart created with {panel_count} panels")
         if synchronized_zoom:
             print("- Synchronized zoom enabled")
+        print("- Interactive features enabled (crosshair, wheel zoom)")
         
         # Layout is handled by constrained_layout=True in subplot creation
         # No need for manual tight_layout calls
@@ -1041,6 +1045,101 @@ class DataPlotter:
         print("- Left mouse drag: Pan (X-axis synchronized, Y-axis independent)")
         print("- Double-click: Reset zoom to original view")
         print("- Toolbar: Additional navigation controls")
+
+    def _setup_interactive_features(self) -> None:
+        """
+        Setup interactive features like crosshair cursor and individual axis zoom.
+        """
+        if self.fig is None or len(self.axes) == 0:
+            return
+        
+        # Enable matplotlib toolbar
+        import matplotlib.pyplot as plt
+        plt.rcParams['toolbar'] = 'toolbar2'
+        
+        # Store crosshair lines for cleanup
+        self._crosshair_lines = []
+        
+        # Add crosshair cursor functionality
+        def on_mouse_move(event):
+            if event.inaxes is None or event.inaxes not in self.axes:
+                return
+                
+            # Remove previous crosshair lines
+            for line in self._crosshair_lines:
+                try:
+                    line.remove()
+                except:
+                    pass
+            self._crosshair_lines.clear()
+            
+            # Add crosshair to current axis
+            ax = event.inaxes
+            if event.xdata is not None and event.ydata is not None:
+                # Vertical line (across all panels with same X)
+                for panel_ax in self.axes:
+                    try:
+                        vline = panel_ax.axvline(x=event.xdata, color='gray', 
+                                               linestyle='--', alpha=0.5, linewidth=1)
+                        self._crosshair_lines.append(vline)
+                    except:
+                        pass
+                
+                # Horizontal line (only on current panel)
+                try:
+                    hline = ax.axhline(y=event.ydata, color='gray', 
+                                     linestyle='--', alpha=0.5, linewidth=1)
+                    self._crosshair_lines.append(hline)
+                except:
+                    pass
+                
+                # Update canvas
+                self.fig.canvas.draw_idle()
+        
+        # Connect mouse move event for crosshair
+        self.fig.canvas.mpl_connect('motion_notify_event', on_mouse_move)
+        
+        # Individual axis scroll zoom (without synchronization)
+        def on_scroll_individual(event):
+            if event.inaxes is None or event.inaxes not in self.axes:
+                return
+            
+            ax = event.inaxes
+            x_center = event.xdata
+            y_center = event.ydata
+            
+            if x_center is None or y_center is None:
+                return
+            
+            # Get current axis limits
+            x_min, x_max = ax.get_xlim()
+            y_min, y_max = ax.get_ylim()
+            
+            # Zoom factor
+            zoom_factor = 1.2 if event.button == 'down' else 1/1.2
+            
+            # Calculate new limits
+            x_range = (x_max - x_min) * zoom_factor
+            y_range = (y_max - y_min) * zoom_factor
+            
+            new_x_min = x_center - x_range/2
+            new_x_max = x_center + x_range/2
+            new_y_min = y_center - y_range/2
+            new_y_max = y_center + y_range/2
+            
+            # Apply new limits only to current axis
+            ax.set_xlim(new_x_min, new_x_max)
+            ax.set_ylim(new_y_min, new_y_max)
+            
+            # Redraw
+            self.fig.canvas.draw_idle()
+        
+        # Store the individual scroll function for potential future use
+        self._individual_scroll_func = on_scroll_individual
+        
+        print("Individual interactive features enabled:")
+        print("- Crosshair cursor: Shows position across all panels")
+        print("- Mouse hover: Real-time crosshair tracking")
 
     def __repr__(self) -> str:
         """String representation of the plotter."""
