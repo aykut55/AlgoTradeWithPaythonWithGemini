@@ -16,6 +16,7 @@ class AlgoTrader:
         self.KarZararPuanList = []
         self.KarZararFiyatList = []
         self.BakiyeFiyatList = []
+        self.KomisyonFiyatList = []
         self.YonList = []
         self.SeviyeList = []
         pass
@@ -93,9 +94,9 @@ class AlgoTrader:
         return most, exmov
 
     def loadMarketData(self):
-        self.dataManager.create_data(600)
-        # self.dataManager.set_read_mode_last_n(1000)  # Son 2000 satırı okumaya ayarla
-        # self.dataManager.load_prices_from_csv("data", "01", "BTCUSD.csv")
+        # self.dataManager.create_data(600)
+        self.dataManager.set_read_mode_last_n(20000)  # Son 20000 satırı okumaya ayarla
+        self.dataManager.load_prices_from_csv(r"data", "01", "BTCUSD.csv")
 
         self.V          = self.dataManager
         self.Df         = self.dataManager.get_dataframe()
@@ -173,7 +174,7 @@ class AlgoTrader:
         )
         self.dataPlotter.show()
 
-    def plotData2(self, show_moving_average=False, show_levels=False, show_balance=False, show_kar_zarar_puan=False, show_kar_zarar_fiyat=False):
+    def plotData2(self, trader, show_moving_average=False, show_levels=False, show_balance=False, show_kar_zarar_puan=False, show_kar_zarar_fiyat=False):
         """
         Dual-panel plotting method with synchronized zoom functionality.
         
@@ -230,27 +231,84 @@ class AlgoTrader:
 
         panels = [
             {
-                'series_data': {'Close Price': self.Close, 'Level': self.Level, 'MOST': self.Most, 'ExMov': self.ExMov},
+                'series_data': {
+                    'Close Price': self.Close,
+                    # 'Level': self.Level,
+                    'MOST': self.Most,
+                    'ExMov': self.ExMov},
                 'title': 'Trading Analysis - Price Chart',
                 'height_ratio': 3,  # Üst panel daha büyük
                 'yon_list': self.YonList,  # A/S/F direction data
                 'seviye_list': self.SeviyeList  # Price level data
             },
             {
-                'series_data': {'Balance': self.BakiyeFiyatList},
+                'series_data': {'Balance': trader.Lists.BakiyeFiyatList},
                 'title': 'Trading Analysis - Balance Chart',
                 'height_ratio': 1  # Alt panel daha küçük
             },
             {
-                'series_data': {'KarZarar': self.KarZararPuanList, 'Zero': self.LevelZero},
+                'series_data': {'KarZarar': trader.Lists.KarZararPuanList, 'Zero': self.LevelZero},
                 'title': 'Trading Analysis - Kar/Zarar Chart (Puan)',
                 'height_ratio': 1  # 3. panel
             },
             {
-                'series_data': {'KarZarar': self.KarZararFiyatList, 'Zero': self.LevelZero},
+                'series_data': {'KarZarar': trader.Lists.KarZararFiyatList, 'Zero': self.LevelZero},
                 'title': 'Trading Analysis - Kar/Zarar Chart (Fiyat)',
                 'height_ratio': 1  # 3. panel
-            }
+            },
+            {
+                'series_data': {'KomisyonIslemSayisiList': trader.Lists.KomisyonIslemSayisiList, 'Zero': self.LevelZero},
+                'title': 'Trading Analysis - KomisyonIslemSayisiList',
+                'height_ratio': 1
+            },
+            # {
+            #     'series_data': {'KomisyonFiyatList': trader.Lists.KomisyonFiyatList,
+            #                     # 'Zero': self.LevelZero
+            #                     },
+            #     'title': 'Trading Analysis - KomisyonFiyatList',
+            #     'height_ratio': 1
+            # }
+
+            # self.BarIndexList = []
+            # self.YonList = []
+            # self.SeviyeList = []
+            # self.SinyalList = []
+            # self.KarZararPuanList = []
+            # self.KarZararFiyatList = []
+            # self.KarZararFiyatYuzdeList = []
+            # self.KarAlList = []
+            # self.IzleyenStopList = []
+            # self.IslemSayisiList = []
+            # self.AlisSayisiList = []
+            # self.SatisSayisiList = []
+            # self.FlatSayisiList = []
+            # self.PassSayisiList = []
+            # self.KontratSayisiList = []
+            # self.VarlikAdedSayisiList = []
+            # self.KomisyonVarlikAdedSayisiList = []
+            # self.KomisyonIslemSayisiList = []
+            # self.KomisyonFiyatList = []
+            # self.KardaBarSayisiList = []
+            # self.ZarardaBarSayisiList = []
+            # self.BakiyePuanList = []
+            # self.BakiyeFiyatList = []
+            # self.GetiriPuanList = []
+            # self.GetiriFiyatList = []
+            # self.GetiriPuanYuzdeList = []
+            # self.GetiriFiyatYuzdeList = []
+            # self.BakiyePuanNetList = []
+            # self.BakiyeFiyatNetList = []
+            # self.GetiriPuanNetList = []
+            # self.GetiriFiyatNetList = []
+            # self.GetiriPuanYuzdeNetList = []
+            # self.GetiriFiyatYuzdeNetList = []
+            # self.GetiriKz = []
+            # self.GetiriKzNet = []
+            # self.GetiriKzSistem = []
+            # self.GetiriKzNetSistem = []
+            # self.EmirKomutList = []
+            # self.EmirStatusList = []
+
         ]
         
         self.dataPlotter.plot_multi_panel(
@@ -599,8 +657,9 @@ class AlgoTrader:
 
         # --------------------------------------------------------------
         print("Plotting market data...")
+        self.active_trader = self.mySystem.get_trader(0)
         # self.plotData()
-        self.plotData2()
+        self.plotData2(self.active_trader)
 
         # --------------------------------------------------------------
         # Show timing reports
