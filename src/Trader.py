@@ -107,7 +107,7 @@ class CTrader(CBase):
         self.LastExecutionTimeStop = ""
         self.LastStatisticsCalculationTime = ""
         self.ExecutionTimeInMSec = 0
-        self.reset_date_times
+        # self.reset_date_times
         return self
 
     def start(self):
