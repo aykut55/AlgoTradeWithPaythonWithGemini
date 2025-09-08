@@ -16,6 +16,8 @@ class AlgoTrader:
         self.KarZararPuanList = []
         self.KarZararFiyatList = []
         self.BakiyeFiyatList = []
+        self.YonList = []
+        self.SeviyeList = []
         pass
 
     def create_level_series(self,bar_count: int, level_value: float) -> np.ndarray:
@@ -153,21 +155,24 @@ class AlgoTrader:
         print("=== DEBUG: plot_dual_panel çağrılıyor ===")
         
         # Use multi panel plotting with synchronized zoom
+        print(self.YonList)
 
         panels = [
             {
                 'series_data': {'Close Price': self.Close, 'Level': self.Level},
-                'title': 'Price Chart',
-                'height_ratio': 3  # Üst panel daha büyük
+                'title': 'Trading Analysis - Price Chart',
+                'height_ratio': 3,  # Üst panel daha büyük
+                'yon_list': self.YonList,  # A/S/F direction data
+                'seviye_list': self.SeviyeList  # Price level data
             },
             {
                 'series_data': {'Balance': self.BakiyeFiyatList},
-                'title': 'Balance Chart',
+                'title': 'Trading Analysis - Balance Chart',
                 'height_ratio': 1  # Alt panel daha küçük
             },
             {
                 'series_data': {'KarZarar': self.KarZararPuanList, 'Zero': self.LevelZero},
-                'title': 'Kar/Zarar Chart',
+                'title': 'Trading Analysis - Kar/Zarar Chart',
                 'height_ratio': 1  # 3. panel
             }
         ]
@@ -420,6 +425,8 @@ class AlgoTrader:
                 self.KarZararPuanList = trader.Lists.KarZararPuanList
                 self.KarZararFiyatList = trader.Lists.KarZararFiyatList
                 self.BakiyeFiyatList = trader.Lists.BakiyeFiyatList
+                self.YonList = trader.Lists.YonList
+                self.SeviyeList = trader.Lists.SeviyeList
 
         self.mySystem.stop()
 

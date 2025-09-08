@@ -700,6 +700,77 @@ class DataPlotter:
         
         plt.tight_layout()
 
+    def _plot_direction_levels(self, ax, x_data, yon_list, seviye_list, use_datetime_format=False):
+        """
+        Plot dynamic support/resistance lines based on direction and level lists.
+        
+        Args:
+            ax: Matplotlib axis to plot on
+            x_data: X-axis data (datetime or index)
+            yon_list: Direction list ('A', 'S', 'F')
+            seviye_list: Level list (price levels)
+            use_datetime_format: Whether x_data is datetime format
+        """
+        if not yon_list or not seviye_list or len(yon_list) != len(seviye_list):
+            return
+        
+        current_level = None
+        current_direction = None
+        line_start_x = None
+        
+        for i, (direction, level) in enumerate(zip(yon_list, seviye_list)):
+            x_pos = x_data[i] if i < len(x_data) else x_data[-1]
+            
+            # Direction change detected
+            if direction != current_direction:
+                # End previous line if exists
+                if current_level is not None and line_start_x is not None and current_direction in ['A', 'S']:
+                    # Draw line from start to current position
+                    x_end = x_pos
+                    if current_direction == 'A':  # Long position - green line below level
+                        line_y = current_level * 0.999  # Slightly below the level
+                        color = '#00ff88'
+                        alpha = 0.6
+                    elif current_direction == 'S':  # Short position - red line above level
+                        line_y = current_level * 1.001  # Slightly above the level  
+                        color = '#ff4444'
+                        alpha = 0.6
+                    
+                    # Draw horizontal line
+                    ax.hlines(y=line_y, xmin=line_start_x, xmax=x_end, 
+                             colors=color, alpha=alpha, linewidth=2, 
+                             linestyles='solid', label=None)
+                
+                # Start new line if direction is A or S
+                if direction in ['A', 'S']:
+                    current_level = level
+                    current_direction = direction
+                    line_start_x = x_pos
+                else:  # direction == 'F'
+                    current_level = None
+                    current_direction = 'F'
+                    line_start_x = None
+            else:
+                # Same direction, update level if needed
+                if direction in ['A', 'S']:
+                    current_level = level
+        
+        # Close final line if still active
+        if current_level is not None and line_start_x is not None and current_direction in ['A', 'S']:
+            x_end = x_data[-1] if x_data else line_start_x
+            if current_direction == 'A':
+                line_y = current_level * 0.999
+                color = '#00ff88'
+                alpha = 0.6
+            elif current_direction == 'S':
+                line_y = current_level * 1.001
+                color = '#ff4444'  
+                alpha = 0.6
+            
+            ax.hlines(y=line_y, xmin=line_start_x, xmax=x_end,
+                     colors=color, alpha=alpha, linewidth=2,
+                     linestyles='solid', label=None)
+
     def plot_multi_panel(self,
                         timestamps: np.ndarray,
                         panels: List[Dict[str, Any]],
@@ -796,6 +867,10 @@ class DataPlotter:
             
             color_index = 0
             
+            # Check for direction levels data in this panel  
+            yon_list = panel.get('yon_list', None)
+            seviye_list = panel.get('seviye_list', None)
+            
             # Plot all series in this panel
             for name, data in panel_data.items():
                 try:
@@ -845,6 +920,14 @@ class DataPlotter:
                 except Exception as e:
                     print(f"Warning: Could not plot panel {panel_idx} series '{name}': {e}")
                     continue
+            
+            # Plot direction-based support/resistance lines
+            if yon_list is not None and seviye_list is not None:
+                try:
+                    self._plot_direction_levels(ax, x_data, yon_list, seviye_list, use_datetime_format)
+                    print(f"Panel {panel_idx}: Direction levels plotted")
+                except Exception as e:
+                    print(f"Warning: Could not plot direction levels for panel {panel_idx}: {e}")
             
             # Set panel labels and title
             ax.set_title(panel_title, color=self.colors['text_color'], fontsize=14, fontweight='bold')
