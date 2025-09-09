@@ -721,69 +721,58 @@ class DataPlotter:
             print(f"  ERROR: Invalid input data. Returning without plotting.")
             return
         
-        current_level = None
-        current_direction = None
-        line_start_x = None
-        lines_drawn = 0
-        
         print(f"  Starting direction levels plotting...")
         
-        for i, (direction, level) in enumerate(zip(yon_list, seviye_list)):
-            x_pos = x_data[i] if i < len(x_data) else x_data[-1]
-            
-            # Direction change detected
-            if direction != current_direction:
-                # End previous line if exists
-                if current_level is not None and line_start_x is not None and current_direction in ['A', 'S']:
-                    # Draw line from start to current position
-                    x_end = x_pos
-                    if current_direction == 'A':  # Long position - green line below level
-                        line_y = current_level * 0.999  # Slightly below the level
-                        color = '#00ff88'
-                        alpha = 0.6
-                    elif current_direction == 'S':  # Short position - red line above level
-                        line_y = current_level * 1.001  # Slightly above the level  
-                        color = '#ff4444'
-                        alpha = 0.6
-                    
-                    # Draw horizontal line
-                    ax.hlines(y=line_y, xmin=line_start_x, xmax=x_end, 
-                             colors=color, alpha=alpha, linewidth=2, 
-                             linestyles='solid', label=None)
-                    lines_drawn += 1
-                    print(f"    Line drawn: {current_direction} from {line_start_x} to {x_end} at level {line_y:.2f}")
-                
-                # Start new line if direction is A or S
-                if direction in ['A', 'S']:
-                    current_level = level
-                    current_direction = direction
-                    line_start_x = x_pos
-                else:  # direction == 'F'
-                    current_level = None
-                    current_direction = 'F'
-                    line_start_x = None
-            else:
-                # Same direction, update level if needed
-                if direction in ['A', 'S']:
-                    current_level = level
+        # Find all signal changes first
+        signal_changes = []
+        current_signal = None
         
-        # Close final line if still active
-        if current_level is not None and line_start_x is not None and current_direction in ['A', 'S']:
-            x_end = x_data[-1] if x_data else line_start_x
-            if current_direction == 'A':
-                line_y = current_level * 0.999
-                color = '#00ff88'
-                alpha = 0.6
-            elif current_direction == 'S':
-                line_y = current_level * 1.001
-                color = '#ff4444'  
-                alpha = 0.6
+        for i, direction in enumerate(yon_list):
+            if direction != current_signal and direction in ['A', 'S']:
+                signal_changes.append({
+                    'index': i,
+                    'direction': direction,
+                    'level': seviye_list[i],
+                    'x_pos': x_data[i] if i < len(x_data) else x_data[-1]
+                })
+                current_signal = direction
+            elif direction == 'F':
+                current_signal = None
+        
+        print(f"  Found {len(signal_changes)} signal changes")
+        
+        # Draw lines between signal changes
+        lines_drawn = 0
+        for i, signal in enumerate(signal_changes):
+            # Find the end point (next signal or end of data)
+            if i + 1 < len(signal_changes):
+                x_end = signal_changes[i + 1]['x_pos']
+                end_index = signal_changes[i + 1]['index']
+            else:
+                x_end = x_data[-1] if x_data else signal['x_pos']
+                end_index = len(x_data) - 1
             
-            ax.hlines(y=line_y, xmin=line_start_x, xmax=x_end,
-                     colors=color, alpha=alpha, linewidth=2,
-                     linestyles='solid', label=None)
-            lines_drawn += 1
-            print(f"    Final line drawn: {current_direction} from {line_start_x} to {x_end} at level {line_y:.2f}")
+            # Only draw if line has meaningful length (more than 1 bar)
+            if abs(end_index - signal['index']) > 1:
+                if signal['direction'] == 'A':  # Long position - green line below level
+                    line_y = signal['level'] * 0.999
+                    color = '#00ff88'
+                    alpha = 0.6
+                elif signal['direction'] == 'S':  # Short position - red line above level
+                    line_y = signal['level'] * 1.001
+                    color = '#ff4444'
+                    alpha = 0.6
+                
+                # Draw horizontal line
+                ax.hlines(y=line_y, xmin=signal['x_pos'], xmax=x_end, 
+                         colors=color, alpha=alpha, linewidth=2, 
+                         linestyles='solid', label=None)
+                lines_drawn += 1
+                
+                bars_duration = end_index - signal['index']
+                print(f"    Line drawn: {signal['direction']} from {signal['index']} to {end_index} ({bars_duration} bars) at level {line_y:.2f}")
+            else:
+                print(f"    Skipped short signal: {signal['direction']} at {signal['index']} (too short)")
         
         print(f"  Total lines drawn: {lines_drawn}")
 

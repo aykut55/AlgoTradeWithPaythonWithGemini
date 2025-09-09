@@ -573,6 +573,8 @@ class AlgoTrader:
             if (trader_id == 0):
                 trader.update_data_frame()
                 print(trader._df)
+                print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
+
 
                 # # CSV formatında kaydet
                 # trader.write_data_frame_to_file("trading_0_data.csv")
