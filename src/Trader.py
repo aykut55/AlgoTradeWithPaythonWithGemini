@@ -1312,6 +1312,183 @@ class CTrader(CBase):
         except Exception as e:
             print(f"Özet dosya yazma hatası: {str(e)}")
 
+    def write_data_frame_to_file_as_tabular(self, file_name):
+        """
+        DataFrame'deki verileri tabular formatında text dosyasına yazar
+        Her sütun düzgün hizalanmış şekilde yan yana yazılır
+        """
+        if self._df is None or self._df.empty:
+            print("DataFrame boş veya None. Önce update_data_frame() methodunu çağırın.")
+            return
+        
+        try:
+            with open(file_name, 'w', encoding='utf-8') as f:
+                # Başlık bilgileri
+                f.write("=" * 80 + "\n")
+                f.write("TRADING DATA - TABULAR FORMAT\n")
+                f.write(f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"Total Rows: {len(self._df)}\n")
+                f.write(f"Total Columns: {len(self._df.columns)}\n")
+                f.write("=" * 80 + "\n\n")
+                
+                # Sütun genişliklerini hesapla
+                col_widths = {}
+                for col in self._df.columns:
+                    # Sütun adının uzunluğu
+                    header_width = len(str(col))
+                    
+                    # Sütundaki en uzun değerin uzunluğunu bul
+                    max_value_width = 0
+                    for value in self._df[col]:
+                        if pd.isna(value):
+                            value_str = "NaN"
+                        elif isinstance(value, float):
+                            value_str = f"{value:.6f}" if value != 0 else "0.000000"
+                        elif isinstance(value, datetime.datetime):
+                            value_str = value.strftime('%Y-%m-%d %H:%M:%S')
+                        else:
+                            value_str = str(value)
+                        max_value_width = max(max_value_width, len(value_str))
+                    
+                    # Sütun genişliği = max(header_width, max_value_width) + 2 (padding)
+                    col_widths[col] = max(header_width, max_value_width) + 2
+                
+                # Sütun başlıklarını yaz
+                header_line = ""
+                separator_line = ""
+                for col in self._df.columns:
+                    width = col_widths[col]
+                    header_line += f"{str(col):<{width}}"
+                    separator_line += "-" * width
+                
+                f.write(header_line + "\n")
+                f.write(separator_line + "\n")
+                
+                # Veri satırlarını yaz
+                for index, row in self._df.iterrows():
+                    line = ""
+                    for col in self._df.columns:
+                        width = col_widths[col]
+                        value = row[col]
+                        
+                        # Değeri uygun formatta string'e çevir
+                        if pd.isna(value):
+                            value_str = "NaN"
+                        elif isinstance(value, float):
+                            if value == 0:
+                                value_str = "0.000000"
+                            else:
+                                value_str = f"{value:.6f}"
+                        elif isinstance(value, datetime.datetime):
+                            value_str = value.strftime('%Y-%m-%d %H:%M:%S')
+                        elif isinstance(value, int):
+                            value_str = str(value)
+                        else:
+                            value_str = str(value)
+                        
+                        # Sayısal değerler sağa hizala, diğerleri sola
+                        if isinstance(value, (int, float)) and not pd.isna(value):
+                            line += f"{value_str:>{width}}"
+                        else:
+                            line += f"{value_str:<{width}}"
+                    
+                    f.write(line + "\n")
+                
+                # Alt bilgi
+                f.write("\n" + "=" * 80 + "\n")
+                f.write(f"End of data - Total {len(self._df)} rows processed\n")
+                f.write("=" * 80 + "\n")
+            
+            print(f"DataFrame tabular formatında kaydedildi: {file_name}")
+            print(f"Toplam {len(self._df)} satır ve {len(self._df.columns)} sütun yazıldı.")
+            
+        except Exception as e:
+            print(f"Tabular dosya yazma hatası: {str(e)}")
+            import traceback
+            print(f"Detay: {traceback.format_exc()}")
+
+    def write_statistics_to_file_as_tabular(self, file_name):
+        """
+        self.Statistics sınıfındaki istatistik verilerini tabular formatında text dosyasına yazar
+        """
+        try:
+            with open(file_name, 'w', encoding='utf-8') as f:
+                # Başlık bilgileri
+                f.write("=" * 80 + "\n")
+                f.write("TRADING STATISTICS - TABULAR FORMAT\n")
+                f.write(f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"Trader ID: {self.Id}\n")
+                f.write(f"System Name: {self.SistemAdi}\n")
+                f.write("=" * 80 + "\n\n")
+                
+                # Statistics sınıfının tüm özelliklerini al
+                stats_data = []
+                
+                # Statistics nesnesindeki tüm attribute'ları topla
+                for attr_name in dir(self.Statistics):
+                    # Private ve method'ları atla
+                    if not attr_name.startswith('_') and not callable(getattr(self.Statistics, attr_name)):
+                        try:
+                            value = getattr(self.Statistics, attr_name)
+                            stats_data.append((attr_name, value))
+                        except:
+                            # Erişilemeyen attribute'lar için
+                            stats_data.append((attr_name, "N/A"))
+                
+                # Eğer hiç veri bulunamazsa
+                if not stats_data:
+                    f.write("No statistics data available.\n")
+                    return
+                
+                # Önce tüm değerleri formatlayıp, gerçek genişliklerini hesapla
+                formatted_data = []
+                for name, value in stats_data:
+                    # Değeri uygun formatta string'e çevir
+                    if isinstance(value, float):
+                        if value == 0:
+                            value_str = "0.000000"
+                        else:
+                            value_str = f"{value:.6f}"
+                    elif isinstance(value, datetime.datetime):
+                        value_str = value.strftime('%Y-%m-%d %H:%M:%S')
+                    elif value is None:
+                        value_str = "None"
+                    else:
+                        value_str = str(value)
+                    formatted_data.append((name, value_str))
+                
+                # Sütun genişliklerini hesapla
+                name_width = max(len("STATISTIC NAME"), max(len(name) for name, _ in formatted_data)) + 3
+                value_width = max(len("VALUE"), max(len(value_str) for _, value_str in formatted_data)) + 3
+                
+                # Toplam satır genişliği 
+                total_width = name_width + value_width
+                
+                # Başlık satırını yaz
+                header_line = f"{'STATISTIC NAME':<{name_width}}{'VALUE':>{value_width}}"
+                separator_line = "-" * total_width
+                
+                f.write(header_line + "\n")
+                f.write(separator_line + "\n")
+                
+                # Veri satırlarını yaz (alfabetik sıralı)
+                for name, value_str in sorted(formatted_data):
+                    # Satırı yaz (isim sola hizalı, değer sağa hizalı)
+                    line = f"{name:<{name_width}}{value_str:>{value_width}}"
+                    f.write(line + "\n")
+                
+                # Alt bilgi
+                f.write("\n" + "=" * 80 + "\n")
+                f.write(f"Total statistics: {len(stats_data)}\n")
+                f.write("=" * 80 + "\n")
+            
+            print(f"Statistics tabular formatinda kaydedildi: {file_name}")
+            print(f"Toplam {len(stats_data)} istatistik yazildi.")
+            
+        except Exception as e:
+            print(f"Statistics dosya yazma hatasi: {str(e)}")
+            import traceback
+            print(f"Detay: {traceback.format_exc()}")
 
     # def reset_date_times(self):
     #     pass

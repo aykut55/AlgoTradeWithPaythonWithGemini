@@ -571,23 +571,6 @@ class AlgoTrader:
             trader_id = trader.Id
 
             if (trader_id == 0):
-                trader.update_data_frame()
-                print(trader._df)
-                print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
-
-
-                # # CSV formatında kaydet
-                # trader.write_data_frame_to_file("trading_0_data.csv")
-                #
-                # # Excel formatında kaydet
-                # trader.write_data_frame_to_file("trading_0_data.xlsx")
-                #
-                # # JSON formatında kaydet
-                # trader.write_data_frame_to_file("trading_0_data.json")
-                #
-                # # HTML formatında kaydet
-                # trader.write_data_frame_to_file("trading_0_data.html")
-
                 if ( self.mySystem.bIdealGetiriHesapla):
                     trader.ideal_getiri_hesapla()
 
@@ -606,6 +589,26 @@ class AlgoTrader:
                 if ( self.mySystem.bIstatistikleriDosyayaYaz):
                     trader.istatistikleri_dosyaya_yaz( self.mySystem.IstatistiklerOutputFileName)
                     pass
+
+
+                trader.update_data_frame()
+                print(trader._df)
+                print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
+                trader.write_data_frame_to_file_as_tabular("trading_data_tabular.txt")
+                trader.write_statistics_to_file_as_tabular("trading_statistics_tabular.txt")
+
+                # # CSV formatında kaydet
+                # trader.write_data_frame_to_file("trading_0_data.csv")
+                #
+                # # Excel formatında kaydet
+                # trader.write_data_frame_to_file("trading_0_data.xlsx")
+                #
+                # # JSON formatında kaydet
+                # trader.write_data_frame_to_file("trading_0_data.json")
+                #
+                # # HTML formatında kaydet
+                # trader.write_data_frame_to_file("trading_0_data.html")
+
                 pass
 
             elif (trader_id == 1):
