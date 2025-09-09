@@ -231,7 +231,7 @@ class CStatistics:
     def reset(self):
         return self
 
-    def hesapla(self):
+    def hesapla(self, SecilenBarNumarasi):
         result = 0
         # V = self.Trader.V
         self.Trader.LastStatisticsCalculationTime = datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S")
@@ -242,20 +242,25 @@ class CStatistics:
         LastBar = len(self.Trader.Close) - 1
         # self.SecilenBarNumarasi = Sistem.SelectBarNo
         # self.SecilenBarTarihi = Sistem.SelectTarih
-        # if self.SecilenBarNumarasi <= LastBar:
-        #     self.SecilenBarAcilisFiyati = V[self.SecilenBarNumarasi].Open
-        #     self.SecilenBarYuksekFiyati = V[self.SecilenBarNumarasi].High
-        #     self.SecilenBarDusukFiyati = V[self.SecilenBarNumarasi].Low
-        #     self.SecilenBarKapanisFiyati = V[self.SecilenBarNumarasi].Close
+        self.SecilenBarNumarasi = SecilenBarNumarasi
+        if self.SecilenBarNumarasi > LastBar:
+            self.SecilenBarNumarasi = LastBar
+        self.SecilenBarTarihi = self.Trader.Date[SecilenBarNumarasi]
+        if self.SecilenBarNumarasi <= LastBar:
+            self.SecilenBarAcilisFiyati = self.Trader.Open[self.SecilenBarNumarasi]
+            self.SecilenBarYuksekFiyati =self.Trader.High[self.SecilenBarNumarasi]
+            self.SecilenBarDusukFiyati = self.Trader.Low[self.SecilenBarNumarasi]
+            self.SecilenBarKapanisFiyati = self.Trader.Close[self.SecilenBarNumarasi]
         self.SonBarTarihi = self.Trader.Date[LastBar]
         self.SonBarAcilisFiyati = self.Trader.Open[LastBar]
         self.SonBarYuksekFiyati = self.Trader.High[LastBar]
         self.SonBarDusukFiyati = self.Trader.Low[LastBar]
         self.SonBarKapanisFiyati = self.Trader.Close[LastBar]
         self.SonBarIndex = len(self.Trader.Close) - 1
-        sure_dakika = 1.0 #(datetime.datetime.now() - self.Trader.Date[0]).total_seconds() / 60
-        sure_saat = 1.0 #(datetime.datetime.now() - self.Trader.Date[0]).total_seconds() / 3600
-        sure_gun = 1.0 #(datetime.datetime.now() - self.Trader.Date[0]).days
+        first_date = self.Trader.Date[0].astype('datetime64[D]').astype('object')
+        sure_dakika = (datetime.datetime.now() - datetime.datetime.combine(first_date, datetime.time.min)).total_seconds() / 60
+        sure_saat = (datetime.datetime.now() - datetime.datetime.combine(first_date, datetime.time.min)).total_seconds() / 3600
+        sure_gun = (datetime.datetime.now() - datetime.datetime.combine(first_date, datetime.time.min)).days
         sure_ay = sure_gun / 30.4
         self.ToplamGecenSureAy = float(sure_ay)
         self.ToplamGecenSureGun = int(sure_gun)
@@ -325,9 +330,10 @@ class CStatistics:
 
     def read_values(self):
         self.SistemId = 0
-        # self.SistemName = Sistem.Name
-        # self.GrafikSembol = Sistem.Sembol
-        # self.GrafikPeriyot = Sistem.Periyot
+        self.SistemName = ""
+        self.GrafikSembol = ""
+        self.GrafikPeriyot = ""
+
         self.LastExecutionId = 0
         self.LastExecutionTime = self.Trader.LastExecutionTime
         self.LastExecutionTimeStart = self.Trader.LastExecutionTimeStart
@@ -444,13 +450,13 @@ class CStatistics:
         self.IstatistiklerNew["ToplamGecenSureDakika"] = str(self.ToplamGecenSureDakika)
         self.IstatistiklerNew["ToplamBarSayisi"] = str(self.ToplamBarSayisi)
         self.IstatistiklerNew["SecilenBarNumarasi"] = str(self.SecilenBarNumarasi)
-        self.IstatistiklerNew["SecilenBarTarihi"] = "" #self.SecilenBarTarihi.strftime("%d.%m.%Y")
-        self.IstatistiklerNew["SecilenBarSaati"] = "" #str(self.SecilenBarTarihi.time())
-        self.IstatistiklerNew["IlkBarTarihi"] = "" #self.IlkBarTarihi.strftime("%d.%m.%Y")
-        self.IstatistiklerNew["IlkBarSaati"] = "" #str(self.IlkBarTarihi.time())
-        self.IstatistiklerNew["SonBarTarihi"] = "" #self.SonBarTarihi.strftime("%d.%m.%Y")
-        # self.IstatistiklerNew["SonBarSaati"] = str(self.SonBarTarihi.time())
-        # self.IstatistiklerNew["IlkBarIndex"] = str(self.IlkBarIndex)
+        self.IstatistiklerNew["SecilenBarTarihi"] = self.SecilenBarTarihi.astype('datetime64[D]').astype('object').strftime("%d.%m.%Y")
+        self.IstatistiklerNew["SecilenBarSaati"] = str(self.SecilenBarTarihi.astype('datetime64[s]').astype('object').time())
+        self.IstatistiklerNew["IlkBarTarihi"] = self.IlkBarTarihi.astype('datetime64[D]').astype('object').strftime("%d.%m.%Y")
+        self.IstatistiklerNew["IlkBarSaati"] = str(self.IlkBarTarihi.astype('datetime64[s]').astype('object').time())
+        self.IstatistiklerNew["SonBarTarihi"] = self.SonBarTarihi.astype('datetime64[D]').astype('object').strftime("%d.%m.%Y")
+        self.IstatistiklerNew["SonBarSaati"] = str(self.SonBarTarihi.astype('datetime64[s]').astype('object').time())
+        self.IstatistiklerNew["IlkBarIndex"] = str(self.IlkBarIndex)
         self.IstatistiklerNew["SonBarIndex"] = str(self.SonBarIndex)
         self.IstatistiklerNew["SonBarAcilisFiyati"] = str(self.SonBarAcilisFiyati)
         self.IstatistiklerNew["SonBarYuksekFiyati"] = str(self.SonBarYuksekFiyati)
@@ -760,16 +766,16 @@ class CStatistics:
             self.panel(PanelNo).column(18).row(i).text_message(s, (255, 215, 0))  # Gold
 
     def istatistikleri_dosyaya_yaz(self, FileName):
-        # delimiter = ";"
-        # myFileUtils = CFileUtils()
-        # logFileFullName = FileName.strip()
-        # myFileUtils.reset().enable_logging().open_log_file(logFileFullName, False, False)
-        # logMessage = f'Kayit Zamani {delimiter} {datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S")}'
-        # myFileUtils.write_to_log_file(logMessage)
-        # for key, value in self.IstatistiklerNew.items():
-        #     logMessage = f'{key.strip()} ; {value} ; \t'
-        #     myFileUtils.write_to_log_file(logMessage)
-        # myFileUtils.close_log_file()
+        delimiter = ";"
+        myFileUtils = CFileUtils()
+        logFileFullName = FileName.strip()
+        myFileUtils.reset().enable_logging().open_log_file(logFileFullName, False, False)
+        logMessage = f'Kayit Zamani {delimiter} {datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S")}'
+        myFileUtils.write_to_log_file(logMessage)
+        for key, value in self.IstatistiklerNew.items():
+            logMessage = f'{key.strip()} ; {value} ; \t'
+            myFileUtils.write_to_log_file(logMessage)
+        myFileUtils.close_log_file()
         pass
 
     def getiri_istatiskleri_hesapla(self):
@@ -779,222 +785,229 @@ class CStatistics:
         DateGunBarNoList = []
         DateSaatBarNoList = []
         timeUtils = CTimeUtils()
-        # for i in range(1, len(self.Trader.Close)):
-        #     yeni_saat = self.Trader.Date[i - 1].hour != self.Trader.Date[i].hour
-        #     if yeni_saat:
-        #         DateSaatBarNoList.append(i)
-        #     yeni_gun = self.Trader.Date[i - 1].day != self.Trader.Date[i].day
-        #     if yeni_gun:
-        #         DateGunBarNoList.append(i)
-        #     yeni_hafta = yeni_gun and timeUtils.get_week_number(self.Trader.Date[i - 1]) != timeUtils.get_week_number(self.Trader.Date[i])
-        #     if yeni_hafta:
-        #         DateHaftaBarNoList.append(i)
-        #     yeni_ay = self.Trader.Date[i - 1].month != self.Trader.Date[i].month
-        #     if yeni_ay:
-        #         DateAyBarNoList.append(i)
+        for i in range(1, len(self.Trader.Close)):
+            prev_date = self.Trader.Date[i - 1].astype('datetime64[s]').astype('object')
+            curr_date = self.Trader.Date[i].astype('datetime64[s]').astype('object')
+            yeni_saat = prev_date.hour != curr_date.hour
+            if yeni_saat:
+                DateSaatBarNoList.append(i)
+            yeni_gun = prev_date.day != curr_date.day
+            if yeni_gun:
+                DateGunBarNoList.append(i)
+            yeni_hafta = prev_date.isocalendar()[1] != curr_date.isocalendar()[1] or prev_date.year != curr_date.year
+            # yeni_hafta = yeni_gun and timeUtils.get_week_number(self.Trader.Date[i - 1]) != timeUtils.get_week_number(self.Trader.Date[i])
+            if yeni_hafta:
+                DateHaftaBarNoList.append(i)
+            yeni_ay = prev_date.month != curr_date.month
+            if yeni_ay:
+                DateAyBarNoList.append(i)
         #
         # KZList = Sistem.Liste(0)
         # for i in range(len(V)):
         #     KZList[i] = Sistem.GetiriKZ[i]
         #
-        # self.GetiriPuanBuAy = 0.0
-        # self.GetiriPuanAy1 = 0.0
-        # self.GetiriPuanAy2 = 0.0
-        # self.GetiriPuanAy3 = 0.0
-        # self.GetiriPuanAy4 = 0.0
-        # self.GetiriPuanAy5 = 0.0
-        # self.GetiriPuanBuHafta = 0.0
-        # self.GetiriPuanHafta1 = 0.0
-        # self.GetiriPuanHafta2 = 0.0
-        # self.GetiriPuanHafta3 = 0.0
-        # self.GetiriPuanHafta4 = 0.0
-        # self.GetiriPuanHafta5 = 0.0
-        # self.GetiriPuanBuGun = 0.0
-        # self.GetiriPuanGun1 = 0.0
-        # self.GetiriPuanGun2 = 0.0
-        # self.GetiriPuanGun3 = 0.0
-        # self.GetiriPuanGun4 = 0.0
-        # self.GetiriPuanGun5 = 0.0
-        # self.GetiriPuanBuSaat = 0.0
-        # self.GetiriPuanSaat1 = 0.0
-        # self.GetiriPuanSaat2 = 0.0
-        # self.GetiriPuanSaat3 = 0.0
-        # self.GetiriPuanSaat4 = 0.0
-        # self.GetiriPuanSaat5 = 0.0
-        #
-        # aykz1 = 0.0
-        # aykz2 = 0.0
-        # aykz3 = 0.0
-        # aykz4 = 0.0
-        # aykz5 = 0.0
-        # if len(DateAyBarNoList) > 5:
-        #     aykz1 = KZList[-1] - 1 * KZList[DateAyBarNoList[-1]]
-        #     aykz2 = KZList[-1] - 1 * KZList[DateAyBarNoList[-2]]
-        #     aykz3 = KZList[-1] - 1 * KZList[DateAyBarNoList[-3]]
-        #     aykz4 = KZList[-1] - 1 * KZList[DateAyBarNoList[-4]]
-        #     aykz5 = KZList[-1] - 1 * KZList[DateAyBarNoList[-5]]
-        #
-        # haftakz1 = 0.0
-        # haftakz2 = 0.0
-        # haftakz3 = 0.0
-        # haftakz4 = 0.0
-        # haftakz5 = 0.0
-        # if len(DateHaftaBarNoList) > 5:
-        #     haftakz1 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-1]]
-        #     haftakz2 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-2]]
-        #     haftakz3 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-3]]
-        #     haftakz4 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-4]]
-        #     haftakz5 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-5]]
-        #
-        # gunkz1 = 0.0
-        # gunkz2 = 0.0
-        # gunkz3 = 0.0
-        # gunkz4 = 0.0
-        # gunkz5 = 0.0
-        # if len(DateGunBarNoList) > 5:
-        #     gunkz1 = KZList[-1] - 1 * KZList[DateGunBarNoList[-1]]
-        #     gunkz2 = KZList[-1] - 1 * KZList[DateGunBarNoList[-2]]
-        #     gunkz3 = KZList[-1] - 1 * KZList[DateGunBarNoList[-3]]
-        #     gunkz4 = KZList[-1] - 1 * KZList[DateGunBarNoList[-4]]
-        #     gunkz5 = KZList[-1] - 1 * KZList[DateGunBarNoList[-5]]
-        #
-        # saatkz1 = 0.0
-        # saatkz2 = 0.0
-        # saatkz3 = 0.0
-        # saatkz4 = 0.0
-        # saatkz5 = 0.0
-        # if len(DateSaatBarNoList) > 5:
-        #     saatkz1 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-2]]
-        #     saatkz2 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-3]]
-        #     saatkz3 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-4]]
-        #     saatkz4 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-5]]
-        #     saatkz5 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-6]]
-        #
-        # self.GetiriPuanBuAy = float(aykz1)
-        # self.GetiriPuanAy1 = float(aykz1)
-        # self.GetiriPuanAy2 = float(aykz2)
-        # self.GetiriPuanAy3 = float(aykz3)
-        # self.GetiriPuanAy4 = float(aykz4)
-        # self.GetiriPuanAy5 = float(aykz5)
-        # self.GetiriPuanBuHafta = float(haftakz1)
-        # self.GetiriPuanHafta1 = float(haftakz1)
-        # self.GetiriPuanHafta2 = float(haftakz2)
-        # self.GetiriPuanHafta3 = float(haftakz3)
-        # self.GetiriPuanHafta4 = float(haftakz4)
-        # self.GetiriPuanHafta5 = float(haftakz5)
-        # self.GetiriPuanBuGun = float(gunkz1)
-        # self.GetiriPuanGun1 = float(gunkz1)
-        # self.GetiriPuanGun2 = float(gunkz2)
-        # self.GetiriPuanGun3 = float(gunkz3)
-        # self.GetiriPuanGun4 = float(gunkz4)
-        # self.GetiriPuanGun5 = float(gunkz5)
-        # self.GetiriPuanBuSaat = float(saatkz1)
-        # self.GetiriPuanSaat1 = float(saatkz1)
-        # self.GetiriPuanSaat2 = float(saatkz2)
-        # self.GetiriPuanSaat3 = float(saatkz3)
-        # self.GetiriPuanSaat4 = float(saatkz4)
-        # self.GetiriPuanSaat5 = float(saatkz5)
-        #
-        # for i in range(len(V)):
-        #     KZList[i] = self.Trader.Lists.GetiriFiyatList[i]
-        #
-        # self.GetiriFiyatBuAy = 0.0
-        # self.GetiriFiyatAy1 = 0.0
-        # self.GetiriFiyatAy2 = 0.0
-        # self.GetiriFiyatAy3 = 0.0
-        # self.GetiriFiyatAy4 = 0.0
-        # self.GetiriFiyatAy5 = 0.0
-        # self.GetiriFiyatBuHafta = 0.0
-        # self.GetiriFiyatHafta1 = 0.0
-        # self.GetiriFiyatHafta2 = 0.0
-        # self.GetiriFiyatHafta3 = 0.0
-        # self.GetiriFiyatHafta4 = 0.0
-        # self.GetiriFiyatHafta5 = 0.0
-        # self.GetiriFiyatBuGun = 0.0
-        # self.GetiriFiyatGun1 = 0.0
-        # self.GetiriFiyatGun2 = 0.0
-        # self.GetiriFiyatGun3 = 0.0
-        # self.GetiriFiyatGun4 = 0.0
-        # self.GetiriFiyatGun5 = 0.0
-        # self.GetiriFiyatBuSaat = 0.0
-        # self.GetiriFiyatSaat1 = 0.0
-        # self.GetiriFiyatSaat2 = 0.0
-        # self.GetiriFiyatSaat3 = 0.0
-        # self.GetiriFiyatSaat4 = 0.0
-        # self.GetiriFiyatSaat5 = 0.0
-        #
-        # aykz1 = 0.0
-        # aykz2 = 0.0
-        # aykz3 = 0.0
-        # aykz4 = 0.0
-        # aykz5 = 0.0
-        # if len(DateAyBarNoList) > 5:
-        #     aykz1 = KZList[-1] - 1 * KZList[DateAyBarNoList[-1]]
-        #     aykz2 = KZList[-1] - 1 * KZList[DateAyBarNoList[-2]]
-        #     aykz3 = KZList[-1] - 1 * KZList[DateAyBarNoList[-3]]
-        #     aykz4 = KZList[-1] - 1 * KZList[DateAyBarNoList[-4]]
-        #     aykz5 = KZList[-1] - 1 * KZList[DateAyBarNoList[-5]]
-        #
-        # haftakz1 = 0.0
-        # haftakz2 = 0.0
-        # haftakz3 = 0.0
-        # haftakz4 = 0.0
-        # haftakz5 = 0.0
-        # if len(DateHaftaBarNoList) > 5:
-        #     haftakz1 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-1]]
-        #     haftakz2 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-2]]
-        #     haftakz3 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-3]]
-        #     haftakz4 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-4]]
-        #     haftakz5 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-5]]
-        #
-        # gunkz1 = 0.0
-        # gunkz2 = 0.0
-        # gunkz3 = 0.0
-        # gunkz4 = 0.0
-        # gunkz5 = 0.0
-        # if len(DateGunBarNoList) > 5:
-        #     gunkz1 = KZList[-1] - 1 * KZList[DateGunBarNoList[-1]]
-        #     gunkz2 = KZList[-1] - 1 * KZList[DateGunBarNoList[-2]]
-        #     gunkz3 = KZList[-1] - 1 * KZList[DateGunBarNoList[-3]]
-        #     gunkz4 = KZList[-1] - 1 * KZList[DateGunBarNoList[-4]]
-        #     gunkz5 = KZList[-1] - 1 * KZList[DateGunBarNoList[-5]]
-        #
-        # saatkz1 = 0.0
-        # saatkz2 = 0.0
-        # saatkz3 = 0.0
-        # saatkz4 = 0.0
-        # saatkz5 = 0.0
-        # if len(DateSaatBarNoList) > 5:
-        #     saatkz1 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-2]]
-        #     saatkz2 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-3]]
-        #     saatkz3 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-4]]
-        #     saatkz4 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-5]]
-        #     saatkz5 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-6]]
-        #
-        # self.GetiriFiyatBuAy = float(aykz1)
-        # self.GetiriFiyatAy1 = float(aykz1)
-        # self.GetiriFiyatAy2 = float(aykz2)
-        # self.GetiriFiyatAy3 = float(aykz3)
-        # self.GetiriFiyatAy4 = float(aykz4)
-        # self.GetiriFiyatAy5 = float(aykz5)
-        # self.GetiriFiyatBuHafta = float(haftakz1)
-        # self.GetiriFiyatHafta1 = float(haftakz1)
-        # self.GetiriFiyatHafta2 = float(haftakz2)
-        # self.GetiriFiyatHafta3 = float(haftakz3)
-        # self.GetiriFiyatHafta4 = float(haftakz4)
-        # self.GetiriFiyatHafta5 = float(haftakz5)
-        # self.GetiriFiyatBuGun = float(gunkz1)
-        # self.GetiriFiyatGun1 = float(gunkz1)
-        # self.GetiriFiyatGun2 = float(gunkz2)
-        # self.GetiriFiyatGun3 = float(gunkz3)
-        # self.GetiriFiyatGun4 = float(gunkz4)
-        # self.GetiriFiyatGun5 = float(gunkz5)
-        # self.GetiriFiyatBuSaat = float(saatkz1)
-        # self.GetiriFiyatSaat1 = float(saatkz1)
-        # self.GetiriFiyatSaat2 = float(saatkz2)
-        # self.GetiriFiyatSaat3 = float(saatkz3)
-        # self.GetiriFiyatSaat4 = float(saatkz4)
-        # self.GetiriFiyatSaat5 = float(saatkz5)
+        KZList = [0.0] * len(self.Trader.Close)
+        for i in range(len(self.Trader.Close)):
+            KZList[i] = 0.0
+
+        self.GetiriPuanBuAy = 0.0
+        self.GetiriPuanAy1 = 0.0
+        self.GetiriPuanAy2 = 0.0
+        self.GetiriPuanAy3 = 0.0
+        self.GetiriPuanAy4 = 0.0
+        self.GetiriPuanAy5 = 0.0
+        self.GetiriPuanBuHafta = 0.0
+        self.GetiriPuanHafta1 = 0.0
+        self.GetiriPuanHafta2 = 0.0
+        self.GetiriPuanHafta3 = 0.0
+        self.GetiriPuanHafta4 = 0.0
+        self.GetiriPuanHafta5 = 0.0
+        self.GetiriPuanBuGun = 0.0
+        self.GetiriPuanGun1 = 0.0
+        self.GetiriPuanGun2 = 0.0
+        self.GetiriPuanGun3 = 0.0
+        self.GetiriPuanGun4 = 0.0
+        self.GetiriPuanGun5 = 0.0
+        self.GetiriPuanBuSaat = 0.0
+        self.GetiriPuanSaat1 = 0.0
+        self.GetiriPuanSaat2 = 0.0
+        self.GetiriPuanSaat3 = 0.0
+        self.GetiriPuanSaat4 = 0.0
+        self.GetiriPuanSaat5 = 0.0
+
+        aykz1 = 0.0
+        aykz2 = 0.0
+        aykz3 = 0.0
+        aykz4 = 0.0
+        aykz5 = 0.0
+        if len(DateAyBarNoList) > 5:
+            aykz1 = KZList[-1] - 1 * KZList[DateAyBarNoList[-1]]
+            aykz2 = KZList[-1] - 1 * KZList[DateAyBarNoList[-2]]
+            aykz3 = KZList[-1] - 1 * KZList[DateAyBarNoList[-3]]
+            aykz4 = KZList[-1] - 1 * KZList[DateAyBarNoList[-4]]
+            aykz5 = KZList[-1] - 1 * KZList[DateAyBarNoList[-5]]
+
+        haftakz1 = 0.0
+        haftakz2 = 0.0
+        haftakz3 = 0.0
+        haftakz4 = 0.0
+        haftakz5 = 0.0
+        if len(DateHaftaBarNoList) > 5:
+            haftakz1 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-1]]
+            haftakz2 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-2]]
+            haftakz3 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-3]]
+            haftakz4 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-4]]
+            haftakz5 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-5]]
+
+        gunkz1 = 0.0
+        gunkz2 = 0.0
+        gunkz3 = 0.0
+        gunkz4 = 0.0
+        gunkz5 = 0.0
+        if len(DateGunBarNoList) > 5:
+            gunkz1 = KZList[-1] - 1 * KZList[DateGunBarNoList[-1]]
+            gunkz2 = KZList[-1] - 1 * KZList[DateGunBarNoList[-2]]
+            gunkz3 = KZList[-1] - 1 * KZList[DateGunBarNoList[-3]]
+            gunkz4 = KZList[-1] - 1 * KZList[DateGunBarNoList[-4]]
+            gunkz5 = KZList[-1] - 1 * KZList[DateGunBarNoList[-5]]
+
+        saatkz1 = 0.0
+        saatkz2 = 0.0
+        saatkz3 = 0.0
+        saatkz4 = 0.0
+        saatkz5 = 0.0
+        if len(DateSaatBarNoList) > 5:
+            saatkz1 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-2]]
+            saatkz2 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-3]]
+            saatkz3 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-4]]
+            saatkz4 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-5]]
+            saatkz5 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-6]]
+
+        self.GetiriPuanBuAy = float(aykz1)
+        self.GetiriPuanAy1 = float(aykz1)
+        self.GetiriPuanAy2 = float(aykz2)
+        self.GetiriPuanAy3 = float(aykz3)
+        self.GetiriPuanAy4 = float(aykz4)
+        self.GetiriPuanAy5 = float(aykz5)
+        self.GetiriPuanBuHafta = float(haftakz1)
+        self.GetiriPuanHafta1 = float(haftakz1)
+        self.GetiriPuanHafta2 = float(haftakz2)
+        self.GetiriPuanHafta3 = float(haftakz3)
+        self.GetiriPuanHafta4 = float(haftakz4)
+        self.GetiriPuanHafta5 = float(haftakz5)
+        self.GetiriPuanBuGun = float(gunkz1)
+        self.GetiriPuanGun1 = float(gunkz1)
+        self.GetiriPuanGun2 = float(gunkz2)
+        self.GetiriPuanGun3 = float(gunkz3)
+        self.GetiriPuanGun4 = float(gunkz4)
+        self.GetiriPuanGun5 = float(gunkz5)
+        self.GetiriPuanBuSaat = float(saatkz1)
+        self.GetiriPuanSaat1 = float(saatkz1)
+        self.GetiriPuanSaat2 = float(saatkz2)
+        self.GetiriPuanSaat3 = float(saatkz3)
+        self.GetiriPuanSaat4 = float(saatkz4)
+        self.GetiriPuanSaat5 = float(saatkz5)
+
+        for i in range(len(self.Trader.Close)):
+            KZList[i] = self.Trader.Lists.GetiriFiyatList[i]
+
+        self.GetiriFiyatBuAy = 0.0
+        self.GetiriFiyatAy1 = 0.0
+        self.GetiriFiyatAy2 = 0.0
+        self.GetiriFiyatAy3 = 0.0
+        self.GetiriFiyatAy4 = 0.0
+        self.GetiriFiyatAy5 = 0.0
+        self.GetiriFiyatBuHafta = 0.0
+        self.GetiriFiyatHafta1 = 0.0
+        self.GetiriFiyatHafta2 = 0.0
+        self.GetiriFiyatHafta3 = 0.0
+        self.GetiriFiyatHafta4 = 0.0
+        self.GetiriFiyatHafta5 = 0.0
+        self.GetiriFiyatBuGun = 0.0
+        self.GetiriFiyatGun1 = 0.0
+        self.GetiriFiyatGun2 = 0.0
+        self.GetiriFiyatGun3 = 0.0
+        self.GetiriFiyatGun4 = 0.0
+        self.GetiriFiyatGun5 = 0.0
+        self.GetiriFiyatBuSaat = 0.0
+        self.GetiriFiyatSaat1 = 0.0
+        self.GetiriFiyatSaat2 = 0.0
+        self.GetiriFiyatSaat3 = 0.0
+        self.GetiriFiyatSaat4 = 0.0
+        self.GetiriFiyatSaat5 = 0.0
+
+        aykz1 = 0.0
+        aykz2 = 0.0
+        aykz3 = 0.0
+        aykz4 = 0.0
+        aykz5 = 0.0
+        if len(DateAyBarNoList) > 5:
+            aykz1 = KZList[-1] - 1 * KZList[DateAyBarNoList[-1]]
+            aykz2 = KZList[-1] - 1 * KZList[DateAyBarNoList[-2]]
+            aykz3 = KZList[-1] - 1 * KZList[DateAyBarNoList[-3]]
+            aykz4 = KZList[-1] - 1 * KZList[DateAyBarNoList[-4]]
+            aykz5 = KZList[-1] - 1 * KZList[DateAyBarNoList[-5]]
+
+        haftakz1 = 0.0
+        haftakz2 = 0.0
+        haftakz3 = 0.0
+        haftakz4 = 0.0
+        haftakz5 = 0.0
+        if len(DateHaftaBarNoList) > 5:
+            haftakz1 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-1]]
+            haftakz2 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-2]]
+            haftakz3 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-3]]
+            haftakz4 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-4]]
+            haftakz5 = KZList[-1] - 1 * KZList[DateHaftaBarNoList[-5]]
+
+        gunkz1 = 0.0
+        gunkz2 = 0.0
+        gunkz3 = 0.0
+        gunkz4 = 0.0
+        gunkz5 = 0.0
+        if len(DateGunBarNoList) > 5:
+            gunkz1 = KZList[-1] - 1 * KZList[DateGunBarNoList[-1]]
+            gunkz2 = KZList[-1] - 1 * KZList[DateGunBarNoList[-2]]
+            gunkz3 = KZList[-1] - 1 * KZList[DateGunBarNoList[-3]]
+            gunkz4 = KZList[-1] - 1 * KZList[DateGunBarNoList[-4]]
+            gunkz5 = KZList[-1] - 1 * KZList[DateGunBarNoList[-5]]
+
+        saatkz1 = 0.0
+        saatkz2 = 0.0
+        saatkz3 = 0.0
+        saatkz4 = 0.0
+        saatkz5 = 0.0
+        if len(DateSaatBarNoList) > 5:
+            saatkz1 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-2]]
+            saatkz2 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-3]]
+            saatkz3 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-4]]
+            saatkz4 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-5]]
+            saatkz5 = KZList[-1] - 1 * KZList[DateSaatBarNoList[-6]]
+
+        self.GetiriFiyatBuAy = float(aykz1)
+        self.GetiriFiyatAy1 = float(aykz1)
+        self.GetiriFiyatAy2 = float(aykz2)
+        self.GetiriFiyatAy3 = float(aykz3)
+        self.GetiriFiyatAy4 = float(aykz4)
+        self.GetiriFiyatAy5 = float(aykz5)
+        self.GetiriFiyatBuHafta = float(haftakz1)
+        self.GetiriFiyatHafta1 = float(haftakz1)
+        self.GetiriFiyatHafta2 = float(haftakz2)
+        self.GetiriFiyatHafta3 = float(haftakz3)
+        self.GetiriFiyatHafta4 = float(haftakz4)
+        self.GetiriFiyatHafta5 = float(haftakz5)
+        self.GetiriFiyatBuGun = float(gunkz1)
+        self.GetiriFiyatGun1 = float(gunkz1)
+        self.GetiriFiyatGun2 = float(gunkz2)
+        self.GetiriFiyatGun3 = float(gunkz3)
+        self.GetiriFiyatGun4 = float(gunkz4)
+        self.GetiriFiyatGun5 = float(gunkz5)
+        self.GetiriFiyatBuSaat = float(saatkz1)
+        self.GetiriFiyatSaat1 = float(saatkz1)
+        self.GetiriFiyatSaat2 = float(saatkz2)
+        self.GetiriFiyatSaat3 = float(saatkz3)
+        self.GetiriFiyatSaat4 = float(saatkz4)
+        self.GetiriFiyatSaat5 = float(saatkz5)
         pass
 
     def getiri_istatistikleri_ekrana_yaz(self, PanelNo=2):
@@ -1178,7 +1191,7 @@ class CStatistics:
         s = f'{self.IstatistiklerNew["GetiriFiyatGun5"]}'
         str_list.append(s)
         for i, s in enumerate(str_list):
-            self.panel(PanelNo).column(ColumnOffset + 9).row(i).text_message(Sistem, s, (255, 215, 0))  # Gold
+            self.panel(PanelNo).column(ColumnOffset + 9).row(i).text_message(s, (255, 215, 0))  # Gold
 
         str_list.clear()
         s = f'Saat'

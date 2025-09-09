@@ -148,11 +148,16 @@ class SystemWrapper(CBase):
         # self.KomisyonCarpan = 0.0
         # self.VarlikAdedCarpani = 1
 
-        self.InputsDir = "Aykut/Exports/"
-        self.OutputsDir = "Aykut/Exports/"
-        self.ParamsInputFileName = self.InputsDir + self.SistemAdi + "_params.txt"
-        self.IstatistiklerOutputFileName = self.OutputsDir + "Istatistikler.csv"
-        self.IstatistiklerOptOutputFileName = self.OutputsDir + "IstatistiklerOpt.csv"
+        current_dir = os.getcwd()
+        self.InputsDir = os.path.join(current_dir, "Aykut", "Exports")
+        self.OutputsDir = os.path.join(current_dir, "Aykut", "Exports")
+        
+        # Create directories if they don't exist
+        os.makedirs(self.InputsDir, exist_ok=True)
+        os.makedirs(self.OutputsDir, exist_ok=True)
+        self.ParamsInputFileName = os.path.join(self.InputsDir, self.SistemAdi + "_params.txt")
+        self.IstatistiklerOutputFileName = os.path.join(self.OutputsDir, "Istatistikler.csv")
+        self.IstatistiklerOptOutputFileName = os.path.join(self.OutputsDir, "IstatistiklerOpt.csv")
 
         self.bUseParamsFromInputFile = False
         self.bOptEnabled = False
@@ -168,7 +173,7 @@ class SystemWrapper(CBase):
         self.CurrentRunIndex = 0
         self.TotalRunCount = 1
 
-        self.myVarlik.set_kontrat_params_fx_ons_altin_micro(KontratSayisi=10, VarlikAdedCarpani=1).set_komisyon_params(KomisyonCarpan=0.0)
+        self.myVarlik.set_kontrat_params_fx_ons_altin_micro(KontratSayisi=10, VarlikAdedCarpani=1).set_komisyon_params(KomisyonCarpan=10.0)
         self.myVarlik.set_bakiye_params(IlkBakiye=100000.0, IlkBakiyePuan=100000.0)
 
         for trader in self.myTraders:

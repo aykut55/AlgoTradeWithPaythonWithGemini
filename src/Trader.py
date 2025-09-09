@@ -492,7 +492,7 @@ class CTrader(CBase):
 
     def istatistikleri_hesapla(self):
         result = 0
-        self.Statistics.hesapla()
+        self.Statistics.hesapla(self.LastBarIndex)
         return result
 
     def istatistikleri_ekrana_yaz(self, PanelNo=1):
@@ -1106,7 +1106,7 @@ class CTrader(CBase):
             # Create BarIndex list if it doesn't exist
             if not hasattr(self.Lists, 'BarIndexList') or len(self.Lists.BarIndexList) == 0:
                 self.Lists.BarIndexList = list(range(self.BarCount))
-            
+
             # Add BarCount and all trading lists as columns to DataFrame
             self._df['BarIndex'] = self.Lists.BarIndexList if len(self.Lists.BarIndexList) == self.BarCount else list(range(self.BarCount))
             self._df['Yon'] = self.Lists.YonList if len(self.Lists.YonList) == self.BarCount else [''] * self.BarCount

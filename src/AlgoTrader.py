@@ -231,6 +231,17 @@ class AlgoTrader:
         #     print(f"Direction changes found: {len(direction_changes)}")
         #     print(f"First 10 changes: {direction_changes[:10]}")
 
+        farkList = [0.0] * len(trader.Lists.BakiyeFiyatList)
+        for i in range(len(trader.Lists.BakiyeFiyatList)):
+            farkList[i] = trader.Lists.BakiyeFiyatList[i] - trader.Lists.GetiriFiyatList[i]
+
+        farkList2 = [0.0] * len(trader.Lists.GetiriKz)
+        for i in range(len(trader.Lists.GetiriKz)):
+            farkList2[i] = trader.Lists.GetiriKz[i] - trader.Lists.GetiriKzNet[i]
+
+        print(f"farkList: {farkList[-1]}")
+        print(f"farkList2: {farkList2[-1]}")
+
         panels = [
             {
                 'series_data': {
@@ -243,33 +254,70 @@ class AlgoTrader:
                 'yon_list': self.YonList,  # A/S/F direction data
                 'seviye_list': self.SeviyeList  # Price level data
             },
-            {
-                'series_data': {'Balance': trader.Lists.BakiyeFiyatList},
-                'title': 'Trading Analysis - Balance Chart',
-                'height_ratio': 1  # Alt panel daha küçük
-            },
-            {
-                'series_data': {'KarZarar': trader.Lists.KarZararPuanList, 'Zero': self.LevelZero},
-                'title': 'Trading Analysis - Kar/Zarar Chart (Puan)',
-                'height_ratio': 1  # 3. panel
-            },
-            {
-                'series_data': {'KarZarar': trader.Lists.KarZararFiyatList, 'Zero': self.LevelZero},
-                'title': 'Trading Analysis - Kar/Zarar Chart (Fiyat)',
-                'height_ratio': 1  # 3. panel
-            },
-            {
-                'series_data': {'KomisyonIslemSayisiList': trader.Lists.KomisyonIslemSayisiList, 'Zero': self.LevelZero},
-                'title': 'Trading Analysis - KomisyonIslemSayisiList',
-                'height_ratio': 1
-            },
             # {
-            #     'series_data': {'KomisyonFiyatList': trader.Lists.KomisyonFiyatList,
-            #                     # 'Zero': self.LevelZero
-            #                     },
-            #     'title': 'Trading Analysis - KomisyonFiyatList',
+            #     'series_data': {'Balance': trader.Lists.BakiyeFiyatList},
+            #     'title': 'Trading Analysis - Balance Chart',
+            #     'height_ratio': 1  # Alt panel daha küçük
+            # },
+            # {
+            #     'series_data': {'KarZarar': trader.Lists.KarZararPuanList, 'Zero': self.LevelZero},
+            #     'title': 'Trading Analysis - Kar/Zarar Chart (Puan)',
+            #     'height_ratio': 1  # 3. panel
+            # },
+            # {
+            #     'series_data': {'KarZarar': trader.Lists.KarZararFiyatList, 'Zero': self.LevelZero},
+            #     'title': 'Trading Analysis - Kar/Zarar Chart (Fiyat)',
+            #     'height_ratio': 1  # 3. panel
+            # },
+            # {
+            #     'series_data': {'KarZarar': trader.Lists.KarZararFiyatYuzdeList, 'Zero': self.LevelZero},
+            #     'title': 'Trading Analysis - Kar/Zarar Chart (Fiyat %)',
+            #     'height_ratio': 1  # 3. panel
+            # },
+            # {
+            #     'series_data': {'KomisyonIslemSayisiList': trader.Lists.KomisyonIslemSayisiList, 'Zero': self.LevelZero},
+            #     'title': 'Trading Analysis - KomisyonIslemSayisiList',
             #     'height_ratio': 1
-            # }
+            # },
+            # {
+            #     'series_data': {
+            #         'YonList': trader.Lists.YonList,
+            #         'SinyalList': trader.Lists.SinyalList,
+            #         'Zero': self.LevelZero
+            #     },
+            #     'title': 'Trading Analysis - YonList',
+            #     'height_ratio': 1
+            # },
+            # # {
+            # #     'series_data': {'KomisyonFiyatList': trader.Lists.KomisyonFiyatList,
+            # #                     # 'Zero': self.LevelZero
+            # #                     },
+            # #     'title': 'Trading Analysis - KomisyonFiyatList',
+            # #     'height_ratio': 1
+            # # }
+            {
+                'series_data': {
+                    'Balance': trader.Lists.BakiyeFiyatList,
+                    'GetiriFiyatList': trader.Lists.GetiriFiyatList,
+                    # 'GetiriFiyatYuzdeList': trader.Lists.GetiriFiyatYuzdeList,
+                    # 'BakiyeFiyatNetList': trader.Lists.BakiyeFiyatNetList,
+                    # 'GetiriFiyatNetList': trader.Lists.GetiriFiyatNetList,
+                    # 'GetiriFiyatYuzdeNetList': trader.Lists.GetiriFiyatYuzdeNetList
+                    'farkList': farkList,
+                },
+                'title': 'Trading Analysis - Balance Chart',
+                'height_ratio': 2  # Alt panel daha küçük
+            },
+            {
+                'series_data': {
+                    # 'Balance': trader.Lists.BakiyeFiyatList,
+                    'GetiriKz': trader.Lists.GetiriKz,
+                    'GetiriKzNet': trader.Lists.GetiriKzNet,
+                    'farkList2': farkList2,
+                },
+                'title': 'Trading Analysis - Balance Chart',
+                'height_ratio': 2  # Alt panel daha küçük
+            },
 
             # self.BarIndexList = []
             # self.YonList = []
