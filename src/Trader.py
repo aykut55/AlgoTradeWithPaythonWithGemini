@@ -1409,86 +1409,76 @@ class CTrader(CBase):
 
     def write_statistics_to_file_as_tabular(self, file_name):
         """
-        self.Statistics sınıfındaki istatistik verilerini tabular formatında text dosyasına yazar
+        self.Statistics sınıfındaki istatistik verilerini ve IstatistiklerNew map'ini
+        tabular formatında text dosyasına yazar.
         """
         try:
             with open(file_name, 'w', encoding='utf-8') as f:
-                # Başlık bilgileri
+                # Genel Başlık
                 f.write("=" * 80 + "\n")
-                f.write("TRADING STATISTICS - TABULAR FORMAT\n")
+                f.write("TRADING STATISTICS REPORT\n")
                 f.write(f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                f.write(f"Trader ID: {self.Id}\n")
-                f.write(f"System Name: {self.SistemAdi}\n")
+                f.write(f"Trader ID: {self.Id} | System Name: {self.SistemAdi}\n")
                 f.write("=" * 80 + "\n\n")
-                
-                # Statistics sınıfının tüm özelliklerini al
-                stats_data = []
-                
-                # Statistics nesnesindeki tüm attribute'ları topla
+
+                # --- CStatistics Attributes Bölümü ---
+                f.write("--- CStatistics Attributes ---\n")
+                stats_attributes = []
                 for attr_name in dir(self.Statistics):
-                    # Private ve method'ları atla
-                    if not attr_name.startswith('_') and not callable(getattr(self.Statistics, attr_name)):
+                    if not attr_name.startswith('_') and not callable(getattr(self.Statistics, attr_name)) and attr_name != 'IstatistiklerNew' and attr_name != 'Trader':
                         try:
                             value = getattr(self.Statistics, attr_name)
-                            stats_data.append((attr_name, value))
-                        except:
-                            # Erişilemeyen attribute'lar için
-                            stats_data.append((attr_name, "N/A"))
+                            stats_attributes.append((attr_name, value))
+                        except AttributeError:
+                            stats_attributes.append((attr_name, "N/A"))
                 
-                # Eğer hiç veri bulunamazsa
-                if not stats_data:
-                    f.write("No statistics data available.\n")
-                    return
+                if stats_attributes:
+                    # Sütun genişliklerini hesapla
+                    name_width = max(len(name) for name, _ in stats_attributes) + 2
+                    value_width = max(len(str(val)) for _, val in stats_attributes) + 2
+                    
+                    # Başlık
+                    f.write(f"{'Attribute':<{name_width}}{'Value':<{value_width}}\n")
+                    f.write("-" * (name_width + value_width) + "\n")
+                    
+                    # Verileri yaz
+                    for name, value in sorted(stats_attributes):
+                        f.write(f"{name:<{name_width}}{str(value):<{value_width}}\n")
+                else:
+                    f.write("No attributes found in CStatistics.\n")
+
+                # Boşluk
+                f.write("\n\n")
+
+                # --- IstatistiklerNew Map Bölümü ---
+                f.write("--- IstatistiklerNew Map ---\n")
+                stats_map = self.Statistics.IstatistiklerNew
+
+                if stats_map:
+                    # Sütun genişliklerini hesapla
+                    key_width = max(len(key) for key in stats_map.keys()) + 2
+                    value_width = max(len(str(val)) for val in stats_map.values()) + 2
+
+                    # Başlık
+                    f.write(f"{'Key':<{key_width}}{'Value':<{value_width}}\n")
+                    f.write("-" * (key_width + value_width) + "\n")
+
+                    # Verileri yaz
+                    for key, value in sorted(stats_map.items()):
+                        f.write(f"{key:<{key_width}}{str(value):<{value_width}}\n")
+                else:
+                    f.write("IstatistiklerNew map is empty.\n")
                 
-                # Önce tüm değerleri formatlayıp, gerçek genişliklerini hesapla
-                formatted_data = []
-                for name, value in stats_data:
-                    # Değeri uygun formatta string'e çevir
-                    if isinstance(value, float):
-                        if value == 0:
-                            value_str = "0.000000"
-                        else:
-                            value_str = f"{value:.6f}"
-                    elif isinstance(value, datetime.datetime):
-                        value_str = value.strftime('%Y-%m-%d %H:%M:%S')
-                    elif value is None:
-                        value_str = "None"
-                    else:
-                        value_str = str(value)
-                    formatted_data.append((name, value_str))
-                
-                # Sütun genişliklerini hesapla
-                name_width = max(len("STATISTIC NAME"), max(len(name) for name, _ in formatted_data)) + 3
-                value_width = max(len("VALUE"), max(len(value_str) for _, value_str in formatted_data)) + 3
-                
-                # Toplam satır genişliği 
-                total_width = name_width + value_width
-                
-                # Başlık satırını yaz
-                header_line = f"{'STATISTIC NAME':<{name_width}}{'VALUE':>{value_width}}"
-                separator_line = "-" * total_width
-                
-                f.write(header_line + "\n")
-                f.write(separator_line + "\n")
-                
-                # Veri satırlarını yaz (alfabetik sıralı)
-                for name, value_str in sorted(formatted_data):
-                    # Satırı yaz (isim sola hizalı, değer sağa hizalı)
-                    line = f"{name:<{name_width}}{value_str:>{value_width}}"
-                    f.write(line + "\n")
-                
-                # Alt bilgi
                 f.write("\n" + "=" * 80 + "\n")
-                f.write(f"Total statistics: {len(stats_data)}\n")
+                f.write("End of Report\n")
                 f.write("=" * 80 + "\n")
-            
-            print(f"Statistics tabular formatinda kaydedildi: {file_name}")
-            print(f"Toplam {len(stats_data)} istatistik yazildi.")
-            
+
+            print(f"Statistics report saved to: {file_name}")
+
         except Exception as e:
-            print(f"Statistics dosya yazma hatasi: {str(e)}")
+            print(f"Error writing statistics to file: {str(e)}")
             import traceback
-            print(f"Detay: {traceback.format_exc()}")
+            print(f"Details: {traceback.format_exc()}")
 
     # def reset_date_times(self):
     #     pass
