@@ -571,11 +571,26 @@ class AlgoTrader:
             trader_id = trader.Id
 
             if (trader_id == 0):
+                trader.update_data_frame()
+                print(trader._df)
+
+                # # CSV formatında kaydet
+                # trader.write_data_frame_to_file("trading_0_data.csv")
+                #
+                # # Excel formatında kaydet
+                # trader.write_data_frame_to_file("trading_0_data.xlsx")
+                #
+                # # JSON formatında kaydet
+                # trader.write_data_frame_to_file("trading_0_data.json")
+                #
+                # # HTML formatında kaydet
+                # trader.write_data_frame_to_file("trading_0_data.html")
+
                 if ( self.mySystem.bIdealGetiriHesapla):
                     trader.ideal_getiri_hesapla()
 
                 if ( self.mySystem.bIstatistikleriHesapla):
-                    # trader.istatistikleri_hesapla()
+                    trader.istatistikleri_hesapla()
                     pass
 
                 if ( self.mySystem.bIstatistikleriEkranaYaz):
@@ -587,7 +602,7 @@ class AlgoTrader:
                     pass
 
                 if ( self.mySystem.bIstatistikleriDosyayaYaz):
-                    # trader.IstatistikleriDosyayaYaz( self.mySystem.IstatistiklerOutputFileName)
+                    trader.istatistikleri_dosyaya_yaz( self.mySystem.IstatistiklerOutputFileName)
                     pass
                 pass
 
@@ -596,7 +611,7 @@ class AlgoTrader:
                     trader.ideal_getiri_hesapla()
 
                 if ( self.mySystem.bIstatistikleriHesapla):
-                    # trader.istatistikleri_hesapla()
+                    trader.istatistikleri_hesapla()
                     pass
 
                 if ( self.mySystem.bIstatistikleriEkranaYaz):
@@ -608,7 +623,7 @@ class AlgoTrader:
                     pass
 
                 if ( self.mySystem.bIstatistikleriDosyayaYaz):
-                    # trader.IstatistikleriDosyayaYaz( self.mySystem.IstatistiklerOutputFileName)
+                    trader.istatistikleri_dosyaya_yaz( self.mySystem.IstatistiklerOutputFileName)
                     pass
                 pass
 
@@ -617,7 +632,7 @@ class AlgoTrader:
                     trader.ideal_getiri_hesapla()
 
                 if ( self.mySystem.bIstatistikleriHesapla):
-                    # trader.istatistikleri_hesapla()
+                    trader.istatistikleri_hesapla()
                     pass
 
                 if ( self.mySystem.bIstatistikleriEkranaYaz):
@@ -629,7 +644,7 @@ class AlgoTrader:
                     pass
 
                 if ( self.mySystem.bIstatistikleriDosyayaYaz):
-                    # trader.IstatistikleriDosyayaYaz( self.mySystem.IstatistiklerOutputFileName)
+                    trader.istatistikleri_dosyaya_yaz( self.mySystem.IstatistiklerOutputFileName)
                     pass
                 pass
 
@@ -638,7 +653,7 @@ class AlgoTrader:
                     trader.ideal_getiri_hesapla()
 
                 if ( self.mySystem.bIstatistikleriHesapla):
-                    # trader.istatistikleri_hesapla()
+                    trader.istatistikleri_hesapla()
                     pass
 
                 if ( self.mySystem.bIstatistikleriEkranaYaz):
@@ -650,7 +665,7 @@ class AlgoTrader:
                     pass
 
                 if ( self.mySystem.bIstatistikleriDosyayaYaz):
-                    # trader.IstatistikleriDosyayaYaz( self.mySystem.IstatistiklerOutputFileName)
+                    trader.istatistikleri_dosyaya_yaz( self.mySystem.IstatistiklerOutputFileName)
                     pass
                 pass
 

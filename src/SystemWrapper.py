@@ -14,9 +14,9 @@ from src.IndicatorManager import CIndicatorManager
 
 class SystemWrapper(CBase):
     def __init__(self):
-        # self.GrafikSembol = ""
-        # self.GrafikPeriyot = ""
-        # self.SistemAdi = ""
+        self.GrafikSembol = ""
+        self.GrafikPeriyot = ""
+        self.SistemAdi = ""
 
         self.myVarlik = None
         self.myTraders = []  # List to hold multiple trader objects, 100 trader objects by default
@@ -33,35 +33,35 @@ class SystemWrapper(CBase):
         # self.KontratSayisi = 10
         # self.KomisyonCarpan = 0.0
         # self.VarlikAdedCarpani = 1
-        #
-        # self.InputsDir = ""
-        # self.OutputsDir = ""
-        # self.ParamsInputFileName = ""
-        # self.IstatistiklerOutputFileName = ""
-        # self.IstatistiklerOptOutputFileName = ""
-        #
-        # self.bUseParamsFromInputFile = False
-        # self.bOptEnabled = False
-        # self.bIdealGetiriHesapla = True
-        # self.bIstatistikleriHesapla = True
-        # self.bIstatistikleriEkranaYaz = True
-        # self.bGetiriIstatistikleriEkranaYaz = True
-        # self.bIstatistikleriDosyayaYaz = True
-        # self.bOptimizasyonIstatistiklerininBasliklariniDosyayaYaz = True
-        # self.bOptimizasyonIstatistikleriniDosyayaYaz = True
-        # self.bSinyalleriEkranaCiz = True
-        # self.CurrentRunIndex = 0
-        # self.TotalRunCount = 1
-        #
+
+        self.InputsDir = ""
+        self.OutputsDir = ""
+        self.ParamsInputFileName = ""
+        self.IstatistiklerOutputFileName = ""
+        self.IstatistiklerOptOutputFileName = ""
+
+        self.bUseParamsFromInputFile = False
+        self.bOptEnabled = False
+        self.bIdealGetiriHesapla = True
+        self.bIstatistikleriHesapla = True
+        self.bIstatistikleriEkranaYaz = True
+        self.bGetiriIstatistikleriEkranaYaz = True
+        self.bIstatistikleriDosyayaYaz = True
+        self.bOptimizasyonIstatistiklerininBasliklariniDosyayaYaz = True
+        self.bOptimizasyonIstatistikleriniDosyayaYaz = True
+        self.bSinyalleriEkranaCiz = True
+        self.CurrentRunIndex = 0
+        self.TotalRunCount = 1
+
         # self.Al = False
         # self.Sat = False
         # self.FlatOl = False
         # self.PasGec = False
         # self.KarAl = False
         # self.ZararKes = False
-        #
-        # self.InputParamsCount = 50
-        # self.InputParams = ["" for _ in range(50)]
+
+        self.InputParamsCount = 50
+        self.InputParams = ["" for _ in range(50)]
 
     def create_modules(self, trader_count=1):
         self.myVarlik = CVarlikManager()
@@ -77,9 +77,9 @@ class SystemWrapper(CBase):
         return self
 
     def initialize(self, EpochTime, DateTime, Date, Time ,Open, High, Low, Close, Volume, Lot):
-        # self.GrafikSembol = Sistem.Sembol
-        # self.GrafikPeriyot = Sistem.Periyot
-        # self.SistemAdi = Sistem.Name
+        self.GrafikSembol = "GrafikSembol Girilecek" #Sistem.Sembol
+        self.GrafikPeriyot = "GrafikPeriyot Girilecek" #Sistem.Periyot
+        self.SistemAdi = "SistemAdi Girilecek" #Sistem.Name
 
         self.set_data(EpochTime, DateTime, Date, Time ,Open, High, Low, Close, Volume, Lot)
 
@@ -139,20 +139,20 @@ class SystemWrapper(CBase):
         if self.myIndicators:
             self.myIndicators.reset()
 
-        # for i in range(self.InputParamsCount):
-        #     self.InputParams[i] = ""
+        for i in range(self.InputParamsCount):
+            self.InputParams[i] = ""
 
     def initialize_params_with_defaults(self):
         # self.HisseSayisi = 0
         # self.KontratSayisi = 10
         # self.KomisyonCarpan = 0.0
         # self.VarlikAdedCarpani = 1
-        #
-        # self.InputsDir = "Aykut/Exports/"
-        # self.OutputsDir = "Aykut/Exports/"
-        # self.ParamsInputFileName = self.InputsDir + self.SistemAdi + "_params.txt"
-        # self.IstatistiklerOutputFileName = self.OutputsDir + "Istatistikler.csv"
-        # self.IstatistiklerOptOutputFileName = self.OutputsDir + "IstatistiklerOpt.csv"
+
+        self.InputsDir = "Aykut/Exports/"
+        self.OutputsDir = "Aykut/Exports/"
+        self.ParamsInputFileName = self.InputsDir + self.SistemAdi + "_params.txt"
+        self.IstatistiklerOutputFileName = self.OutputsDir + "Istatistikler.csv"
+        self.IstatistiklerOptOutputFileName = self.OutputsDir + "IstatistiklerOpt.csv"
 
         self.bUseParamsFromInputFile = False
         self.bOptEnabled = False
@@ -230,11 +230,13 @@ class SystemWrapper(CBase):
                 trader.anlik_kar_zarar_hesapla(i)
                 trader.emirleri_resetle(i)
 
-                # is_yeni_gun = self.V[i].Date.day != self.V[i - 1].Date.day
-                # if is_yeni_gun:
-                #     Sistem.DikeyCizgiEkle(i, "DimGray", 2, 2)
-
-                # is_yeni_saat = self.V[i].Date.hour != self.V[i - 1].Date.hour
+                is_yeni_gun = trader.Date[i] != trader.Date[i-1]
+                if is_yeni_gun:
+                    print(is_yeni_gun)
+                    pass
+                is_yeni_saat = trader.Time[i] != self.V[i - 1].Time
+                if is_yeni_gun:
+                    pass
 
                 if trader.Signals.GunSonuPozKapatildi:
                     trader.Signals.GunSonuPozKapatildi = False

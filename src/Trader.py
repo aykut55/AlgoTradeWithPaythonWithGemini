@@ -19,8 +19,9 @@ class CTrader(CBase):
     def __init__(self,  Id=0):
         self.GrafikSembol = ""
         self.GrafikPeriyot = ""
-        self.Adi = ""
+        self.SistemAdi = ""
         super().__init__()
+        self.Adi = ""
         self.Id = Id
         self.Signals = CSignals()
         self.Status = CStatus()
@@ -541,17 +542,17 @@ class CTrader(CBase):
     def gun_sonu_poz_kapat(self, BarIndex, GunSonuPozKapatEnabled=True):
         i = BarIndex
         GunSonuPozKapatildi = False
-        # if GunSonuPozKapatEnabled:
-        #     if i < self.BarCount - 1 and self.V[i].Date.day != self.V[i + 1].Date.day:
-        #         self.Signals.FlatOl = True
-        #         GunSonuPozKapatildi = True
+        if GunSonuPozKapatEnabled:
+            if i < self.BarCount - 1 and self.Date[i] != self.Date[i+1]:
+                self.Signals.FlatOl = True
+                GunSonuPozKapatildi = True
         return GunSonuPozKapatildi
 
     def gun_sonu_poz_kapat2(self, BarIndex, GunSonuPozKapatEnabled=True, Hour=18, Minute=0):
         i = BarIndex
         GunSonuPozKapatildi = False
         # if GunSonuPozKapatEnabled:
-        #     if self.V[i].Date.hour == 18 and self.V[i].Date.minute >= 0:
+        #     if self.Time[i] == 18 and self.V[i].Date.minute >= 0:
         #         self.Signals.FlatOl = True
         #         GunSonuPozKapatildi = True
         return GunSonuPozKapatildi
@@ -642,7 +643,6 @@ class CTrader(CBase):
         # k += 1
         return k
 
-
     def get_bar_values_description(self):
         delimiter = ";"
         LogMessage = ""
@@ -658,122 +658,120 @@ class CTrader(CBase):
         delimiter = ";"
         LogMessage = ""
         mode = 1
-        # if mode == 0:
-        #     LogMessage = f'{i:<5} 	 {self.V[i].Date.strftime("%Y.%m.%d %H:%M:%S"):<20} 	 {self.V[i].Open:5.2f} 	 {self.V[i].High:5.2f} 	 {self.V[i].Low:5.2f} 	 {self.V[i].Close:5.2f} 	 {self.V[i].Vol:10.0f} 	 {self.V[i].Size:5.0f}'
-        # else:
-        #     LogMessage = f'{delimiter} {i:<5} {delimiter} {self.V[i].Date.strftime("%Y.%m.%d"):>10} {delimiter} {self.V[i].Date.strftime("%H:%M:%S"):>10} {delimiter} {self.V[i].Open:10.2f} {delimiter} {self.V[i].High:10.2f} {delimiter} {self.V[i].Low:10.2f} {delimiter} {self.V[i].Close:10.2f} {delimiter} {self.V[i].Vol:10.0f} {delimiter} {self.V[i].Size:10.0f} {delimiter}'
+        if mode == 0:
+            LogMessage = f'{i:<5} 	 {self.Date[i].strftime("%Y.%m.%d %H:%M:%S"):<20} 	 {self.Open[i]:5.2f} 	 {self.High[i]:5.2f} 	 {self.Low[i]:5.2f} 	 {self.Close[i]:5.2f} 	 {self.Vol[i]:10.0f} 	 {self.Size[i]:5.0f}'
+        else:
+            LogMessage = f'{delimiter} {i:<5} {delimiter} {self.Date[i].strftime("%Y.%m.%d"):>10} {delimiter} {self.Date[i].strftime("%H:%M:%S"):>10} {delimiter} {self.Open[i]:10.2f} {delimiter} {self.High[i]:10.2f} {delimiter} {self.Low[i]:10.2f} {delimiter} {self.Close[i]:10.2f} {delimiter} {self.Vol[i]:10.0f} {delimiter} {self.Size[i]:10.0f} {delimiter}'
         return LogMessage
 
     def write_data_to_file_ohlc(self, FileName):
-        # myFileUtils = CFileUtils()
-        # myTimeUtils = CTimeUtils()
-        # myTimeUtils.initialize(Sistem, self.V, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
-        # myTimeUtils.gecen_zaman_bilgilerini_al(Sistem)
-        # aciklama1 = "..."
-        # aciklama2 = "..."
-        # aciklama3 = "..."
-        # aciklama4 = "..."
-        # aciklama5 = "..."
-        # aciklama6 = "..."
-        # logFileFullName = FileName.strip()
-        # myFileUtils.reset(Sistem).enable_logging(Sistem).open_log_file(Sistem, logFileFullName, False, False)
-        # logMessage = f'#  {"Aciklama (1)":<14}   ; {aciklama1.strip()}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Aciklama (2)":<14}   ; {aciklama2.strip()}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Aciklama (3)":<14}   ; {aciklama3.strip()}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Aciklama (4)":<14}   ; {aciklama4.strip()}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Aciklama (5)":<14}   ; {aciklama5.strip()}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Aciklama (6)":<14}   ; {aciklama6.strip()}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Log Zamani":<14}   ; {datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S")}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Sembol":<14}   ; {Sistem.Sembol}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Periyod":<14}   ; {Sistem.Periyot}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Bar Sayisi":<14}   ; {self.BarCount}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Ilk Bar Zamani":<10}   ; {self.V[0].Date.strftime("%Y.%m.%d %H:%M:%S")}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Son Bar Zamani":<10}   ; {self.V[-1].Date.strftime("%Y.%m.%d %H:%M:%S")}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Gecen Sure (A)":<10}   ; {myTimeUtils.gecen_sure(Sistem, "A"):0.1f}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Gecen Sure (G)":<10}   ; {myTimeUtils.gecen_sure(Sistem, "G"):0.0f}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = self.get_bar_values_description(Sistem)
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # for i in range(self.BarCount):
-        #     logMessage = f'{self.get_bar_values_as_string(Sistem, i)}'
-        #     myFileUtils.write_to_log_file(Sistem, logMessage)
-        # myFileUtils.close_log_file(Sistem)
+        myFileUtils = CFileUtils()
+        myTimeUtils = CTimeUtils()
+        myTimeUtils.initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
+        myTimeUtils.gecen_zaman_bilgilerini_al()
+        aciklama1 = "..."
+        aciklama2 = "..."
+        aciklama3 = "..."
+        aciklama4 = "..."
+        aciklama5 = "..."
+        aciklama6 = "..."
+        logFileFullName = FileName.strip()
+        myFileUtils.reset().enable_logging().open_log_file(logFileFullName, False, False)
+        logMessage = f'#  {"Aciklama (1)":<14}   ; {aciklama1.strip()}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Aciklama (2)":<14}   ; {aciklama2.strip()}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Aciklama (3)":<14}   ; {aciklama3.strip()}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Aciklama (4)":<14}   ; {aciklama4.strip()}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Aciklama (5)":<14}   ; {aciklama5.strip()}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Aciklama (6)":<14}   ; {aciklama6.strip()}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Log Zamani":<14}   ; {datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S")}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Sembol":<14}   ; {self.GrafikSembol}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Periyod":<14}   ; {self.GrafikPeriyot}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Bar Sayisi":<14}   ; {self.BarCount}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Ilk Bar Zamani":<10}   ; {self.V[0].Date.strftime("%Y.%m.%d %H:%M:%S")}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Son Bar Zamani":<10}   ; {self.V[-1].Date.strftime("%Y.%m.%d %H:%M:%S")}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Gecen Sure (A)":<10}   ; {myTimeUtils.gecen_sure("A"):0.1f}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Gecen Sure (G)":<10}   ; {myTimeUtils.gecen_sure("G"):0.0f}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = self.get_bar_values_description()
+        myFileUtils.write_to_log_file(logMessage)
+        for i in range(self.BarCount):
+            logMessage = f'{self.get_bar_values_as_string(i)}'
+            myFileUtils.write_to_log_file(logMessage)
+        myFileUtils.close_log_file()
         pass
 
     def write_data_to_file_custom(self, FileName, DataLists, CaptionList):
-        # delimiter = ";"
-        # myFileUtils = CFileUtils()
-        # myTimeUtils = CTimeUtils()
-        # myTimeUtils.initialize(Sistem, self.V, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
-        # myTimeUtils.gecen_zaman_bilgilerini_al(Sistem)
-        # aciklama1 = "..."
-        # aciklama2 = "..."
-        # aciklama3 = "..."
-        # aciklama4 = "..."
-        # aciklama5 = "..."
-        # aciklama6 = "..."
-        # logFileFullName = FileName.strip()
-        # myFileUtils.reset(Sistem).enable_logging(Sistem).open_log_file(Sistem, logFileFullName, False, False)
-        # logMessage = f'#  {"Aciklama (1)":<14}   ; {aciklama1.strip()}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Aciklama (2)":<14}   ; {aciklama2.strip()}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Aciklama (3)":<14}   ; {aciklama3.strip()}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Aciklama (4)":<14}   ; {aciklama4.strip()}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Aciklama (5)":<14}   ; {aciklama5.strip()}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Aciklama (6)":<14}   ; {aciklama6.strip()}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Log Zamani":<14}   ; {datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S")}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Sembol":<14}   ; {Sistem.Sembol}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Periyod":<14}   ; {Sistem.Periyot}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Bar Sayisi":<14}   ; {self.BarCount}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Ilk Bar Zamani":<10}   ; {self.V[0].Date.strftime("%Y.%m.%d %H:%M:%S")}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Son Bar Zamani":<10}   ; {self.V[-1].Date.strftime("%Y.%m.%d %H:%M:%S")}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Gecen Sure (A)":<10}   ; {myTimeUtils.gecen_sure(Sistem, "A"):0.1f}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Gecen Sure (G)":<10}   ; {myTimeUtils.gecen_sure(Sistem, "G"):0.0f}\t'
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # logMessage = f'#  {"Sutunlar":<12} {delimiter} {"No"}'
-        # for j in range(len(CaptionList)):
-        #     logMessage = logMessage + delimiter + CaptionList[j]
-        # myFileUtils.write_to_log_file(Sistem, logMessage)
-        # for i in range(self.BarCount):
-        #     logMessage = f'{delimiter} {i:<5}'
-        #     for j in range(len(DataLists)):
-        #         column = DataLists[j]
-        #         logMessage = logMessage + delimiter + str(column[i])
-        #     myFileUtils.write_to_log_file(Sistem, logMessage)
-        # myFileUtils.close_log_file(Sistem)
+        delimiter = ";"
+        myFileUtils = CFileUtils()
+        myTimeUtils = CTimeUtils()
+        myTimeUtils.initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
+        myTimeUtils.gecen_zaman_bilgilerini_al()
+        aciklama1 = "..."
+        aciklama2 = "..."
+        aciklama3 = "..."
+        aciklama4 = "..."
+        aciklama5 = "..."
+        aciklama6 = "..."
+        logFileFullName = FileName.strip()
+        myFileUtils.reset().enable_logging().open_log_file(logFileFullName, False, False)
+        logMessage = f'#  {"Aciklama (1)":<14}   ; {aciklama1.strip()}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Aciklama (2)":<14}   ; {aciklama2.strip()}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Aciklama (3)":<14}   ; {aciklama3.strip()}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Aciklama (4)":<14}   ; {aciklama4.strip()}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Aciklama (5)":<14}   ; {aciklama5.strip()}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Aciklama (6)":<14}   ; {aciklama6.strip()}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Log Zamani":<14}   ; {datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S")}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Sembol":<14}   ; {self.GrafikSembol}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Periyod":<14}   ; {self.GrafikPeriyot}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Bar Sayisi":<14}   ; {self.BarCount}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Ilk Bar Zamani":<10}   ; {self.Date[0].strftime("%Y.%m.%d %H:%M:%S")}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Son Bar Zamani":<10}   ; {self.Date[-1].strftime("%Y.%m.%d %H:%M:%S")}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Gecen Sure (A)":<10}   ; {myTimeUtils.gecen_sure("A"):0.1f}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Gecen Sure (G)":<10}   ; {myTimeUtils.gecen_sure("G"):0.0f}\t'
+        myFileUtils.write_to_log_file(logMessage)
+        logMessage = f'#  {"Sutunlar":<12} {delimiter} {"No"}'
+        for j in range(len(CaptionList)):
+            logMessage = logMessage + delimiter + CaptionList[j]
+        myFileUtils.write_to_log_file(logMessage)
+        for i in range(self.BarCount):
+            logMessage = f'{delimiter} {i:<5}'
+            for j in range(len(DataLists)):
+                column = DataLists[j]
+                logMessage = logMessage + delimiter + str(column[i])
+            myFileUtils.write_to_log_file(logMessage)
+        myFileUtils.close_log_file()
         pass
 
     def reset_date_times(self):
         useLastBarDateTime = True
-        # # YAPILACAK
-        # # self.StartDateTime = self.V[0].Date
-        # # YAPILACAK
-        # # self.StopDateTime = self.V[Sistem.BarSayisi - 1].Date if useLastBarDateTime else datetime.datetime.now()
+        self.StartDateTime = self.Date[0]
+        self.StopDateTime = self.Date[self.BarCount - 1] if useLastBarDateTime else datetime.datetime.now()
         self.StartDate = self.StartDateTime
         self.StopDate = self.StopDateTime
         self.StartTime = self.StartDateTime
@@ -844,94 +842,94 @@ class CTrader(CBase):
 
     def islem_zaman_filtresi_uygula(self, BarIndex, FilterMode, IsTradeEnabled, IsPozKapatEnabled, CheckResult):
         i = BarIndex
-        # BarDateTime = self.V[i].Date
-        # startDateTime = self.StartDateTimeStr
-        # stopDateTime = self.StopDateTimeStr
-        # startDate = self.StartDateStr
-        # stopDate = self.StopDateStr
-        # startTime = self.StartTimeStr
-        # stopTime = self.StopTimeStr
-        # nowDateTime = datetime.datetime.now().strftime("%d.%m.%Y %H:%M:%S")
-        # nowDate = datetime.datetime.now().strftime("%d.%m.%Y")
-        # nowTime = datetime.datetime.now().strftime("%H:%M:%S")
-        # useTimeFiltering = self.Signals.TimeFilteringEnabled
-        # if useTimeFiltering:
-        #     if i == Sistem.BarSayisi - 1:
-        #         s = ""
-        #         s += f'  {startDateTime}\n'
-        #         s += f'  {stopDateTime}\n'
-        #         s += f'  {startDate}\n'
-        #         s += f'  {stopDate}\n'
-        #         s += f'  {startTime}\n'
-        #         s += f'  {stopTime}\n'
-        #         s += f'  {nowDateTime}\n'
-        #         s += f'  {nowDate}\n'
-        #         s += f'  {nowTime}\n'
-        #         s += f'  FilterMode = {FilterMode}\n'
-        #         s += '  CTrader::IslemZamanFiltresiUygula\n'
-        #     if FilterMode == 0:
-        #         IsTradeEnabled.value = True
-        #         CheckResult.value = 0
-        #     elif FilterMode == 1:
-        #         if self.TimeUtils.check_bar_time_with(Sistem, i, startTime) >= 0 and self.TimeUtils.check_bar_time_with(Sistem, i, stopTime) < 0:
-        #             IsTradeEnabled.value = True
-        #             CheckResult.value = 0
-        #         elif self.TimeUtils.check_bar_time_with(Sistem, i, startTime) < 0:
-        #             if not self.is_son_yon_f(Sistem):
-        #                 IsPozKapatEnabled.value = True
-        #             CheckResult.value = -1
-        #         elif self.TimeUtils.check_bar_time_with(Sistem, i, stopTime) >= 0:
-        #             if not self.is_son_yon_f(Sistem):
-        #                 IsPozKapatEnabled.value = True
-        #             CheckResult.value = 1
-        #     elif FilterMode == 2:
-        #         if self.TimeUtils.check_bar_date_with(Sistem, i, startDate) >= 0 and self.TimeUtils.check_bar_date_with(Sistem, i, stopDate) < 0:
-        #             IsTradeEnabled.value = True
-        #             CheckResult.value = 0
-        #         elif self.TimeUtils.check_bar_date_with(Sistem, i, startDate) < 0:
-        #             if not self.is_son_yon_f(Sistem):
-        #                 IsPozKapatEnabled.value = True
-        #             CheckResult.value = -1
-        #         elif self.TimeUtils.check_bar_date_with(Sistem, i, stopDate) >= 0:
-        #             if not self.is_son_yon_f(Sistem):
-        #                 IsPozKapatEnabled.value = True
-        #             CheckResult.value = 1
-        #     elif FilterMode == 3:
-        #         if self.TimeUtils.check_bar_date_time_with(Sistem, i, startDateTime) >= 0 and self.TimeUtils.check_bar_date_time_with(Sistem, i, stopDateTime) < 0:
-        #             IsTradeEnabled.value = True
-        #             CheckResult.value = 0
-        #         elif self.TimeUtils.check_bar_date_time_with(Sistem, i, startDateTime) < 0:
-        #             if not self.is_son_yon_f(Sistem):
-        #                 IsPozKapatEnabled.value = True
-        #             CheckResult.value = -1
-        #         elif self.TimeUtils.check_bar_date_time_with(Sistem, i, stopDateTime) >= 0:
-        #             if not self.is_son_yon_f(Sistem):
-        #                 IsPozKapatEnabled.value = True
-        #             CheckResult.value = 1
-        #     elif FilterMode == 4:
-        #         if self.TimeUtils.check_bar_time_with(Sistem, i, startTime) >= 0:
-        #             IsTradeEnabled.value = True
-        #             CheckResult.value = 0
-        #         elif self.TimeUtils.check_bar_time_with(Sistem, i, startTime) < 0:
-        #             if not self.is_son_yon_f(Sistem):
-        #                 IsPozKapatEnabled.value = True
-        #             CheckResult.value = -1
-        #     elif FilterMode == 5:
-        #         if self.TimeUtils.check_bar_date_with(Sistem, i, startDate) >= 0:
-        #             IsTradeEnabled.value = True
-        #             CheckResult.value = 0
-        #         elif self.TimeUtils.check_bar_date_with(Sistem, i, startDate) < 0:
-        #             if not self.is_son_yon_f(Sistem):
-        #                 IsPozKapatEnabled.value = True
-        #             CheckResult.value = -1
-        #     elif FilterMode == 6:
-        #         if self.TimeUtils.check_bar_date_time_with(Sistem, i, startDateTime) >= 0:
-        #             IsTradeEnabled.value = True
-        #             CheckResult.value = 0
-        #         elif self.TimeUtils.check_bar_date_time_with(Sistem, i, startDateTime) < 0:
-        #             if not self.is_son_yon_f(Sistem):
-        #                 IsPozKapatEnabled.value = True
-        #             CheckResult.value = -1
+        BarDateTime = self.DateTime[i]
+        startDateTime = self.StartDateTimeStr
+        stopDateTime = self.StopDateTimeStr
+        startDate = self.StartDateStr
+        stopDate = self.StopDateStr
+        startTime = self.StartTimeStr
+        stopTime = self.StopTimeStr
+        nowDateTime = datetime.datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+        nowDate = datetime.datetime.now().strftime("%d.%m.%Y")
+        nowTime = datetime.datetime.now().strftime("%H:%M:%S")
+        useTimeFiltering = self.Signals.TimeFilteringEnabled
+        if useTimeFiltering:
+            if i == self.BarCount - 1:
+                s = ""
+                s += f'  {startDateTime}\n'
+                s += f'  {stopDateTime}\n'
+                s += f'  {startDate}\n'
+                s += f'  {stopDate}\n'
+                s += f'  {startTime}\n'
+                s += f'  {stopTime}\n'
+                s += f'  {nowDateTime}\n'
+                s += f'  {nowDate}\n'
+                s += f'  {nowTime}\n'
+                s += f'  FilterMode = {FilterMode}\n'
+                s += '  CTrader::IslemZamanFiltresiUygula\n'
+            if FilterMode == 0:
+                IsTradeEnabled.value = True
+                CheckResult.value = 0
+            elif FilterMode == 1:
+                if self.TimeUtils.check_bar_time_with(i, startTime) >= 0 and self.TimeUtils.check_bar_time_with(i, stopTime) < 0:
+                    IsTradeEnabled.value = True
+                    CheckResult.value = 0
+                elif self.TimeUtils.check_bar_time_with(i, startTime) < 0:
+                    if not self.is_son_yon_f():
+                        IsPozKapatEnabled.value = True
+                    CheckResult.value = -1
+                elif self.TimeUtils.check_bar_time_with(i, stopTime) >= 0:
+                    if not self.is_son_yon_f():
+                        IsPozKapatEnabled.value = True
+                    CheckResult.value = 1
+            elif FilterMode == 2:
+                if self.TimeUtils.check_bar_date_with(i, startDate) >= 0 and self.TimeUtils.check_bar_date_with(i, stopDate) < 0:
+                    IsTradeEnabled.value = True
+                    CheckResult.value = 0
+                elif self.TimeUtils.check_bar_date_with(i, startDate) < 0:
+                    if not self.is_son_yon_f():
+                        IsPozKapatEnabled.value = True
+                    CheckResult.value = -1
+                elif self.TimeUtils.check_bar_date_with(i, stopDate) >= 0:
+                    if not self.is_son_yon_f():
+                        IsPozKapatEnabled.value = True
+                    CheckResult.value = 1
+            elif FilterMode == 3:
+                if self.TimeUtils.check_bar_date_time_with(i, startDateTime) >= 0 and self.TimeUtils.check_bar_date_time_with(i, stopDateTime) < 0:
+                    IsTradeEnabled.value = True
+                    CheckResult.value = 0
+                elif self.TimeUtils.check_bar_date_time_with(i, startDateTime) < 0:
+                    if not self.is_son_yon_f():
+                        IsPozKapatEnabled.value = True
+                    CheckResult.value = -1
+                elif self.TimeUtils.check_bar_date_time_with(i, stopDateTime) >= 0:
+                    if not self.is_son_yon_f():
+                        IsPozKapatEnabled.value = True
+                    CheckResult.value = 1
+            elif FilterMode == 4:
+                if self.TimeUtils.check_bar_time_with(i, startTime) >= 0:
+                    IsTradeEnabled.value = True
+                    CheckResult.value = 0
+                elif self.TimeUtils.check_bar_time_with(i, startTime) < 0:
+                    if not self.is_son_yon_f():
+                        IsPozKapatEnabled.value = True
+                    CheckResult.value = -1
+            elif FilterMode == 5:
+                if self.TimeUtils.check_bar_date_with(i, startDate) >= 0:
+                    IsTradeEnabled.value = True
+                    CheckResult.value = 0
+                elif self.TimeUtils.check_bar_date_with(i, startDate) < 0:
+                    if not self.is_son_yon_f():
+                        IsPozKapatEnabled.value = True
+                    CheckResult.value = -1
+            elif FilterMode == 6:
+                if self.TimeUtils.check_bar_date_time_with(i, startDateTime) >= 0:
+                    IsTradeEnabled.value = True
+                    CheckResult.value = 0
+                elif self.TimeUtils.check_bar_date_time_with(i, startDateTime) < 0:
+                    if not self.is_son_yon_f():
+                        IsPozKapatEnabled.value = True
+                    CheckResult.value = -1
         return 0
 
     def emir_oncesi_dongu_foksiyonlarini_calistir(self, bar_index):
@@ -947,10 +945,14 @@ class CTrader(CBase):
         self.anlik_kar_zarar_hesapla(i)
 
         self.emirleri_resetle(i)
-        #
-        # bool isYeniGun = (V[i].Date.Day != V[i - 1].Date.Day); if (isYeniGun) .DikeyCizgiEkle(i, Color.DimGray, 2, 2);
-        #
-        # bool isYeniSaat = (V[i].Date.Hour != V[i - 1].Date.Hour);  //if (isYeniSaat) .DikeyCizgiEkle(i, Color.DimGray, 2, 2);
+
+        isYeniGun = (self.Date[i] != self.Date[i-1])
+        if (isYeniGun):
+            pass #.DikeyCizgiEkle(i, Color.DimGray, 2, 2);
+
+        # isYeniSaat = (self.Time[i].Hour != self.Time[i-1].Hour)
+        # if (isYeniSaat):
+        #     pass #.DikeyCizgiEkle(i, Color.DimGray, 2, 2);
 
         if (self.Signals.GunSonuPozKapatildi):
             self.Signals.GunSonuPozKapatildi = False
@@ -1081,8 +1083,236 @@ class CTrader(CBase):
 
         pass
 
-    #
-    #
+    def update_data_frame(self):
+        # Clear DataFrame
+        self._df = None
+
+        # Create DataFrame with OHLCV data as columns
+        self._df = pd.DataFrame({
+            'EpochTime': self.EpochTime,
+            'DateTime': self.DateTime,
+            'Date': self.Date,
+            'Time': self.Time,
+            'Open': self.Open,
+            'High': self.High,
+            'Low': self.Low,
+            'Close': self.Close,
+            'Volume': self.Volume,
+            'Lot': self.Lot
+        })
+        
+        # Add all lists and attributes to DataFrame
+        if self.BarCount > 0:
+            # Create BarIndex list if it doesn't exist
+            if not hasattr(self.Lists, 'BarIndexList') or len(self.Lists.BarIndexList) == 0:
+                self.Lists.BarIndexList = list(range(self.BarCount))
+            
+            # Add BarCount and all trading lists as columns to DataFrame
+            self._df['BarIndex'] = self.Lists.BarIndexList if len(self.Lists.BarIndexList) == self.BarCount else list(range(self.BarCount))
+            self._df['Yon'] = self.Lists.YonList if len(self.Lists.YonList) == self.BarCount else [''] * self.BarCount
+            self._df['Seviye'] = self.Lists.SeviyeList if len(self.Lists.SeviyeList) == self.BarCount else [0.0] * self.BarCount
+            self._df['Sinyal'] = self.Lists.SinyalList if len(self.Lists.SinyalList) == self.BarCount else [0.0] * self.BarCount
+            self._df['KarZararPuan'] = self.Lists.KarZararPuanList if len(self.Lists.KarZararPuanList) == self.BarCount else [0.0] * self.BarCount
+            self._df['KarZararFiyat'] = self.Lists.KarZararFiyatList if len(self.Lists.KarZararFiyatList) == self.BarCount else [0.0] * self.BarCount
+            self._df['KarZararFiyatYuzde'] = self.Lists.KarZararFiyatYuzdeList if len(self.Lists.KarZararFiyatYuzdeList) == self.BarCount else [0.0] * self.BarCount
+            self._df['KarAl'] = self.Lists.KarAlList if len(self.Lists.KarAlList) == self.BarCount else [0.0] * self.BarCount
+            self._df['IzleyenStop'] = self.Lists.IzleyenStopList if len(self.Lists.IzleyenStopList) == self.BarCount else [0.0] * self.BarCount
+            self._df['IslemSayisi'] = self.Lists.IslemSayisiList if len(self.Lists.IslemSayisiList) == self.BarCount else [0.0] * self.BarCount
+            self._df['AlisSayisi'] = self.Lists.AlisSayisiList if len(self.Lists.AlisSayisiList) == self.BarCount else [0.0] * self.BarCount
+            self._df['SatisSayisi'] = self.Lists.SatisSayisiList if len(self.Lists.SatisSayisiList) == self.BarCount else [0.0] * self.BarCount
+            self._df['FlatSayisi'] = self.Lists.FlatSayisiList if len(self.Lists.FlatSayisiList) == self.BarCount else [0.0] * self.BarCount
+            self._df['PassSayisi'] = self.Lists.PassSayisiList if len(self.Lists.PassSayisiList) == self.BarCount else [0.0] * self.BarCount
+            self._df['KontratSayisi'] = self.Lists.KontratSayisiList if len(self.Lists.KontratSayisiList) == self.BarCount else [0.0] * self.BarCount
+            self._df['VarlikAdedSayisi'] = self.Lists.VarlikAdedSayisiList if len(self.Lists.VarlikAdedSayisiList) == self.BarCount else [0.0] * self.BarCount
+            self._df['KomisyonVarlikAdedSayisi'] = self.Lists.KomisyonVarlikAdedSayisiList if len(self.Lists.KomisyonVarlikAdedSayisiList) == self.BarCount else [0.0] * self.BarCount
+            self._df['KomisyonIslemSayisi'] = self.Lists.KomisyonIslemSayisiList if len(self.Lists.KomisyonIslemSayisiList) == self.BarCount else [0.0] * self.BarCount
+            self._df['KomisyonFiyat'] = self.Lists.KomisyonFiyatList if len(self.Lists.KomisyonFiyatList) == self.BarCount else [0.0] * self.BarCount
+            self._df['KardaBarSayisi'] = self.Lists.KardaBarSayisiList if len(self.Lists.KardaBarSayisiList) == self.BarCount else [0.0] * self.BarCount
+            self._df['ZarardaBarSayisi'] = self.Lists.ZarardaBarSayisiList if len(self.Lists.ZarardaBarSayisiList) == self.BarCount else [0.0] * self.BarCount
+            self._df['BakiyePuan'] = self.Lists.BakiyePuanList if len(self.Lists.BakiyePuanList) == self.BarCount else [0.0] * self.BarCount
+            self._df['BakiyeFiyat'] = self.Lists.BakiyeFiyatList if len(self.Lists.BakiyeFiyatList) == self.BarCount else [0.0] * self.BarCount
+            self._df['GetiriPuan'] = self.Lists.GetiriPuanList if len(self.Lists.GetiriPuanList) == self.BarCount else [0.0] * self.BarCount
+            self._df['GetiriFiyat'] = self.Lists.GetiriFiyatList if len(self.Lists.GetiriFiyatList) == self.BarCount else [0.0] * self.BarCount
+            self._df['GetiriPuanYuzde'] = self.Lists.GetiriPuanYuzdeList if len(self.Lists.GetiriPuanYuzdeList) == self.BarCount else [0.0] * self.BarCount
+            self._df['GetiriFiyatYuzde'] = self.Lists.GetiriFiyatYuzdeList if len(self.Lists.GetiriFiyatYuzdeList) == self.BarCount else [0.0] * self.BarCount
+            self._df['BakiyePuanNet'] = self.Lists.BakiyePuanNetList if len(self.Lists.BakiyePuanNetList) == self.BarCount else [0.0] * self.BarCount
+            self._df['BakiyeFiyatNet'] = self.Lists.BakiyeFiyatNetList if len(self.Lists.BakiyeFiyatNetList) == self.BarCount else [0.0] * self.BarCount
+            self._df['GetiriPuanNet'] = self.Lists.GetiriPuanNetList if len(self.Lists.GetiriPuanNetList) == self.BarCount else [0.0] * self.BarCount
+            self._df['GetiriFiyatNet'] = self.Lists.GetiriFiyatNetList if len(self.Lists.GetiriFiyatNetList) == self.BarCount else [0.0] * self.BarCount
+            self._df['GetiriPuanYuzdeNet'] = self.Lists.GetiriPuanYuzdeNetList if len(self.Lists.GetiriPuanYuzdeNetList) == self.BarCount else [0.0] * self.BarCount
+            self._df['GetiriFiyatYuzdeNet'] = self.Lists.GetiriFiyatYuzdeNetList if len(self.Lists.GetiriFiyatYuzdeNetList) == self.BarCount else [0.0] * self.BarCount
+            self._df['GetiriKz'] = self.Lists.GetiriKz if len(self.Lists.GetiriKz) == self.BarCount else [0.0] * self.BarCount
+            self._df['GetiriKzNet'] = self.Lists.GetiriKzNet if len(self.Lists.GetiriKzNet) == self.BarCount else [0.0] * self.BarCount
+            self._df['GetiriKzSistem'] = self.Lists.GetiriKzSistem if len(self.Lists.GetiriKzSistem) == self.BarCount else [0.0] * self.BarCount
+            self._df['GetiriKzNetSistem'] = self.Lists.GetiriKzNetSistem if len(self.Lists.GetiriKzNetSistem) == self.BarCount else [0.0] * self.BarCount
+            self._df['EmirKomut'] = self.Lists.EmirKomutList if len(self.Lists.EmirKomutList) == self.BarCount else [0.0] * self.BarCount
+            self._df['EmirStatus'] = self.Lists.EmirStatusList if len(self.Lists.EmirStatusList) == self.BarCount else [0.0] * self.BarCount
+            
+            # Add metadata as DataFrame attributes (not columns, to avoid repetition)
+            self._df.attrs.update({
+                'BakiyeInitialized': self.BakiyeInitialized,
+                'ExecutionStepNumber': self.ExecutionStepNumber,
+                'LastResetTime': self.LastResetTime,
+                'LastExecutionTime': self.LastExecutionTime,
+                'LastExecutionTimeStart': self.LastExecutionTimeStart,
+                'LastExecutionTimeStop': self.LastExecutionTimeStop,
+                'LastStatisticsCalculationTime': self.LastStatisticsCalculationTime,
+                'ExecutionTimeInMSec': self.ExecutionTimeInMSec,
+                'DateTimeStringFormat': self.DateTimeStringFormat,
+                'DateStringFormat': self.DateStringFormat,
+                'TimeStringFormat': self.TimeStringFormat,
+                'StartDateTime': self.StartDateTime,
+                'StopDateTime': self.StopDateTime,
+                'StartDate': self.StartDate,
+                'StopDate': self.StopDate,
+                'StartTime': self.StartTime,
+                'StopTime': self.StopTime,
+                'StartDateTimeStr': self.StartDateTimeStr,
+                'StopDateTimeStr': self.StopDateTimeStr,
+                'StartDateStr': self.StartDateStr,
+                'StopDateStr': self.StopDateStr,
+                'StartTimeStr': self.StartTimeStr,
+                'StopTimeStr': self.StopTimeStr,
+                'EnableDateTime': self.EnableDateTime,
+                'DisableDateTime': self.DisableDateTime,
+                'EnableDate': self.EnableDate,
+                'DisableDate': self.DisableDate,
+                'EnableTime': self.EnableTime,
+                'DisableTime': self.DisableTime,
+                'EnableDateTimeStr': self.EnableDateTimeStr,
+                'DisableDateTimeStr': self.DisableDateTimeStr,
+                'EnableDateStr': self.EnableDateStr,
+                'DisableDateStr': self.DisableDateStr,
+                'EnableTimeStr': self.EnableTimeStr,
+                'DisableTimeStr': self.DisableTimeStr
+            })
+            
+            # Add class instance names as metadata attributes (not columns, to avoid repetition)
+            self._df.attrs.update({
+                'SignalsClass': str(type(self.Signals).__name__),
+                'StatusClass': str(type(self.Status).__name__),
+                'FlagsClass': str(type(self.Flags).__name__),
+                'ListsClass': str(type(self.Lists).__name__),
+                'KarZararClass': str(type(self.KarZarar).__name__),
+                'KomisyonClass': str(type(self.Komisyon).__name__),
+                'BakiyeClass': str(type(self.Bakiye).__name__),
+                'VarlikManagerClass': str(type(self.VarlikManager).__name__ if self.VarlikManager else 'None'),
+                'StatisticsClass': str(type(self.Statistics).__name__),
+                'KarAlZararKesClass': str(type(self.KarAlZararKes).__name__),
+                'TimeFilterClass': str(type(self.TimeFilter).__name__),
+                'TimeUtilsClass': str(type(self.TimeUtils).__name__)
+            })
+
+    def write_data_frame_to_file(self, file_name):
+        """
+        DataFrame'deki verileri tablo formatında dosyaya yazar
+        """
+        if self._df is None or self._df.empty:
+            print("DataFrame boş veya None. Önce update_data_frame() methodunu çağırın.")
+            return
+        
+        try:
+            # Dosya uzantısına göre format belirle
+            file_name = file_name.strip()
+            file_extension = file_name.split('.')[-1].lower() if '.' in file_name else ''
+            
+            # CSV formatında kaydet
+            if file_extension == 'csv' or file_extension == '':
+                if file_extension == '':
+                    file_name += '.csv'
+                self._df.to_csv(file_name, index=False, encoding='utf-8-sig')
+                print(f"DataFrame CSV formatında kaydedildi: {file_name}")
+            
+            # Excel formatında kaydet
+            elif file_extension in ['xlsx', 'xls']:
+                try:
+                    # Önce openpyxl ile dene
+                    self._df.to_excel(file_name, index=False, engine='openpyxl')
+                    print(f"DataFrame Excel formatında kaydedildi: {file_name}")
+                except ImportError:
+                    print("openpyxl kütüphanesi bulunamadı. Excel yerine CSV formatında kaydediliyor...")
+                    csv_file_name = file_name.replace('.xlsx', '.csv').replace('.xls', '.csv')
+                    self._df.to_csv(csv_file_name, index=False, encoding='utf-8-sig')
+                    print(f"DataFrame CSV formatında kaydedildi: {csv_file_name}")
+                except Exception as e:
+                    print(f"Excel kaydetme hatası: {str(e)}")
+                    print("Excel yerine CSV formatında kaydediliyor...")
+                    csv_file_name = file_name.replace('.xlsx', '.csv').replace('.xls', '.csv')
+                    self._df.to_csv(csv_file_name, index=False, encoding='utf-8-sig')
+                    print(f"DataFrame CSV formatında kaydedildi: {csv_file_name}")
+            
+            # JSON formatında kaydet
+            elif file_extension == 'json':
+                self._df.to_json(file_name, orient='records', date_format='iso', indent=2)
+                print(f"DataFrame JSON formatında kaydedildi: {file_name}")
+            
+            # HTML tablo formatında kaydet
+            elif file_extension == 'html':
+                html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trading Data</title>
+    <style>
+        table {{ border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }}
+        th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+        th {{ background-color: #f2f2f2; font-weight: bold; }}
+        tr:nth-child(even) {{ background-color: #f9f9f9; }}
+        .numeric {{ text-align: right; }}
+    </style>
+</head>
+<body>
+    <h2>Trading Data - {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</h2>
+    {self._df.to_html(index=False, classes='table table-striped', escape=False)}
+</body>
+</html>
+"""
+                with open(file_name, 'w', encoding='utf-8') as f:
+                    f.write(html_content)
+                print(f"DataFrame HTML formatında kaydedildi: {file_name}")
+            
+            # Varsayılan olarak CSV formatında kaydet
+            else:
+                csv_file_name = file_name + '.csv'
+                self._df.to_csv(csv_file_name, index=False, encoding='utf-8-sig')
+                print(f"Bilinmeyen format, CSV olarak kaydedildi: {csv_file_name}")
+                
+        except Exception as e:
+            print(f"Dosya yazma hatası: {str(e)}")
+            
+    def write_data_frame_summary_to_file(self, file_name):
+        """
+        DataFrame'in özet bilgilerini dosyaya yazar
+        """
+        if self._df is None or self._df.empty:
+            print("DataFrame boş veya None. Önce update_data_frame() methodunu çağırın.")
+            return
+            
+        try:
+            with open(file_name, 'w', encoding='utf-8') as f:
+                f.write("=== DATAFRAME ÖZET BİLGİLERİ ===\n")
+                f.write(f"Oluşturulma Tarihi: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"Toplam Satır Sayısı: {len(self._df)}\n")
+                f.write(f"Toplam Sütun Sayısı: {len(self._df.columns)}\n")
+                f.write(f"DataFrame Boyutu: {self._df.shape}\n\n")
+                
+                f.write("=== SÜTUN BİLGİLERİ ===\n")
+                for i, col in enumerate(self._df.columns, 1):
+                    f.write(f"{i:3d}. {col}\n")
+                
+                f.write("\n=== VERİ TİPLERİ ===\n")
+                f.write(str(self._df.dtypes))
+                f.write("\n\n=== İLK 10 SATIR ===\n")
+                f.write(str(self._df.head(10)))
+                f.write("\n\n=== SON 10 SATIR ===\n")
+                f.write(str(self._df.tail(10)))
+                
+            print(f"DataFrame özet bilgileri kaydedildi: {file_name}")
+            
+        except Exception as e:
+            print(f"Özet dosya yazma hatası: {str(e)}")
+
+
     # def reset_date_times(self):
     #     pass
     #
@@ -1163,11 +1393,3 @@ class CTrader(CBase):
     #
     # def optimizasyon_istatistiklerini_dosyaya_yaz(self, filename, run_index, total_runs):
     #     pass
-    #
-    #
-    #
-
-    #
-
-    #
-    #
