@@ -369,99 +369,7 @@ class AlgoTrader:
         print("=== DEBUG: show çağrılıyor ===")
         self.dataPlotter.show()
 
-
-
-
-
-
-
-
-
-
-    def trader_0_run_func(self):
-        DateTimes = ["25.05.2025 14:30:00", "02.06.2025 14:00:00"]
-        Dates = ["01.01.1900", "01.01.2100"]
-        Times = ["09:30:00", "11:59:00"]
-
-        self.mySystem.get_trader().reset_date_times
-        self.mySystem.get_trader().set_date_times(DateTimes[0], DateTimes[1])
-
-        self.mySystem.get_trader().Signals.KarAlEnabled = False
-        self.mySystem.get_trader().Signals.ZararKesEnabled = False
-        self.mySystem.get_trader().Signals.GunSonuPozKapatEnabled = False
-        self.mySystem.get_trader().Signals.TimeFilteringEnabled = True
-
-        self.mySystem.start()
-        for i in range(self.BarCount):
-            Al = False
-            Sat = False
-            FlatOl = False
-            PasGec = False
-            KarAl = False
-            ZararKes = False
-            isTradeEnabled = False
-            isPozKapatEnabled = False
-
-            self.mySystem.emirleri_resetle(i)
-
-            self.mySystem.emir_oncesi_dongu_foksiyonlarini_calistir(i)
-
-            if i < 1:
-                continue
-
-            FlatOl = False
-
-            Al = True
-            Al = self.myUtils.yukari_kesti(i, self.Close, self.Level)
-
-            Sat = True
-            Sat = self.myUtils.asagi_kesti(i, self.Close, self.Level)
-
-            KarAl = self.mySystem.get_trader().KarAlZararKes.son_fiyata_gore_kar_al_seviye_hesapla(i, 5, 50,
-                                                                                                   1000) != 0
-
-            ZararKes = self.mySystem.get_trader().KarAlZararKes.son_fiyata_gore_zarar_kes_seviye_hesapla(i, -1,
-                                                                                                         -10,
-                                                                                                         1000) != 0
-
-            KarAl = self.mySystem.get_trader().Signals.KarAlEnabled
-
-            ZararKes = self.mySystem.get_trader().Signals.ZararKesEnabled
-
-            IsSonYonA = self.mySystem.get_trader().is_son_yon_a()
-
-            IsSonYonS = self.mySystem.get_trader().is_son_yon_s()
-
-            IsSonYonF = self.mySystem.get_trader().is_son_yon_f()
-
-            useTimeFiltering = self.mySystem.get_trader().Signals.TimeFilteringEnabled
-
-            self.mySystem.emirleri_setle(i, Al, Sat, FlatOl, PasGec, KarAl, ZararKes)
-
-            self.mySystem.islem_zaman_filtresi_uygula(i)
-
-            self.mySystem.emir_sonrasi_dongu_foksiyonlarini_calistir(i)
-
-        self.mySystem.stop()
-
-        self.mySystem.hesaplamalari_yap()
-
-        self.mySystem.sonuclari_ekranda_goster()
-
-        self.mySystem.sonuclari_dosyaya_yaz()
-
-        pass
-
-    def trader_1_run_func(self):
-        pass
-
-    def trader_2_run_func(self):
-        pass
-
-    def trader_3_run_func(self):
-        pass
-
-    def run(self):
+    def run_with_multiple_trader(self):
         # --------------------------------------------------------------
         # Read market data (equivalent to .GrafikVerileri operations)
         print("Loading market data...")
@@ -739,12 +647,184 @@ class AlgoTrader:
         print(self.BakiyeFiyatList[0])
         print(self.BakiyeFiyatList[1])
 
+    def run_with_single_trader(self):
+        # --------------------------------------------------------------
+        # Read market data (equivalent to .GrafikVerileri operations)
+        print("Loading market data...")
+        self.loadMarketData()
+
+        # --------------------------------------------------------------
+        # Create level series
+        self.LevelUp4 = self.create_level_series(self.BarCount, 6000)
+        self.LevelUp3 = self.create_level_series(self.BarCount, 5750)
+        self.LevelUp2 = self.create_level_series(self.BarCount, 5500)
+        self.LevelUp1 = self.create_level_series(self.BarCount, 5250)
+
+        self.Level = self.create_level_series(self.BarCount, 5000)
+
+        self.LevelDown1 = self.create_level_series(self.BarCount, 4750)
+        self.LevelDown2 = self.create_level_series(self.BarCount, 4500)
+        self.LevelDown3 = self.create_level_series(self.BarCount, 4250)
+        self.LevelDown4 = self.create_level_series(self.BarCount, 4000)
+
+        self.LevelZero = self.create_level_series(self.BarCount, 0)
+
+        self.Most, self.ExMov = self.calculate_most(period=21, percent=1.0)
+
+        # --------------------------------------------------------------
+        self.mySystem.create_modules().initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
+
+        self.mySystem.reset()
+        self.mySystem.initialize_params_with_defaults()
+        self.mySystem.set_params_for_single_run()
+
+        for i in range(self.mySystem.get_trader_count()):
+            trader = self.mySystem.get_trader(i)
+            trader_id = trader.Id
+
+            DateTimes = ["25.05.2025 14:30:00", "02.06.2025 14:00:00"]
+            Dates = ["01.01.1900", "01.01.2100"]
+            Times = ["09:30:00", "11:59:00"]
+
+            trader.reset_date_times
+            trader.set_date_times(DateTimes[0], DateTimes[1])
+
+            trader.Signals.KarAlEnabled = False
+            trader.Signals.ZararKesEnabled = False
+            trader.Signals.GunSonuPozKapatEnabled = False
+            trader.Signals.TimeFilteringEnabled = True
+
+        self.mySystem.start()
+        for i in range(self.BarCount):
+            for j in range(self.mySystem.get_trader_count()):
+                trader = self.mySystem.get_trader(j)
+
+                # print(f"bar {i} : trader {trader.Id} is runnig...\n")
+
+                Al = False
+                Sat = False
+                FlatOl = False
+                PasGec = False
+                KarAl = False
+                ZararKes = False
+                isTradeEnabled = False
+                isPozKapatEnabled = False
+
+                trader.emirleri_resetle(i)
+
+                trader.emir_oncesi_dongu_foksiyonlarini_calistir(i)
+
+                if i < 1:
+                    continue
+
+                FlatOl = False
+
+                Al = self.myUtils.yukari_kesti(i, self.ExMov, self.Most)
+
+                Sat = self.myUtils.asagi_kesti(i, self.ExMov, self.Most)
+
+                KarAl = trader.Signals.KarAlEnabled
+                KarAl = KarAl and trader.KarAlZararKes.son_fiyata_gore_kar_al_seviye_hesapla(i, 5, 50, 1000) != 0
+
+                ZararKes = trader.Signals.ZararKesEnabled
+                ZararKes = ZararKes and trader.KarAlZararKes.son_fiyata_gore_zarar_kes_seviye_hesapla(i, -1, -10, 1000) != 0
+
+                IsSonYonA = trader.is_son_yon_a()
+
+                IsSonYonS = trader.is_son_yon_s()
+
+                IsSonYonF = trader.is_son_yon_f()
+
+                # useTimeFiltering = trader.Signals.TimeFilteringEnabled
+
+                trader.emirleri_setle(i, Al, Sat, FlatOl, PasGec, KarAl, ZararKes)
+
+                # YAPILACAK
+                trader.islem_zaman_filtresi_uygula(i)
+
+                trader.emir_sonrasi_dongu_foksiyonlarini_calistir(i)
+
+                if Al:
+                    print(f"bar {i} : trader {trader.Id} : Signal : Buy, Close {self.Close[i]}")
+                if Sat:
+                    print(f"bar {i} : trader {trader.Id} : Signal : Sell, Close {self.Close[i]}")
+
+                self.KarZararPuanList = trader.Lists.KarZararPuanList
+                self.KarZararFiyatList = trader.Lists.KarZararFiyatList
+                self.BakiyeFiyatList = trader.Lists.BakiyeFiyatList
+                self.YonList = trader.Lists.YonList
+                self.SeviyeList = trader.Lists.SeviyeList
+
+        self.mySystem.stop()
+
+        for i in range(self.mySystem.get_trader_count()):
+            trader = self.mySystem.get_trader(i)
+            trader_id = trader.Id
+
+            if (self.mySystem.bIdealGetiriHesapla):
+                trader.ideal_getiri_hesapla()
+
+            if (self.mySystem.bIstatistikleriHesapla):
+                trader.istatistikleri_hesapla()
+                pass
+
+            if (self.mySystem.bIstatistikleriEkranaYaz):
+                # trader.istatistikleri_ekrana_yaz(1)
+                pass
+
+            if (self.mySystem.bGetiriIstatistikleriEkranaYaz):
+                # trader.istatistikleri_ekrana_yaz(2)
+                pass
+
+            if (self.mySystem.bIstatistikleriDosyayaYaz):
+                trader.istatistikleri_dosyaya_yaz(self.mySystem.IstatistiklerOutputFileName)
+                pass
+
+            trader.update_data_frame()
+            print(trader._df)
+            print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
+            trader.write_data_frame_to_file_as_tabular("trading_data_tabular.txt")
+            trader.write_statistics_to_file_as_tabular("trading_statistics_tabular.txt")
+
+            # # CSV formatında kaydet
+            # trader.write_data_frame_to_file("trading_0_data.csv")
+            #
+            # # Excel formatında kaydet
+            # trader.write_data_frame_to_file("trading_0_data.xlsx")
+            #
+            # # JSON formatında kaydet
+            # trader.write_data_frame_to_file("trading_0_data.json")
+            #
+            # # HTML formatında kaydet
+            # trader.write_data_frame_to_file("trading_0_data.html")
+            pass
+
+        # --------------------------------------------------------------
+        print("Plotting market data...")
+        self.active_trader = self.mySystem.get_trader(0)
+        # self.plotData()
+        self.plotData2(self.active_trader)
+
+        # --------------------------------------------------------------
+        # Show timing reports
+        self.dataManager.reportTimes()
+        self.mySystem.reportTimes()
+
+        print(self.BakiyeFiyatList[0])
+        print(self.BakiyeFiyatList[1])
+
+
 if __name__ == "__main__":
     print("Hello, Gemini!")
 
     print("algoTrader, started!")
 
     algoTrader = AlgoTrader()
-    algoTrader.run()
+
+    choice = 0
+    if choice == 0:
+        algoTrader.run_with_single_trader()
+    else:
+        algoTrader.run_with_multiple_trader()
 
     print("algoTrader, finished!")

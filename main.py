@@ -6,6 +6,11 @@ if __name__ == "__main__":
     print("algoTrader, started!")
 
     algoTrader = AlgoTrader()
-    algoTrader.run()
+
+    choice = 0
+    if choice == 0:
+        algoTrader.run_with_single_trader()
+    else:
+        algoTrader.run_with_multiple_trader()
 
     print("algoTrader, finished!")
