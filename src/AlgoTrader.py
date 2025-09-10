@@ -239,6 +239,26 @@ class AlgoTrader:
         loss_trades = len([x for x in trader.Lists.KarZararFiyatList if x < 0])
         win_rate = (profit_trades / total_trades) if total_trades > 0 else 0
         
+        # Extract additional metrics
+        islem_sayisi = trader.Lists.IslemSayisiList[-1] if len(trader.Lists.IslemSayisiList) > 0 else 0
+        alis_sayisi = trader.Lists.AlisSayisiList[-1] if len(trader.Lists.AlisSayisiList) > 0 else 0
+        satis_sayisi = trader.Lists.SatisSayisiList[-1] if len(trader.Lists.SatisSayisiList) > 0 else 0
+        flat_sayisi = trader.Lists.FlatSayisiList[-1] if len(trader.Lists.FlatSayisiList) > 0 else 0
+        pass_sayisi = trader.Lists.PassSayisiList[-1] if len(trader.Lists.PassSayisiList) > 0 else 0
+        
+        komisyon_islem_sayisi = trader.Lists.KomisyonIslemSayisiList[-1] if len(trader.Lists.KomisyonIslemSayisiList) > 0 else 0
+        komisyon_fiyat = trader.Lists.KomisyonFiyatList[-1] if len(trader.Lists.KomisyonFiyatList) > 0 else 0
+        
+        getiri_fiyat = trader.Lists.GetiriFiyatList[-1] if len(trader.Lists.GetiriFiyatList) > 0 else 0
+        getiri_fiyat_yuzde = trader.Lists.GetiriFiyatYuzdeList[-1] if len(trader.Lists.GetiriFiyatYuzdeList) > 0 else 0
+        
+        bakiye_fiyat_net = trader.Lists.BakiyeFiyatNetList[-1] if len(trader.Lists.BakiyeFiyatNetList) > 0 else 0
+        getiri_fiyat_net = trader.Lists.GetiriFiyatNetList[-1] if len(trader.Lists.GetiriFiyatNetList) > 0 else 0
+        getiri_fiyat_yuzde_net = trader.Lists.GetiriFiyatYuzdeNetList[-1] if len(trader.Lists.GetiriFiyatYuzdeNetList) > 0 else 0
+        
+        getiri_kz = trader.Lists.GetiriKz[-1] if len(trader.Lists.GetiriKz) > 0 else 0
+        getiri_kz_net = trader.Lists.GetiriKzNet[-1] if len(trader.Lists.GetiriKzNet) > 0 else 0
+
         return {
             'period': period,
             'percent': percent,
@@ -246,7 +266,21 @@ class AlgoTrader:
             'total_trades': total_trades,
             'profit_trades': profit_trades,
             'loss_trades': loss_trades,
-            'win_rate': win_rate
+            'win_rate': win_rate,
+            'islem_sayisi': islem_sayisi,
+            'alis_sayisi': alis_sayisi,
+            'satis_sayisi': satis_sayisi,
+            'flat_sayisi': flat_sayisi,
+            'pass_sayisi': pass_sayisi,
+            'komisyon_islem_sayisi': komisyon_islem_sayisi,
+            'komisyon_fiyat': komisyon_fiyat,
+            'getiri_fiyat': getiri_fiyat,
+            'getiri_fiyat_yuzde': getiri_fiyat_yuzde,
+            'bakiye_fiyat_net': bakiye_fiyat_net,
+            'getiri_fiyat_net': getiri_fiyat_net,
+            'getiri_fiyat_yuzde_net': getiri_fiyat_yuzde_net,
+            'getiri_kz': getiri_kz,
+            'getiri_kz_net': getiri_kz_net
         }
 
     def write_optimization_results_to_file(self, output_dir, optimization_results, best_result, best_period, best_percent):
@@ -344,6 +378,156 @@ class AlgoTrader:
                        f"{row['loss_trades']:<8} {row['win_rate']:<8.2%}\n")
         
         print(f"Detailed report saved to: {txt_filename}")
+
+    def write_optimization_results_to_file_2(self, output_dir, optimization_results, best_result, best_period, best_percent):
+        """
+        Write optimization results with all 23 metrics to multiple file formats
+        
+        Args:
+            output_dir: Directory to save the files
+            optimization_results: List of all optimization results with 23 metrics
+            best_result: Best optimization result
+            best_period: Best period parameter
+            best_percent: Best percent parameter
+        """
+        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Ensure output directory exists
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Create DataFrame from results
+        import pandas as pd
+        df = pd.DataFrame(optimization_results)
+        
+        # Sort by final_balance descending to show best results first
+        df = df.sort_values('final_balance', ascending=False)
+        
+        # Add ranking column
+        df['rank'] = range(1, len(df) + 1)
+        
+        # Reorder columns - put key metrics first
+        key_columns = ['rank', 'period', 'percent', 'final_balance', 'total_trades', 'profit_trades', 'loss_trades', 'win_rate']
+        other_columns = [col for col in df.columns if col not in key_columns]
+        df = df[key_columns + other_columns]
+        
+        # Write to CSV
+        csv_filename = os.path.join(output_dir, f"optimization_results_detailed_{current_time}.csv")
+        df.to_csv(csv_filename, index=False)
+        print(f"Detailed optimization results saved to: {csv_filename}")
+        
+        # Write to Excel with formatting
+        try:
+            excel_filename = os.path.join(output_dir, f"optimization_results_detailed_{current_time}.xlsx")
+            with pd.ExcelWriter(excel_filename, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name='Detailed_Results', index=False)
+                
+                # Add summary sheet with more metrics
+                summary_data = {
+                    'Metric': ['Best Period', 'Best Percent', 'Best Final Balance', 'Best Total Trades', 'Best Win Rate', 
+                               'Best Profit Trades', 'Best Loss Trades', 'Best İslem Sayisi', 'Best Alis Sayisi',
+                               'Total Tests Run', 'Worst Final Balance', 'Average Final Balance'],
+                    'Value': [best_period, best_percent, best_result['final_balance'], best_result['total_trades'], 
+                             f"{best_result['win_rate']:.2%}", best_result.get('profit_trades', 'N/A'), 
+                             best_result.get('loss_trades', 'N/A'), best_result.get('islem_sayisi', 'N/A'),
+                             best_result.get('alis_sayisi', 'N/A'), len(optimization_results), 
+                             df['final_balance'].min(), df['final_balance'].mean()]
+                }
+                summary_df = pd.DataFrame(summary_data)
+                summary_df.to_excel(writer, sheet_name='Summary', index=False)
+            
+            print(f"Detailed optimization results saved to: {excel_filename}")
+        except ImportError:
+            print("openpyxl not available, Excel file not created")
+        
+        # Write comprehensive text report
+        txt_filename = os.path.join(output_dir, f"optimization_report_detailed_{current_time}.txt")
+        with open(txt_filename, 'w', encoding='utf-8') as f:
+            f.write("=== DETAILED OPTIMIZATION REPORT (23 Metrics) ===\n")
+            f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+            
+            f.write("=== BEST RESULT (All Metrics) ===\n")
+            for key, value in best_result.items():
+                if isinstance(value, float):
+                    if 'rate' in key.lower() or 'ratio' in key.lower():
+                        f.write(f"{key}: {value:.2%}\n")
+                    else:
+                        f.write(f"{key}: {value:.2f}\n")
+                else:
+                    f.write(f"{key}: {value}\n")
+            f.write("\n")
+            
+            f.write("=== TOP 10 RESULTS (Key Metrics) ===\n")
+            f.write(f"{'Rank':<4} {'Period':<6} {'Percent':<7} {'Balance':<12} {'Trades':<6} {'Win Rate':<8} {'İslem':<6} {'Alış':<6}\n")
+            f.write("-" * 65 + "\n")
+            
+            for i, row in df.head(10).iterrows():
+                islem = row.get('islem_sayisi', 'N/A')
+                alis = row.get('alis_sayisi', 'N/A')
+                f.write(f"{row['rank']:<4} {row['period']:<6} {row['percent']:<7} "
+                       f"{row['final_balance']:<12.2f} {row['total_trades']:<6} {row['win_rate']:<8.2%} "
+                       f"{islem:<6} {alis:<6}\n")
+            
+            f.write(f"\n=== STATISTICS ===\n")
+            f.write(f"Total tests run: {len(optimization_results)}\n")
+            f.write(f"Best balance: {df['final_balance'].max():.2f}\n")
+            f.write(f"Worst balance: {df['final_balance'].min():.2f}\n")
+            f.write(f"Average balance: {df['final_balance'].mean():.2f}\n")
+            f.write(f"Standard deviation: {df['final_balance'].std():.2f}\n")
+            
+            # Write all results with all columns
+            f.write(f"\n=== ALL RESULTS (All Metrics) ===\n")
+            f.write("Note: Due to large number of columns (23 metrics), see CSV/Excel files for complete tabular view\n")
+            f.write("-" * 80 + "\n")
+            
+            for i, row in df.head(20).iterrows():  # Limit to top 20 for readability
+                f.write(f"\nRank {row['rank']}: Period={row['period']}, Percent={row['percent']}\n")
+                f.write(f"  Final Balance: {row['final_balance']:.2f}\n")
+                f.write(f"  Total Trades: {row['total_trades']}, Win Rate: {row['win_rate']:.2%}\n")
+                if 'islem_sayisi' in row:
+                    f.write(f"  İslem Sayisi: {row.get('islem_sayisi', 'N/A')}, Alış Sayisi: {row.get('alis_sayisi', 'N/A')}\n")
+        
+        print(f"Detailed optimization report saved to: {txt_filename}")
+        
+        print(f"\n=== DETAILED OPTIMIZATION SUMMARY ===")
+        print(f"Best Period: {best_period}")
+        print(f"Best Percent: {best_percent}")
+        print(f"Best Final Balance: {best_result['final_balance']:.2f}")
+        print(f"Total Tests: {len(optimization_results)}")
+        print(f"Average Balance: {df['final_balance'].mean():.2f}")
+        print(f"Results saved to: {output_dir}")
+
+    def print_current_result(self, result):
+        """Print current optimization result with basic metrics"""
+        print(f"  Result: Balance={result['final_balance']:.2f}, Trades={result['total_trades']}, Win Rate={result['win_rate']:.2%}")
+
+    def print_current_result_2(self, result):
+        """Print current optimization result with all 23 metrics"""
+        print(f"  Detailed Result:")
+        print(f"    Period={result['period']}, Percent={result['percent']}")
+        print(f"    Final Balance: {result['final_balance']:.2f}")
+        print(f"    Total Trades: {result['total_trades']}, Profit: {result['profit_trades']}, Loss: {result['loss_trades']}")
+        print(f"    Win Rate: {result['win_rate']:.2%}")
+        
+        # Print additional metrics if available
+        if 'islem_sayisi' in result:
+            print(f"    İslem Sayisi: {result.get('islem_sayisi', 'N/A')}, Alış Sayisi: {result.get('alis_sayisi', 'N/A')}")
+        if 'satis_sayisi' in result:
+            print(f"    Satış Sayisi: {result.get('satis_sayisi', 'N/A')}, Net Kar: {result.get('net_kar', 'N/A')}")
+        if 'toplam_komisyon' in result:
+            print(f"    Toplam Komisyon: {result.get('toplam_komisyon', 'N/A'):.2f}")
+        if 'max_dd' in result:
+            print(f"    Max DD: {result.get('max_dd', 'N/A'):.2f}, Max DD %: {result.get('max_dd_percent', 'N/A'):.2%}")
+        if 'sharpe_ratio' in result:
+            print(f"    Sharpe Ratio: {result.get('sharpe_ratio', 'N/A'):.3f}, Sortino Ratio: {result.get('sortino_ratio', 'N/A'):.3f}")
+        
+        # Print remaining metrics if they exist
+        metrics_to_skip = {'period', 'percent', 'final_balance', 'total_trades', 'profit_trades', 'loss_trades', 
+                          'win_rate', 'islem_sayisi', 'alis_sayisi', 'satis_sayisi', 'net_kar', 'toplam_komisyon',
+                          'max_dd', 'max_dd_percent', 'sharpe_ratio', 'sortino_ratio'}
+        
+        other_metrics = {k: v for k, v in result.items() if k not in metrics_to_skip}
+        if other_metrics:
+            print(f"    Other metrics: {other_metrics}")
 
     def loadMarketData(self):
         # self.dataManager.create_data(600)
@@ -1160,7 +1344,7 @@ class AlgoTrader:
         
         percent_start = 0.5
         percent_end = 2.5
-        percent_increment = 0.05
+        percent_increment = 0.5
         
         best_result = None
         best_period = None
@@ -1196,7 +1380,8 @@ class AlgoTrader:
                 optimization_results.append(result)
                 
                 # Print current result
-                print(f"  Result: Balance={result['final_balance']:.2f}, Trades={result['total_trades']}, Win Rate={result['win_rate']:.2%}")
+                # self.print_current_result(result)
+                self.print_current_result_2(result)
                 
                 # Track best result (example: highest final balance)
                 if best_result is None or result['final_balance'] > best_result['final_balance']:
@@ -1209,8 +1394,9 @@ class AlgoTrader:
         print(f"Best result: {best_result}")
         
         # Write optimization results to file
-        self.write_optimization_results_to_file(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
-        
+        # self.write_optimization_results_to_file(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
+        self.write_optimization_results_to_file_2(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
+
         # Use best parameters for final run and plotting
         self.Most, self.ExMov = self.calculate_most(period=best_period, percent=best_percent)
 
