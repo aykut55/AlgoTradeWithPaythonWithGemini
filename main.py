@@ -7,10 +7,14 @@ if __name__ == "__main__":
 
     algoTrader = AlgoTrader()
 
-    choice = 0
+    choice = 2
     if choice == 0:
         algoTrader.run_with_single_trader()
-    else:
+    elif choice == 1:
         algoTrader.run_with_multiple_trader()
+    elif choice == 2:
+        algoTrader.run_optimization_with_single_trader()
+    else:
+        pass
 
     print("algoTrader, finished!")

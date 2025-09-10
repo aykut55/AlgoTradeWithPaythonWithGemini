@@ -315,7 +315,6 @@ class SystemWrapper(CBase):
                 if self.bIstatistikleriDosyayaYaz:
                     trader.istatistikleri_dosyaya_yaz(self.IstatistiklerOutputFileName)
 
-
     def set_params_for_optimizasyon(self, OptEnabled=True, IdealGetiriHesapla=True, IstatistikleriHesapla=True,
                                     IstatistikleriEkranaYaz=False, GetiriIstatistikleriEkranaYaz=False,
                                     IstatistikleriDosyayaYaz=True, SinyalleriEkranaCiz=False,
@@ -345,6 +344,10 @@ class SystemWrapper(CBase):
 
     def set_total_run_count(self, TotalRunCount):
         self.TotalRunCount = TotalRunCount
+
+    def clear_input_params(self):
+        for i in range(self.InputParamsCount):
+            self.InputParams[i] = ""
 
     def set_input_params(self, Index, Value):
         self.InputParams[Index] = Value

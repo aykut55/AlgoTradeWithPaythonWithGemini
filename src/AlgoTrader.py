@@ -93,6 +93,258 @@ class AlgoTrader:
 
         return most, exmov
 
+    def run_single_optimization_test(self, period, percent):
+        """
+        Run a single optimization test with given parameters
+        
+        Args:
+            period: Period value for MOST calculation
+            percent: Percent value for MOST calculation
+            
+        Returns:
+            dict: Results of the trading test
+        """
+        # Reset system for this test
+        # self.mySystem.reset()
+        # self.mySystem.initialize_params_with_defaults()
+        # self.mySystem.set_params_for_single_run()
+
+        # Get the first trader
+        trader = self.mySystem.get_trader(0)
+
+        trader_id = trader.Id
+
+        DateTimes = ["25.05.2025 14:30:00", "02.06.2025 14:00:00"]
+        Dates = ["01.01.1900", "01.01.2100"]
+        Times = ["09:30:00", "11:59:00"]
+
+        trader.reset_date_times
+        trader.set_date_times(DateTimes[0], DateTimes[1])
+
+        trader.Signals.KarAlEnabled = False
+        trader.Signals.ZararKesEnabled = False
+        trader.Signals.GunSonuPozKapatEnabled = False
+        trader.Signals.TimeFilteringEnabled = True
+
+
+
+        self.mySystem.start()
+        for i in range(self.BarCount):
+            trader = self.mySystem.get_trader(0)
+            # print(f"bar {i} : trader {trader.Id} is runnig...\n")
+
+            Al = False
+            Sat = False
+            FlatOl = False
+            PasGec = False
+            KarAl = False
+            ZararKes = False
+            isTradeEnabled = False
+            isPozKapatEnabled = False
+
+            trader.emirleri_resetle(i)
+
+            trader.emir_oncesi_dongu_foksiyonlarini_calistir(i)
+
+            if i < 1:
+                continue
+
+            FlatOl = False
+
+            Al = self.myUtils.yukari_kesti(i, self.ExMov, self.Most)
+
+            Sat = self.myUtils.asagi_kesti(i, self.ExMov, self.Most)
+
+            KarAl = trader.Signals.KarAlEnabled
+            KarAl = KarAl and trader.KarAlZararKes.son_fiyata_gore_kar_al_seviye_hesapla(i, 5, 50, 1000) != 0
+
+            ZararKes = trader.Signals.ZararKesEnabled
+            ZararKes = ZararKes and trader.KarAlZararKes.son_fiyata_gore_zarar_kes_seviye_hesapla(i, -1, -10, 1000) != 0
+
+            IsSonYonA = trader.is_son_yon_a()
+
+            IsSonYonS = trader.is_son_yon_s()
+
+            IsSonYonF = trader.is_son_yon_f()
+
+            # useTimeFiltering = trader.Signals.TimeFilteringEnabled
+
+            trader.emirleri_setle(i, Al, Sat, FlatOl, PasGec, KarAl, ZararKes)
+
+            # YAPILACAK
+            trader.islem_zaman_filtresi_uygula(i)
+
+            trader.emir_sonrasi_dongu_foksiyonlarini_calistir(i)
+
+            if Al:
+                print(f"bar {i} : trader {trader.Id} : Signal : Buy, Close {self.Close[i]}")
+            if Sat:
+                print(f"bar {i} : trader {trader.Id} : Signal : Sell, Close {self.Close[i]}")
+
+            self.KarZararPuanList = trader.Lists.KarZararPuanList
+            self.KarZararFiyatList = trader.Lists.KarZararFiyatList
+            self.BakiyeFiyatList = trader.Lists.BakiyeFiyatList
+            self.YonList = trader.Lists.YonList
+            self.SeviyeList = trader.Lists.SeviyeList
+        self.mySystem.stop()
+
+        # Get results from the first trader
+        trader = self.mySystem.get_trader(0)
+        trader_id = trader.Id
+
+        # Calculate statistics (ideal)
+        if (self.mySystem.bIdealGetiriHesapla):
+            trader.ideal_getiri_hesapla()
+
+        # Calculate statistics
+        if (self.mySystem.bIstatistikleriHesapla):
+            trader.istatistikleri_hesapla()
+            pass
+
+        if (self.mySystem.bIstatistikleriEkranaYaz):
+            # trader.istatistikleri_ekrana_yaz(1)
+            pass
+
+        if (self.mySystem.bGetiriIstatistikleriEkranaYaz):
+            # trader.istatistikleri_ekrana_yaz(2)
+            pass
+
+        if (self.mySystem.bIstatistikleriDosyayaYaz):
+            trader.istatistikleri_dosyaya_yaz(self.mySystem.IstatistiklerOutputFileName)
+            pass
+
+        # trader.update_data_frame()
+        # print(trader._df)
+        # print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
+        # trader.write_data_frame_to_file_as_tabular("trading_data_tabular.txt")
+        # trader.write_statistics_to_file_as_tabular("trading_statistics_tabular.txt")
+        #
+        # # # CSV formatında kaydet
+        # # trader.write_data_frame_to_file("trading_0_data.csv")
+        # #
+        # # # Excel formatında kaydet
+        # # trader.write_data_frame_to_file("trading_0_data.xlsx")
+        # #
+        # # # JSON formatında kaydet
+        # # trader.write_data_frame_to_file("trading_0_data.json")
+        # #
+        # # # HTML formatında kaydet
+        # # trader.write_data_frame_to_file("trading_0_data.html")
+        # pass
+        
+        # Extract key metrics
+        final_balance = trader.Lists.BakiyeFiyatList[-1] if len(trader.Lists.BakiyeFiyatList) > 0 else 0
+        total_trades = len([x for x in trader.Lists.YonList if x != 'F'])
+        profit_trades = len([x for x in trader.Lists.KarZararFiyatList if x > 0])
+        loss_trades = len([x for x in trader.Lists.KarZararFiyatList if x < 0])
+        win_rate = (profit_trades / total_trades) if total_trades > 0 else 0
+        
+        return {
+            'period': period,
+            'percent': percent,
+            'final_balance': final_balance,
+            'total_trades': total_trades,
+            'profit_trades': profit_trades,
+            'loss_trades': loss_trades,
+            'win_rate': win_rate
+        }
+
+    def write_optimization_results_to_file(self, output_dir, optimization_results, best_result, best_period, best_percent):
+        """
+        Write optimization results to multiple file formats
+        
+        Args:
+            output_dir: Directory to save the files
+            optimization_results: List of all optimization results
+            best_result: Best optimization result
+            best_period: Best period parameter
+            best_percent: Best percent parameter
+        """
+        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Ensure output directory exists
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Create DataFrame from results
+        import pandas as pd
+        df = pd.DataFrame(optimization_results)
+        
+        # Sort by final_balance descending to show best results first
+        df = df.sort_values('final_balance', ascending=False)
+        
+        # Add ranking column
+        df['rank'] = range(1, len(df) + 1)
+        
+        # Reorder columns
+        df = df[['rank', 'period', 'percent', 'final_balance', 'total_trades', 'profit_trades', 'loss_trades', 'win_rate']]
+        
+        # Write to CSV
+        csv_filename = os.path.join(output_dir, f"optimization_results_{current_time}.csv")
+        df.to_csv(csv_filename, index=False)
+        print(f"Optimization results saved to: {csv_filename}")
+        
+        # Write to Excel with formatting
+        try:
+            excel_filename = os.path.join(output_dir, f"optimization_results_{current_time}.xlsx")
+            with pd.ExcelWriter(excel_filename, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name='Optimization_Results', index=False)
+                
+                # Add summary sheet
+                summary_data = {
+                    'Metric': ['Best Period', 'Best Percent', 'Best Final Balance', 'Best Total Trades', 'Best Win Rate', 
+                               'Total Tests Run', 'Worst Final Balance', 'Average Final Balance'],
+                    'Value': [best_period, best_percent, best_result['final_balance'], best_result['total_trades'], 
+                             f"{best_result['win_rate']:.2%}", len(optimization_results), df['final_balance'].min(),
+                             df['final_balance'].mean()]
+                }
+                summary_df = pd.DataFrame(summary_data)
+                summary_df.to_excel(writer, sheet_name='Summary', index=False)
+            
+            print(f"Optimization results saved to: {excel_filename}")
+        except ImportError:
+            print("openpyxl not available, Excel file not created")
+        
+        # Write detailed text report
+        txt_filename = os.path.join(output_dir, f"optimization_report_{current_time}.txt")
+        with open(txt_filename, 'w', encoding='utf-8') as f:
+            f.write("=== OPTIMIZATION REPORT ===\n")
+            f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+            
+            f.write("=== BEST RESULT ===\n")
+            f.write(f"Period: {best_period}\n")
+            f.write(f"Percent: {best_percent}\n")
+            f.write(f"Final Balance: {best_result['final_balance']:.2f}\n")
+            f.write(f"Total Trades: {best_result['total_trades']}\n")
+            f.write(f"Profit Trades: {best_result['profit_trades']}\n")
+            f.write(f"Loss Trades: {best_result['loss_trades']}\n")
+            f.write(f"Win Rate: {best_result['win_rate']:.2%}\n\n")
+            
+            f.write("=== TOP 10 RESULTS ===\n")
+            f.write(f"{'Rank':<4} {'Period':<6} {'Percent':<7} {'Balance':<12} {'Trades':<6} {'Win Rate':<8}\n")
+            f.write("-" * 50 + "\n")
+            
+            for i, row in df.head(10).iterrows():
+                f.write(f"{row['rank']:<4} {row['period']:<6} {row['percent']:<7} "
+                       f"{row['final_balance']:<12.2f} {row['total_trades']:<6} {row['win_rate']:<8.2%}\n")
+            
+            f.write(f"\n=== STATISTICS ===\n")
+            f.write(f"Total tests run: {len(optimization_results)}\n")
+            f.write(f"Best balance: {df['final_balance'].max():.2f}\n")
+            f.write(f"Worst balance: {df['final_balance'].min():.2f}\n")
+            f.write(f"Average balance: {df['final_balance'].mean():.2f}\n")
+            f.write(f"Standard deviation: {df['final_balance'].std():.2f}\n")
+            
+            f.write(f"\n=== ALL RESULTS ===\n")
+            f.write(f"{'Rank':<4} {'Period':<6} {'Percent':<7} {'Balance':<12} {'Trades':<6} {'P.Trades':<8} {'L.Trades':<8} {'Win Rate':<8}\n")
+            f.write("-" * 70 + "\n")
+            
+            for i, row in df.iterrows():
+                f.write(f"{row['rank']:<4} {row['period']:<6} {row['percent']:<7} "
+                       f"{row['final_balance']:<12.2f} {row['total_trades']:<6} {row['profit_trades']:<8} "
+                       f"{row['loss_trades']:<8} {row['win_rate']:<8.2%}\n")
+        
+        print(f"Detailed report saved to: {txt_filename}")
+
     def loadMarketData(self):
         # self.dataManager.create_data(600)
         self.dataManager.set_read_mode_last_n(20000)  # Son 20000 satırı okumaya ayarla
@@ -813,6 +1065,127 @@ class AlgoTrader:
         print(self.BakiyeFiyatList[0])
         print(self.BakiyeFiyatList[1])
 
+    def create_config_file(self, configFilePath):
+        self.mySystem.write_params_to_file(configFilePath,
+                                           self.mySystem.bUseParamsFromInputFile,
+                                           self.mySystem.CurrentRunIndex,
+                                           self.mySystem.TotalRunCount,
+
+                                           self.mySystem.bOptEnabled,
+                                           self.mySystem.bIdealGetiriHesapla,
+                                           self.mySystem.bIstatistikleriHesapla,
+                                           self.mySystem.bIstatistikleriEkranaYaz,
+                                           self.mySystem.bGetiriIstatistikleriEkranaYaz,
+                                           self.mySystem.bIstatistikleriDosyayaYaz,
+                                           self.mySystem.bOptimizasyonIstatistiklerininBasliklariniDosyayaYaz,
+                                           self.mySystem.bOptimizasyonIstatistikleriniDosyayaYaz,
+
+                                           self.mySystem.bSinyalleriEkranaCiz,
+                                           self.mySystem.ParamsInputFileName,
+                                           self.mySystem.IstatistiklerOutputFileName,
+                                           self.mySystem.IstatistiklerOptOutputFileName)
+
+    def run_optimization_with_single_trader(self):
+        # --------------------------------------------------------------
+        # Read market data (equivalent to .GrafikVerileri operations)
+        print("Loading market data...")
+        self.loadMarketData()
+
+        # --------------------------------------------------------------
+        # Create level series
+        self.LevelUp4 = self.create_level_series(self.BarCount, 6000)
+        self.LevelUp3 = self.create_level_series(self.BarCount, 5750)
+        self.LevelUp2 = self.create_level_series(self.BarCount, 5500)
+        self.LevelUp1 = self.create_level_series(self.BarCount, 5250)
+
+        self.Level = self.create_level_series(self.BarCount, 5000)
+
+        self.LevelDown1 = self.create_level_series(self.BarCount, 4750)
+        self.LevelDown2 = self.create_level_series(self.BarCount, 4500)
+        self.LevelDown3 = self.create_level_series(self.BarCount, 4250)
+        self.LevelDown4 = self.create_level_series(self.BarCount, 4000)
+
+        self.LevelZero = self.create_level_series(self.BarCount, 0)
+
+        self.Most, self.ExMov = self.calculate_most(period=21, percent=1.0)
+
+        # --------------------------------------------------------------
+        self.mySystem.create_modules().initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
+
+        self.mySystem.GrafikSembol = "BTCUSD"
+        self.mySystem.GrafikPeriyot = "01"
+        self.mySystem.SistemAdi = "my_sistem_01"
+
+        self.mySystem.reset()
+        self.mySystem.initialize_params_with_defaults()
+
+        # enable for single run
+        self.mySystem.set_params_for_single_run()
+        self.mySystem.clear_input_params()
+        self.mySystem.set_input_params(0, "Simple")
+        self.mySystem.set_input_params(1, "8")
+        self.mySystem.set_input_params(2, "13")
+        self.mySystem.set_input_params(3, "21")
+        self.mySystem.set_input_params(4, "50")
+        self.mySystem.set_input_params(5, "100")
+        self.mySystem.set_input_params(5, "200")
+
+        # enable for optimization
+        self.mySystem.set_params_for_optimizasyon()
+        self.mySystem.clear_input_params()
+        self.mySystem.set_input_params(0, "Simple")
+        self.mySystem.set_input_params(1, "8")
+        self.mySystem.set_input_params(2, "13")
+        self.mySystem.set_input_params(3, "21")
+        self.mySystem.set_input_params(4, "50")
+        self.mySystem.set_input_params(5, "100")
+        self.mySystem.set_input_params(5, "200")
+
+        # # enable to create configFile (only once), then disable
+        # configFileName = "config.txt"
+        # configFilePath = os.path.join(self.mySystem.InputsDir, configFileName)
+        # self.create_config_file(configFilePath)
+        #
+        # # configFile must be prepared, already
+        # self.mySystem.read_params_from_file(configFilePath).update_sistem_parametreleri()
+
+        # Parameter scanning for period and percent
+        period_values = [8, 13, 21, 34, 50]  # Different period values to test
+        percent_values = [0.5, 1.0, 1.5, 2.0, 2.5]  # Different percent values to test
+        
+        best_result = None
+        best_period = None
+        best_percent = None
+        optimization_results = []
+        
+        for period in period_values:
+            for percent in percent_values:
+                print(f"Testing period={period}, percent={percent}")
+                self.Most, self.ExMov = self.calculate_most(period=period, percent=percent)
+                
+                # Run trading simulation for this parameter combination
+                result = self.run_single_optimization_test(period, percent)
+                optimization_results.append(result)
+                
+                # Print current result
+                print(f"  Result: Balance={result['final_balance']:.2f}, Trades={result['total_trades']}, Win Rate={result['win_rate']:.2%}")
+                
+                # Track best result (example: highest final balance)
+                if best_result is None or result['final_balance'] > best_result['final_balance']:
+                    best_result = result
+                    best_period = period
+                    best_percent = percent
+        
+        print(f"\nOptimization completed!")
+        print(f"Best parameters: period={best_period}, percent={best_percent}")
+        print(f"Best result: {best_result}")
+        
+        # Write optimization results to file
+        self.write_optimization_results_to_file(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
+        
+        # Use best parameters for final run and plotting
+        self.Most, self.ExMov = self.calculate_most(period=best_period, percent=best_percent)
+
 
 if __name__ == "__main__":
     print("Hello, Gemini!")
@@ -821,10 +1194,14 @@ if __name__ == "__main__":
 
     algoTrader = AlgoTrader()
 
-    choice = 0
+    choice = 2
     if choice == 0:
         algoTrader.run_with_single_trader()
-    else:
+    elif choice == 1:
         algoTrader.run_with_multiple_trader()
+    elif choice == 2:
+        algoTrader.run_optimization_with_single_trader()
+    else:
+        pass
 
     print("algoTrader, finished!")
