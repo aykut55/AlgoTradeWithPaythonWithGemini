@@ -176,10 +176,10 @@ class AlgoTrader:
 
             trader.emir_sonrasi_dongu_foksiyonlarini_calistir(i)
 
-            if Al:
-                print(f"bar {i} : trader {trader.Id} : Signal : Buy, Close {self.Close[i]}")
-            if Sat:
-                print(f"bar {i} : trader {trader.Id} : Signal : Sell, Close {self.Close[i]}")
+            # if Al:
+            #     print(f"bar {i} : trader {trader.Id} : Signal : Buy, Close {self.Close[i]}")
+            # if Sat:
+            #     print(f"bar {i} : trader {trader.Id} : Signal : Sell, Close {self.Close[i]}")
 
             self.KarZararPuanList = trader.Lists.KarZararPuanList
             self.KarZararFiyatList = trader.Lists.KarZararFiyatList
@@ -1150,17 +1150,45 @@ class AlgoTrader:
         # self.mySystem.read_params_from_file(configFilePath).update_sistem_parametreleri()
 
         # Parameter scanning for period and percent
-        period_values = [8, 13, 21, 34, 50]  # Different period values to test
-        percent_values = [0.5, 1.0, 1.5, 2.0, 2.5]  # Different percent values to test
+        # period_values = [8, 13, 21, 34, 50]  # Different period values to test
+        # percent_values = [0.5, 1.0, 1.5, 2.0, 2.5]  # Different percent values to test
+        #         veya asagidaki gibi kullanim
+        # Parameter scanning for period and percent
+        period_start = 8
+        period_end = 50
+        period_increment = 1
+        
+        percent_start = 0.5
+        percent_end = 2.5
+        percent_increment = 0.05
         
         best_result = None
         best_period = None
         best_percent = None
         optimization_results = []
         
+        # Generate period values using range
+        period_values = list(range(period_start, period_end + 1, period_increment))
+        
+        # Generate percent values using increment
+        percent_values = []
+        current_percent = percent_start
+        while current_percent <= percent_end:
+            percent_values.append(round(current_percent, 1))  # Round to avoid floating point issues
+            current_percent += percent_increment
+        
+        print(f"Period values to test: {period_values}")
+        print(f"Percent values to test: {percent_values}")
+        total_combinations = len(period_values) * len(percent_values)
+        print(f"Total combinations: {total_combinations}")
+        print("=" * 50)
+
+        current_iteration = 0
         for period in period_values:
             for percent in percent_values:
-                print(f"Testing period={period}, percent={percent}")
+                current_iteration += 1
+                progress_percent = (current_iteration / total_combinations) * 100
+                print(f"[{current_iteration}/{total_combinations}] ({progress_percent:.1f}%) Testing period={period}, percent={percent}")
                 self.Most, self.ExMov = self.calculate_most(period=period, percent=percent)
                 
                 # Run trading simulation for this parameter combination
