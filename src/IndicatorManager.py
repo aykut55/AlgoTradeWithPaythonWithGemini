@@ -32,6 +32,65 @@ class MAMethod(Enum):
     WILDER = "Wilder"
     ZERO_LAG = "ZeroLag"
     TIME_SERIES = "TimeSeries"
+    DEMA = "DEMA"
+    TEMA = "TEMA"
+    VWMA = "VWMA"
+    SMMA = "SMMA"
+    LSMA = "LSMA"
+    KAMA = "KAMA"
+    FRAMA = "FRAMA"
+    VIDYA = "VIDYA"
+    ZLEMA = "ZLEMA"
+    T3 = "T3"
+    ALMA = "ALMA"
+    JMA = "JMA"
+    MAMA = "MAMA"
+    MCGINLEY = "MCGINLEY"
+    VAMA = "VAMA"
+    COVWMA = "COVWMA"
+    COVWEMA = "COVWEMA"
+    FAMA = "FAMA"
+    SRWMA = "SRWMA"
+    SWMA = "SWMA"
+    EVWMA = "EVWMA"
+    REGMA = "REGMA"
+    REMA = "REMA"
+    REPMA = "REPMA"
+    RSIMA = "RSIMA"
+    ETMA = "ETMA"
+    TREMA = "TREMA"
+    TRSMA = "TRSMA"
+    THMA = "THMA"
+    DWMA = "DWMA"
+    TWMA = "TWMA"
+    DVWMA = "DVWMA"
+    TVWMA = "TVWMA"
+    DHULL = "DHULL"
+    THULL = "THULL"
+    DZLEMA = "DZLEMA"
+    TZLEMA = "TZLEMA"
+    DSSMA = "DSSMA"
+    TSSMA = "TSSMA"
+    DSMMA = "DSMMA"
+    TSMMA = "TSMMA"
+    DSMA = "DSMA"
+    TSMA = "TSMA"
+    ADEMA = "ADEMA"
+    EDMA = "EDMA"
+    EDSMA = "EDSMA"
+    AHMA = "AHMA"
+    EHMA = "EHMA"
+    ALSMA = "ALSMA"
+    AARMA = "AARMA"
+    MCMA = "MCMA"
+    LEOMA = "LEOMA"
+    CMA = "CMA"
+    CORMA = "CORMA"
+    AUTOL = "AUTOL"
+    MEDIAN = "MEDIAN"
+    GMA = "GMA"
+    XEMA = "XEMA"
+    ZSMA = "ZSMA"
 
 
 @dataclass
@@ -246,6 +305,625 @@ class CIndicatorManager(CBase):
         hull_ma = self.calculate_wma(hull_source, sqrt_period)
         
         return hull_ma
+
+    def calculate_dema(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Double Exponential Moving Average.
+        
+        Args:
+            source: Price series
+            period: Calculation period
+            
+        Returns:
+            DEMA values as numpy array
+        """
+        ema1 = self.calculate_ema(source, period)
+        ema2 = self.calculate_ema(ema1, period)
+        dema = 2 * ema1 - ema2
+        return dema
+
+    def calculate_tema(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Triple Exponential Moving Average.
+        
+        Args:
+            source: Price series
+            period: Calculation period
+            
+        Returns:
+            TEMA values as numpy array
+        """
+        ema1 = self.calculate_ema(source, period)
+        ema2 = self.calculate_ema(ema1, period)
+        ema3 = self.calculate_ema(ema2, period)
+        tema = 3 * (ema1 - ema2) + ema3
+        return tema
+
+    def calculate_vwma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Volume Weighted Moving Average.
+        
+        Args:
+            source: Price series
+            period: Calculation period
+            
+        Returns:
+            VWMA values as numpy array
+        """
+        source_array = np.array(source, dtype=np.float64)
+        volume_array = np.array(self.Volume, dtype=np.float64)
+        
+        if len(source_array) < period:
+            return np.full(len(source_array), np.nan)
+            
+        price_volume = source_array * volume_array
+        
+        price_volume_series = pd.Series(price_volume)
+        volume_series = pd.Series(volume_array)
+        
+        sum_price_volume = price_volume_series.rolling(window=period, min_periods=period).sum()
+        sum_volume = volume_series.rolling(window=period, min_periods=period).sum()
+        
+        vwma = sum_price_volume / sum_volume
+        
+        return vwma.values
+
+    def calculate_lsma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Least Squares Moving Average (Linear Regression).
+        
+        Args:
+            source: Price series
+            period: Calculation period
+            
+        Returns:
+            LSMA values as numpy array
+        """
+        source_array = np.array(source, dtype=np.float64)
+        if len(source_array) < period:
+            return np.full(len(source_array), np.nan)
+            
+        lsma = np.full(len(source_array), np.nan)
+        x = np.arange(period)
+        
+        for i in range(len(source_array) - period + 1):
+            y = source_array[i:i+period]
+            if np.any(np.isnan(y)):
+                continue
+            slope, intercept = np.polyfit(x, y, 1)
+            lsma[i + period - 1] = intercept + slope * (period - 1)
+            
+        return lsma
+
+    def calculate_kama(self, source: NumericList, period: int, fast_period: int = 2, slow_period: int = 30) -> np.ndarray:
+        """
+        Calculate Kaufman's Adaptive Moving Average.
+        
+        Args:
+            source: Price series
+            period: KAMA period
+            fast_period: Fast EMA period for smoothing constant
+            slow_period: Slow EMA period for smoothing constant
+            
+        Returns:
+            KAMA values as numpy array
+        """
+        source_series = pd.Series(source)
+        
+        change = (source_series - source_series.shift(period)).abs()
+        volatility = (source_series - source_series.shift(1)).abs().rolling(window=period).sum()
+        
+        er = change / volatility
+        er = er.fillna(0)
+        
+        fast_alpha = 2 / (fast_period + 1)
+        slow_alpha = 2 / (slow_period + 1)
+        
+        sc = (er * (fast_alpha - slow_alpha) + slow_alpha) ** 2
+        
+        kama = np.full(len(source), np.nan)
+        
+        # Set the first KAMA value to the first source value
+        if len(source) > 0:
+            kama[0] = source[0]
+            
+        for i in range(1, len(source)):
+            if np.isnan(kama[i-1]):
+                 kama[i] = source[i]
+            else:
+                kama[i] = kama[i-1] + sc[i] * (source[i] - kama[i-1])
+                
+        return kama
+
+    def calculate_vidya(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Variable Index Dynamic Average.
+        
+        Args:
+            source: Price series
+            period: VIDYA period
+            
+        Returns:
+            VIDYA values as numpy array
+        """
+        source_series = pd.Series(source)
+        mom = source_series.diff()
+        up_sum = mom.where(mom > 0, 0).rolling(window=period).sum()
+        down_sum = -mom.where(mom < 0, 0).rolling(window=period).sum()
+        
+        # Avoid division by zero
+        cmo = (up_sum - down_sum) / (up_sum + down_sum)
+        cmo = cmo.fillna(0).abs()
+        
+        alpha = 2 / (period + 1)
+        vidya = np.full(len(source), np.nan)
+        
+        if len(source) > 0:
+            vidya[0] = source[0]
+            
+        for i in range(1, len(source)):
+            if np.isnan(vidya[i-1]):
+                vidya[i] = source[i]
+            else:
+                vidya[i] = source[i] * alpha * cmo[i] + vidya[i-1] * (1 - alpha * cmo[i])
+                
+        return vidya
+
+    def calculate_zlema(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Zero-Lag Exponential Moving Average.
+        
+        Args:
+            source: Price series
+            period: ZLEMA period
+            
+        Returns:
+            ZLEMA values as numpy array
+        """
+        lag = (period - 1) // 2
+        source_series = pd.Series(source)
+        zlema_data = source_series + (source_series - source_series.shift(lag))
+        
+        zlema = self.calculate_ema(zlema_data, period)
+        
+        return zlema
+
+    def calculate_t3(self, source: NumericList, period: int, v_factor: float = 0.7) -> np.ndarray:
+        """
+        Calculate Tillson T3 Moving Average.
+        
+        Args:
+            source: Price series
+            period: T3 period
+            v_factor: Volume factor
+            
+        Returns:
+            T3 values as numpy array
+        """
+        ema1 = self.calculate_ema(source, period)
+        ema2 = self.calculate_ema(ema1, period)
+        ema3 = self.calculate_ema(ema2, period)
+        ema4 = self.calculate_ema(ema3, period)
+        ema5 = self.calculate_ema(ema4, period)
+        ema6 = self.calculate_ema(ema5, period)
+        
+        c1 = -1 * v_factor**3
+        c2 = 3 * v_factor**2 + 3 * v_factor**3
+        c3 = -6 * v_factor**2 - 3 * v_factor - 3 * v_factor**3
+        c4 = 1 + 3 * v_factor + v_factor**3 + 3 * v_factor**2
+        
+        t3 = c1 * ema6 + c2 * ema5 + c3 * ema4 + c4 * ema3
+        
+        return t3
+
+    def calculate_alma(self, source: NumericList, period: int, sigma: float = 6.0, offset: float = 0.85) -> np.ndarray:
+        """
+        Calculate Arnaud Legoux Moving Average.
+        
+        Args:
+            source: Price series
+            period: ALMA period
+            sigma: Sigma for Gaussian distribution
+            offset: Offset for Gaussian distribution
+            
+        Returns:
+            ALMA values as numpy array
+        """
+        source_array = np.array(source, dtype=np.float64)
+        if len(source_array) < period:
+            return np.full(len(source_array), np.nan)
+            
+        m = offset * (period - 1)
+        s = period / sigma
+        
+        w = np.exp(-((np.arange(period) - m) ** 2) / (2 * s * s))
+        w /= np.sum(w)
+        
+        alma = np.convolve(source_array, w, mode='valid')
+        
+        result = np.full(len(source_array), np.nan)
+        result[period-1:] = alma
+        
+        return result
+
+    def calculate_jma(self, source: NumericList, period: int, phase: float = 0, power: float = 2) -> np.ndarray:
+        """
+        Calculate Jurik Moving Average.
+        
+        Args:
+            source: Price series
+            period: JMA period
+            phase: Phase parameter
+            power: Power parameter
+            
+        Returns:
+            JMA values as numpy array
+        """
+        source_array = np.array(source, dtype=np.float64)
+        if len(source_array) < period:
+            return np.full(len(source_array), np.nan)
+
+        phase_ratio = 0.5 if phase < -100 else 2.5 if phase > 100 else phase / 100 + 1.5
+        beta = 0.45 * (period - 1) / (0.45 * (period - 1) + 2)
+        alpha = beta ** power
+        
+        ma1 = np.zeros_like(source_array)
+        det0 = np.zeros_like(source_array)
+        jma = np.zeros_like(source_array)
+        
+        ma1[0] = source_array[0]
+        for i in range(1, len(source_array)):
+            ma1[i] = (1 - alpha) * source_array[i] + alpha * ma1[i-1]
+            
+        det0[0] = 0
+        for i in range(1, len(source_array)):
+            det0[i] = (source_array[i] - ma1[i]) * (1 - beta) + beta * det0[i-1]
+            
+        ma2 = ma1 + phase_ratio * det0
+        
+        det1 = np.zeros_like(source_array)
+        jma[0] = ma2[0]
+        for i in range(1, len(source_array)):
+            det1[i] = (ma2[i] - jma[i-1]) * ((1 - alpha)**2) + (alpha**2) * det1[i-1]
+            jma[i] = jma[i-1] + det1[i]
+            
+        return jma
+
+    def calculate_frama(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Fractal Adaptive Moving Average. (Not yet implemented)
+        """
+        warnings.warn("FRAMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_mama(self, source: NumericList, fast_limit: float = 0.5, slow_limit: float = 0.05) -> np.ndarray:
+        """
+        Calculate MESA Adaptive Moving Average. (Not yet implemented)
+        """
+        warnings.warn("MAMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_mcginley(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate McGinley Dynamic. (Not yet implemented)
+        """
+        warnings.warn("McGinley Dynamic is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_vama(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Volatility Adjusted Moving Average. (Not yet implemented)
+        """
+        warnings.warn("VAMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_covwma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Coefficient of Variation Weighted Moving Average. (Not yet implemented)
+        """
+        warnings.warn("COVWMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_covwema(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Coefficient of Variation Weighted Exponential Moving Average. (Not yet implemented)
+        """
+        warnings.warn("COVWEMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_fama(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Following Adaptive Moving Average. (Not yet implemented)
+        """
+        warnings.warn("FAMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_srwma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Square Root Weighted Moving Average. (Not yet implemented)
+        """
+        warnings.warn("SRWMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_swma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Symmetrically (Sine-) Weighted Moving Average. (Not yet implemented)
+        """
+        warnings.warn("SWMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_evwma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Elastic Volume Weighted MA. (Not yet implemented)
+        """
+        warnings.warn("EVWMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_regma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Regularized Exponential Moving Average. (Not yet implemented)
+        """
+        warnings.warn("REGMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_rema(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Range EMA. (Not yet implemented)
+        """
+        warnings.warn("REMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_repma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Repulsion MA. (Not yet implemented)
+        """
+        warnings.warn("REPMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_rsima(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate RSI-based MA. (Not yet implemented)
+        """
+        warnings.warn("RSIMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_etma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Exponential Triangular MA. (Not yet implemented)
+        """
+        warnings.warn("ETMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_trema(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Triangular Exponential MA. (Not yet implemented)
+        """
+        warnings.warn("TREMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_trsma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Triangular Simple MA. (Not yet implemented)
+        """
+        warnings.warn("TRSMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_thma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Triple Hull MA. (Not yet implemented)
+        """
+        warnings.warn("THMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_dwma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Double WMA. (Not yet implemented)
+        """
+        warnings.warn("DWMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_twma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Triple WMA. (Not yet implemented)
+        """
+        warnings.warn("TWMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_dvwma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Double VWMA. (Not yet implemented)
+        """
+        warnings.warn("DVWMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_tvwma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Triple VWMA. (Not yet implemented)
+        """
+        warnings.warn("TVWMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_dhull(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Double Hull MA. (Not yet implemented)
+        """
+        warnings.warn("DHULL is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_thull(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Triple Hull MA. (Not yet implemented)
+        """
+        warnings.warn("THULL is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_dzlema(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Double ZLEMA. (Not yet implemented)
+        """
+        warnings.warn("DZLEMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_tzlema(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Triple ZLEMA. (Not yet implemented)
+        """
+        warnings.warn("TZLEMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_dssma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Double SSMA. (Not yet implemented)
+        """
+        warnings.warn("DSSMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_tssma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Triple SSMA. (Not yet implemented)
+        """
+        warnings.warn("TSSMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_dsmma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Double SMMA. (Not yet implemented)
+        """
+        warnings.warn("DSMMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_tsmma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Triple SMMA. (Not yet implemented)
+        """
+        warnings.warn("TSMMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_dsma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Double SMA. (Not yet implemented)
+        """
+        warnings.warn("DSMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_tsma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Triple SMA. (Not yet implemented)
+        """
+        warnings.warn("TSMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_adema(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Alpha-Decreasing EMA. (Not yet implemented)
+        """
+        warnings.warn("ADEMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_edma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Exponentially Deviating MA. (Not yet implemented)
+        """
+        warnings.warn("EDMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_edsma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Ehlers Dynamic Smoothed MA. (Not yet implemented)
+        """
+        warnings.warn("EDSMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_ahma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Ahrens MA. (Not yet implemented)
+        """
+        warnings.warn("AHMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_ehma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Exponential Hull MA. (Not yet implemented)
+        """
+        warnings.warn("EHMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_alsma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Adaptive Least Squares MA. (Not yet implemented)
+        """
+        warnings.warn("ALSMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_aarma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Adaptive Autonomous Recursive MA. (Not yet implemented)
+        """
+        warnings.warn("AARMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_mcma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate McNicholl MA. (Not yet implemented)
+        """
+        warnings.warn("MCMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_leoma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Leo MA. (Not yet implemented)
+        """
+        warnings.warn("LEOMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_cma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Corrective MA. (Not yet implemented)
+        """
+        warnings.warn("CMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_corma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Correlation MA. (Not yet implemented)
+        """
+        warnings.warn("CORMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_autol(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Auto-Line. (Not yet implemented)
+        """
+        warnings.warn("AUTOL is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_median(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Median MA. (Not yet implemented)
+        """
+        warnings.warn("MEDIAN is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_gma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Geometric MA. (Not yet implemented)
+        """
+        warnings.warn("GMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_xema(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Optimized Exponential MA. (Not yet implemented)
+        """
+        warnings.warn("XEMA is not yet implemented.")
+        return np.full(len(source), np.nan)
+
+    def calculate_zsma(self, source: NumericList, period: int) -> np.ndarray:
+        """
+        Calculate Zero-Lag Simple MA. (Not yet implemented)
+        """
+        warnings.warn("ZSMA is not yet implemented.")
+        return np.full(len(source), np.nan)
     
     def calculate_ma(
         self,
@@ -284,10 +962,126 @@ class CIndicatorManager(CBase):
             sma_period = (period + 1) // 2
             sma1 = self.calculate_sma(source, sma_period)
             result = self.calculate_sma(sma1, sma_period)
-        elif method_upper == "WILDER":
+        elif method_upper in ["WILDER", "RMA", "SMMA"]:
             # Wilder's smoothing (similar to EMA with different alpha)
             alpha = 1.0 / period
             result = self._calculate_wilder_ma(source, alpha)
+        elif method_upper == "DEMA":
+            result = self.calculate_dema(source, period)
+        elif method_upper == "TEMA":
+            result = self.calculate_tema(source, period)
+        elif method_upper == "VWMA":
+            result = self.calculate_vwma(source, period)
+        elif method_upper == "LSMA":
+            result = self.calculate_lsma(source, period)
+        elif method_upper == "KAMA":
+            result = self.calculate_kama(source, period)
+        elif method_upper == "VIDYA":
+            result = self.calculate_vidya(source, period)
+        elif method_upper == "ZLEMA":
+            result = self.calculate_zlema(source, period)
+        elif method_upper == "T3":
+            result = self.calculate_t3(source, period)
+        elif method_upper == "ALMA":
+            result = self.calculate_alma(source, period)
+        elif method_upper == "JMA":
+            result = self.calculate_jma(source, period)
+        elif method_upper == "FRAMA":
+            result = self.calculate_frama(source, period)
+        elif method_upper == "MAMA":
+            result = self.calculate_mama(source)
+        elif method_upper == "MCGINLEY":
+            result = self.calculate_mcginley(source, period)
+        elif method_upper == "VAMA":
+            result = self.calculate_vama(source, period)
+        elif method_upper == "COVWMA":
+            result = self.calculate_covwma(source, period)
+        elif method_upper == "COVWEMA":
+            result = self.calculate_covwema(source, period)
+        elif method_upper == "FAMA":
+            result = self.calculate_fama(source, period)
+        elif method_upper == "SRWMA":
+            result = self.calculate_srwma(source, period)
+        elif method_upper == "SWMA":
+            result = self.calculate_swma(source, period)
+        elif method_upper == "EVWMA":
+            result = self.calculate_evwma(source, period)
+        elif method_upper == "REGMA":
+            result = self.calculate_regma(source, period)
+        elif method_upper == "REMA":
+            result = self.calculate_rema(source, period)
+        elif method_upper == "REPMA":
+            result = self.calculate_repma(source, period)
+        elif method_upper == "RSIMA":
+            result = self.calculate_rsima(source, period)
+        elif method_upper == "ETMA":
+            result = self.calculate_etma(source, period)
+        elif method_upper == "TREMA":
+            result = self.calculate_trema(source, period)
+        elif method_upper == "TRSMA":
+            result = self.calculate_trsma(source, period)
+        elif method_upper == "THMA":
+            result = self.calculate_thma(source, period)
+        elif method_upper == "DWMA":
+            result = self.calculate_dwma(source, period)
+        elif method_upper == "TWMA":
+            result = self.calculate_twma(source, period)
+        elif method_upper == "DVWMA":
+            result = self.calculate_dvwma(source, period)
+        elif method_upper == "TVWMA":
+            result = self.calculate_tvwma(source, period)
+        elif method_upper == "DHULL":
+            result = self.calculate_dhull(source, period)
+        elif method_upper == "THULL":
+            result = self.calculate_thull(source, period)
+        elif method_upper == "DZLEMA":
+            result = self.calculate_dzlema(source, period)
+        elif method_upper == "TZLEMA":
+            result = self.calculate_tzlema(source, period)
+        elif method_upper == "DSSMA":
+            result = self.calculate_dssma(source, period)
+        elif method_upper == "TSSMA":
+            result = self.calculate_tssma(source, period)
+        elif method_upper == "DSMMA":
+            result = self.calculate_dsmma(source, period)
+        elif method_upper == "TSMMA":
+            result = self.calculate_tsmma(source, period)
+        elif method_upper == "DSMA":
+            result = self.calculate_dsma(source, period)
+        elif method_upper == "TSMA":
+            result = self.calculate_tsma(source, period)
+        elif method_upper == "ADEMA":
+            result = self.calculate_adema(source, period)
+        elif method_upper == "EDMA":
+            result = self.calculate_edma(source, period)
+        elif method_upper == "EDSMA":
+            result = self.calculate_edsma(source, period)
+        elif method_upper == "AHMA":
+            result = self.calculate_ahma(source, period)
+        elif method_upper == "EHMA":
+            result = self.calculate_ehma(source, period)
+        elif method_upper == "ALSMA":
+            result = self.calculate_alsma(source, period)
+        elif method_upper == "AARMA":
+            result = self.calculate_aarma(source, period)
+        elif method_upper == "MCMA":
+            result = self.calculate_mcma(source, period)
+        elif method_upper == "LEOMA":
+            result = self.calculate_leoma(source, period)
+        elif method_upper == "CMA":
+            result = self.calculate_cma(source, period)
+        elif method_upper == "CORMA":
+            result = self.calculate_corma(source, period)
+        elif method_upper == "AUTOL":
+            result = self.calculate_autol(source, period)
+        elif method_upper == "MEDIAN":
+            result = self.calculate_median(source, period)
+        elif method_upper == "GMA":
+            result = self.calculate_gma(source, period)
+        elif method_upper == "XEMA":
+            result = self.calculate_xema(source, period)
+        elif method_upper == "ZSMA":
+            result = self.calculate_zsma(source, period)
         else:
             # Default to Simple MA for unknown methods
             warnings.warn(f"Unknown MA method '{method}', using Simple MA")
