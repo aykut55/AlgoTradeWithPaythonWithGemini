@@ -6,6 +6,7 @@ from src.DataManager import DataManager
 from src.DataPlotter import DataPlotter
 from src.SystemWrapper import SystemWrapper
 from src.Utils import CUtils
+from src.IndicatorManager import CIndicatorManager
 
 class AlgoTrader:
     def __init__(self):
@@ -13,6 +14,7 @@ class AlgoTrader:
         self.dataPlotter = DataPlotter()
         self.mySystem = SystemWrapper()
         self.myUtils = CUtils()
+        self.indicatorManager = None
         self.KarZararPuanList = []
         self.KarZararFiyatList = []
         self.BakiyeFiyatList = []
@@ -33,65 +35,6 @@ class AlgoTrader:
             numpy array filled with the level value
         """
         return np.full(bar_count, level_value, dtype=float)
-
-    def calculate_most(self, period=21, percent=1.0):
-        """
-        Calculates the MOST (Moving Stop Loss) indicator based on the provided Pine Script logic.
-
-        Args:
-            period: The period for the Exponential Moving Average (EMA).
-            percent: The percentage for the bands.
-
-        Returns:
-            A tuple containing two numpy arrays: (most, exmov)
-        """
-        close_series = pd.Series(self.Close)
-        exmov = close_series.ewm(span=period, adjust=False).mean().to_numpy()
-
-        fark = exmov * (percent / 100.0)
-        up = exmov - fark
-        down = exmov + fark
-
-        trend_up = np.zeros(self.BarCount)
-        trend_down = np.zeros(self.BarCount)
-        trend = np.zeros(self.BarCount)
-        most = np.zeros(self.BarCount)
-
-        # Initialize first values
-        trend_up[0] = up[0]
-        trend_down[0] = down[0]
-        trend[0] = 1
-        most[0] = trend_up[0]
-
-
-        for i in range(1, self.BarCount):
-            # Pine Script: TrendUp = prev(ExMov,1)>prev(TrendUp,1) ? max(Up,prev(TrendUp,1)) : Up
-            if exmov[i-1] > trend_up[i-1]:
-                trend_up[i] = max(up[i], trend_up[i-1])
-            else:
-                trend_up[i] = up[i]
-
-            # Pine Script: TrendDown = prev(ExMov,1)<prev(TrendDown,1) ? min(Down,prev(TrendDown,1)) : Down
-            if exmov[i-1] < trend_down[i-1]:
-                trend_down[i] = min(down[i], trend_down[i-1])
-            else:
-                trend_down[i] = down[i]
-
-            # Pine Script: Trend = ExMov>prev(TrendDown,1) ? 1 : ExMov<prev(TrendUp,1) ? -1 : prev(Trend,1)
-            if exmov[i] > trend_down[i-1]:
-                trend[i] = 1
-            elif exmov[i] < trend_up[i-1]:
-                trend[i] = -1
-            else:
-                trend[i] = trend[i-1]
-
-            # Pine Script: MOST = Trend==1 ? TrendUp : TrendDown
-            if trend[i] == 1:
-                most[i] = trend_up[i]
-            else:
-                most[i] = trend_down[i]
-
-        return most, exmov
 
     def run_single_optimization_test(self, period, percent):
         """
@@ -805,6 +748,197 @@ class AlgoTrader:
         print("=== DEBUG: show çağrılıyor ===")
         self.dataPlotter.show()
 
+    def create_config_file(self, configFilePath):
+        self.mySystem.write_params_to_file(configFilePath,
+                                           self.mySystem.bUseParamsFromInputFile,
+                                           self.mySystem.CurrentRunIndex,
+                                           self.mySystem.TotalRunCount,
+
+                                           self.mySystem.bOptEnabled,
+                                           self.mySystem.bIdealGetiriHesapla,
+                                           self.mySystem.bIstatistikleriHesapla,
+                                           self.mySystem.bIstatistikleriEkranaYaz,
+                                           self.mySystem.bGetiriIstatistikleriEkranaYaz,
+                                           self.mySystem.bIstatistikleriDosyayaYaz,
+                                           self.mySystem.bOptimizasyonIstatistiklerininBasliklariniDosyayaYaz,
+                                           self.mySystem.bOptimizasyonIstatistikleriniDosyayaYaz,
+
+                                           self.mySystem.bSinyalleriEkranaCiz,
+                                           self.mySystem.ParamsInputFileName,
+                                           self.mySystem.IstatistiklerOutputFileName,
+                                           self.mySystem.IstatistiklerOptOutputFileName)
+
+    def run_with_single_trader(self):
+        # --------------------------------------------------------------
+        # Read market data (equivalent to .GrafikVerileri operations)
+        print("Loading market data...")
+        self.loadMarketData()
+
+        # --------------------------------------------------------------
+        # Create level series
+        self.LevelUp4 = self.create_level_series(self.BarCount, 6000)
+        self.LevelUp3 = self.create_level_series(self.BarCount, 5750)
+        self.LevelUp2 = self.create_level_series(self.BarCount, 5500)
+        self.LevelUp1 = self.create_level_series(self.BarCount, 5250)
+
+        self.Level = self.create_level_series(self.BarCount, 5000)
+
+        self.LevelDown1 = self.create_level_series(self.BarCount, 4750)
+        self.LevelDown2 = self.create_level_series(self.BarCount, 4500)
+        self.LevelDown3 = self.create_level_series(self.BarCount, 4250)
+        self.LevelDown4 = self.create_level_series(self.BarCount, 4000)
+
+        self.LevelZero = self.create_level_series(self.BarCount, 0)
+
+        # --------------------------------------------------------------
+        self.mySystem.create_modules().initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
+
+        self.mySystem.reset()
+        self.mySystem.initialize_params_with_defaults()
+        self.mySystem.set_params_for_single_run()
+
+        # --------------------------------------------------------------
+        self.indicatorManager = self.mySystem.myIndicators
+
+        # self.Most, self.ExMov = self.calculate_most(period=21, percent=1.0)
+        self.Most, self.ExMov = self.indicatorManager.calculate_most(period=21, percent=1.0)
+
+        # --------------------------------------------------------------
+        for i in range(self.mySystem.get_trader_count()):
+            trader = self.mySystem.get_trader(i)
+            trader_id = trader.Id
+
+            DateTimes = ["25.05.2025 14:30:00", "02.06.2025 14:00:00"]
+            Dates = ["01.01.1900", "01.01.2100"]
+            Times = ["09:30:00", "11:59:00"]
+
+            trader.reset_date_times
+            trader.set_date_times(DateTimes[0], DateTimes[1])
+
+            trader.Signals.KarAlEnabled = False
+            trader.Signals.ZararKesEnabled = False
+            trader.Signals.GunSonuPozKapatEnabled = False
+            trader.Signals.TimeFilteringEnabled = True
+
+        self.mySystem.start()
+        for i in range(self.BarCount):
+            for j in range(self.mySystem.get_trader_count()):
+                trader = self.mySystem.get_trader(j)
+
+                # print(f"bar {i} : trader {trader.Id} is runnig...\n")
+
+                Al = False
+                Sat = False
+                FlatOl = False
+                PasGec = False
+                KarAl = False
+                ZararKes = False
+                isTradeEnabled = False
+                isPozKapatEnabled = False
+
+                trader.emirleri_resetle(i)
+
+                trader.emir_oncesi_dongu_foksiyonlarini_calistir(i)
+
+                if i < 1:
+                    continue
+
+                FlatOl = False
+
+                Al = self.myUtils.yukari_kesti(i, self.ExMov, self.Most)
+
+                Sat = self.myUtils.asagi_kesti(i, self.ExMov, self.Most)
+
+                KarAl = trader.Signals.KarAlEnabled
+                KarAl = KarAl and trader.KarAlZararKes.son_fiyata_gore_kar_al_seviye_hesapla(i, 5, 50, 1000) != 0
+
+                ZararKes = trader.Signals.ZararKesEnabled
+                ZararKes = ZararKes and trader.KarAlZararKes.son_fiyata_gore_zarar_kes_seviye_hesapla(i, -1, -10, 1000) != 0
+
+                IsSonYonA = trader.is_son_yon_a()
+
+                IsSonYonS = trader.is_son_yon_s()
+
+                IsSonYonF = trader.is_son_yon_f()
+
+                # useTimeFiltering = trader.Signals.TimeFilteringEnabled
+
+                trader.emirleri_setle(i, Al, Sat, FlatOl, PasGec, KarAl, ZararKes)
+
+                # YAPILACAK
+                trader.islem_zaman_filtresi_uygula(i)
+
+                trader.emir_sonrasi_dongu_foksiyonlarini_calistir(i)
+
+                if Al:
+                    print(f"bar {i} : trader {trader.Id} : Signal : Buy, Close {self.Close[i]}")
+                if Sat:
+                    print(f"bar {i} : trader {trader.Id} : Signal : Sell, Close {self.Close[i]}")
+
+                self.KarZararPuanList = trader.Lists.KarZararPuanList
+                self.KarZararFiyatList = trader.Lists.KarZararFiyatList
+                self.BakiyeFiyatList = trader.Lists.BakiyeFiyatList
+                self.YonList = trader.Lists.YonList
+                self.SeviyeList = trader.Lists.SeviyeList
+
+        self.mySystem.stop()
+
+        for i in range(self.mySystem.get_trader_count()):
+            trader = self.mySystem.get_trader(i)
+            trader_id = trader.Id
+
+            if (self.mySystem.bIdealGetiriHesapla):
+                trader.ideal_getiri_hesapla()
+
+            if (self.mySystem.bIstatistikleriHesapla):
+                trader.istatistikleri_hesapla()
+                pass
+
+            if (self.mySystem.bIstatistikleriEkranaYaz):
+                # trader.istatistikleri_ekrana_yaz(1)
+                pass
+
+            if (self.mySystem.bGetiriIstatistikleriEkranaYaz):
+                # trader.istatistikleri_ekrana_yaz(2)
+                pass
+
+            if (self.mySystem.bIstatistikleriDosyayaYaz):
+                trader.istatistikleri_dosyaya_yaz(self.mySystem.IstatistiklerOutputFileName)
+                pass
+
+            trader.update_data_frame()
+            print(trader._df)
+            print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
+            trader.write_data_frame_to_file_as_tabular("trading_data_tabular.txt")
+            trader.write_statistics_to_file_as_tabular("trading_statistics_tabular.txt")
+
+            # # CSV formatında kaydet
+            # trader.write_data_frame_to_file("trading_0_data.csv")
+            #
+            # # Excel formatında kaydet
+            # trader.write_data_frame_to_file("trading_0_data.xlsx")
+            #
+            # # JSON formatında kaydet
+            # trader.write_data_frame_to_file("trading_0_data.json")
+            #
+            # # HTML formatında kaydet
+            # trader.write_data_frame_to_file("trading_0_data.html")
+            pass
+
+        # --------------------------------------------------------------
+        print("Plotting market data...")
+        self.active_trader = self.mySystem.get_trader(0)
+        # self.plotData()
+        self.plotData2(self.active_trader)
+
+        # --------------------------------------------------------------
+        # Show timing reports
+        self.dataManager.reportTimes()
+        self.mySystem.reportTimes()
+
+        print(self.BakiyeFiyatList[0])
+        print(self.BakiyeFiyatList[1])
+
     def run_with_multiple_trader(self):
         # --------------------------------------------------------------
         # Read market data (equivalent to .GrafikVerileri operations)
@@ -827,14 +961,18 @@ class AlgoTrader:
 
         self.LevelZero = self.create_level_series(self.BarCount, 0)
 
-        self.Most, self.ExMov = self.calculate_most(period=21, percent=1.0)
-
         # --------------------------------------------------------------
         self.mySystem.create_modules().initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
 
         self.mySystem.reset()
         self.mySystem.initialize_params_with_defaults()
         self.mySystem.set_params_for_single_run()
+
+        # --------------------------------------------------------------
+        self.indicatorManager = self.mySystem.myIndicators
+
+        # self.Most, self.ExMov = self.calculate_most(period=21, percent=1.0)
+        self.Most, self.ExMov = self.indicatorManager.calculate_most(period=21, percent=1.0)
 
         for i in range(self.mySystem.get_trader_count()):
             trader = self.mySystem.get_trader(i)
@@ -1083,192 +1221,6 @@ class AlgoTrader:
         print(self.BakiyeFiyatList[0])
         print(self.BakiyeFiyatList[1])
 
-    def run_with_single_trader(self):
-        # --------------------------------------------------------------
-        # Read market data (equivalent to .GrafikVerileri operations)
-        print("Loading market data...")
-        self.loadMarketData()
-
-        # --------------------------------------------------------------
-        # Create level series
-        self.LevelUp4 = self.create_level_series(self.BarCount, 6000)
-        self.LevelUp3 = self.create_level_series(self.BarCount, 5750)
-        self.LevelUp2 = self.create_level_series(self.BarCount, 5500)
-        self.LevelUp1 = self.create_level_series(self.BarCount, 5250)
-
-        self.Level = self.create_level_series(self.BarCount, 5000)
-
-        self.LevelDown1 = self.create_level_series(self.BarCount, 4750)
-        self.LevelDown2 = self.create_level_series(self.BarCount, 4500)
-        self.LevelDown3 = self.create_level_series(self.BarCount, 4250)
-        self.LevelDown4 = self.create_level_series(self.BarCount, 4000)
-
-        self.LevelZero = self.create_level_series(self.BarCount, 0)
-
-        self.Most, self.ExMov = self.calculate_most(period=21, percent=1.0)
-
-        # --------------------------------------------------------------
-        self.mySystem.create_modules().initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
-
-        self.mySystem.reset()
-        self.mySystem.initialize_params_with_defaults()
-        self.mySystem.set_params_for_single_run()
-
-        for i in range(self.mySystem.get_trader_count()):
-            trader = self.mySystem.get_trader(i)
-            trader_id = trader.Id
-
-            DateTimes = ["25.05.2025 14:30:00", "02.06.2025 14:00:00"]
-            Dates = ["01.01.1900", "01.01.2100"]
-            Times = ["09:30:00", "11:59:00"]
-
-            trader.reset_date_times
-            trader.set_date_times(DateTimes[0], DateTimes[1])
-
-            trader.Signals.KarAlEnabled = False
-            trader.Signals.ZararKesEnabled = False
-            trader.Signals.GunSonuPozKapatEnabled = False
-            trader.Signals.TimeFilteringEnabled = True
-
-        self.mySystem.start()
-        for i in range(self.BarCount):
-            for j in range(self.mySystem.get_trader_count()):
-                trader = self.mySystem.get_trader(j)
-
-                # print(f"bar {i} : trader {trader.Id} is runnig...\n")
-
-                Al = False
-                Sat = False
-                FlatOl = False
-                PasGec = False
-                KarAl = False
-                ZararKes = False
-                isTradeEnabled = False
-                isPozKapatEnabled = False
-
-                trader.emirleri_resetle(i)
-
-                trader.emir_oncesi_dongu_foksiyonlarini_calistir(i)
-
-                if i < 1:
-                    continue
-
-                FlatOl = False
-
-                Al = self.myUtils.yukari_kesti(i, self.ExMov, self.Most)
-
-                Sat = self.myUtils.asagi_kesti(i, self.ExMov, self.Most)
-
-                KarAl = trader.Signals.KarAlEnabled
-                KarAl = KarAl and trader.KarAlZararKes.son_fiyata_gore_kar_al_seviye_hesapla(i, 5, 50, 1000) != 0
-
-                ZararKes = trader.Signals.ZararKesEnabled
-                ZararKes = ZararKes and trader.KarAlZararKes.son_fiyata_gore_zarar_kes_seviye_hesapla(i, -1, -10, 1000) != 0
-
-                IsSonYonA = trader.is_son_yon_a()
-
-                IsSonYonS = trader.is_son_yon_s()
-
-                IsSonYonF = trader.is_son_yon_f()
-
-                # useTimeFiltering = trader.Signals.TimeFilteringEnabled
-
-                trader.emirleri_setle(i, Al, Sat, FlatOl, PasGec, KarAl, ZararKes)
-
-                # YAPILACAK
-                trader.islem_zaman_filtresi_uygula(i)
-
-                trader.emir_sonrasi_dongu_foksiyonlarini_calistir(i)
-
-                if Al:
-                    print(f"bar {i} : trader {trader.Id} : Signal : Buy, Close {self.Close[i]}")
-                if Sat:
-                    print(f"bar {i} : trader {trader.Id} : Signal : Sell, Close {self.Close[i]}")
-
-                self.KarZararPuanList = trader.Lists.KarZararPuanList
-                self.KarZararFiyatList = trader.Lists.KarZararFiyatList
-                self.BakiyeFiyatList = trader.Lists.BakiyeFiyatList
-                self.YonList = trader.Lists.YonList
-                self.SeviyeList = trader.Lists.SeviyeList
-
-        self.mySystem.stop()
-
-        for i in range(self.mySystem.get_trader_count()):
-            trader = self.mySystem.get_trader(i)
-            trader_id = trader.Id
-
-            if (self.mySystem.bIdealGetiriHesapla):
-                trader.ideal_getiri_hesapla()
-
-            if (self.mySystem.bIstatistikleriHesapla):
-                trader.istatistikleri_hesapla()
-                pass
-
-            if (self.mySystem.bIstatistikleriEkranaYaz):
-                # trader.istatistikleri_ekrana_yaz(1)
-                pass
-
-            if (self.mySystem.bGetiriIstatistikleriEkranaYaz):
-                # trader.istatistikleri_ekrana_yaz(2)
-                pass
-
-            if (self.mySystem.bIstatistikleriDosyayaYaz):
-                trader.istatistikleri_dosyaya_yaz(self.mySystem.IstatistiklerOutputFileName)
-                pass
-
-            trader.update_data_frame()
-            print(trader._df)
-            print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
-            trader.write_data_frame_to_file_as_tabular("trading_data_tabular.txt")
-            trader.write_statistics_to_file_as_tabular("trading_statistics_tabular.txt")
-
-            # # CSV formatında kaydet
-            # trader.write_data_frame_to_file("trading_0_data.csv")
-            #
-            # # Excel formatında kaydet
-            # trader.write_data_frame_to_file("trading_0_data.xlsx")
-            #
-            # # JSON formatında kaydet
-            # trader.write_data_frame_to_file("trading_0_data.json")
-            #
-            # # HTML formatında kaydet
-            # trader.write_data_frame_to_file("trading_0_data.html")
-            pass
-
-        # --------------------------------------------------------------
-        print("Plotting market data...")
-        self.active_trader = self.mySystem.get_trader(0)
-        # self.plotData()
-        self.plotData2(self.active_trader)
-
-        # --------------------------------------------------------------
-        # Show timing reports
-        self.dataManager.reportTimes()
-        self.mySystem.reportTimes()
-
-        print(self.BakiyeFiyatList[0])
-        print(self.BakiyeFiyatList[1])
-
-    def create_config_file(self, configFilePath):
-        self.mySystem.write_params_to_file(configFilePath,
-                                           self.mySystem.bUseParamsFromInputFile,
-                                           self.mySystem.CurrentRunIndex,
-                                           self.mySystem.TotalRunCount,
-
-                                           self.mySystem.bOptEnabled,
-                                           self.mySystem.bIdealGetiriHesapla,
-                                           self.mySystem.bIstatistikleriHesapla,
-                                           self.mySystem.bIstatistikleriEkranaYaz,
-                                           self.mySystem.bGetiriIstatistikleriEkranaYaz,
-                                           self.mySystem.bIstatistikleriDosyayaYaz,
-                                           self.mySystem.bOptimizasyonIstatistiklerininBasliklariniDosyayaYaz,
-                                           self.mySystem.bOptimizasyonIstatistikleriniDosyayaYaz,
-
-                                           self.mySystem.bSinyalleriEkranaCiz,
-                                           self.mySystem.ParamsInputFileName,
-                                           self.mySystem.IstatistiklerOutputFileName,
-                                           self.mySystem.IstatistiklerOptOutputFileName)
-
     def run_optimization_with_single_trader(self):
         # --------------------------------------------------------------
         # Read market data (equivalent to .GrafikVerileri operations)
@@ -1291,8 +1243,6 @@ class AlgoTrader:
 
         self.LevelZero = self.create_level_series(self.BarCount, 0)
 
-        self.Most, self.ExMov = self.calculate_most(period=21, percent=1.0)
-
         # --------------------------------------------------------------
         self.mySystem.create_modules().initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
 
@@ -1303,6 +1253,10 @@ class AlgoTrader:
         self.mySystem.reset()
         self.mySystem.initialize_params_with_defaults()
 
+        # --------------------------------------------------------------
+        self.indicatorManager = self.mySystem.myIndicators
+
+        # --------------------------------------------------------------
         # enable for single run
         self.mySystem.set_params_for_single_run()
         self.mySystem.clear_input_params()
@@ -1324,6 +1278,11 @@ class AlgoTrader:
         self.mySystem.set_input_params(4, "50")
         self.mySystem.set_input_params(5, "100")
         self.mySystem.set_input_params(5, "200")
+
+        persistentIndicatorManager = CIndicatorManager()
+        persistentIndicatorManager.reset()
+        persistentIndicatorManager.initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
+        self.Most, self.ExMov = persistentIndicatorManager.calculate_most(period=21, percent=2)
 
         # # enable to create configFile (only once), then disable
         # configFileName = "config.txt"
@@ -1373,7 +1332,6 @@ class AlgoTrader:
                 current_iteration += 1
                 progress_percent = (current_iteration / total_combinations) * 100
                 print(f"[{current_iteration}/{total_combinations}] ({progress_percent:.1f}%) Testing period={period}, percent={percent}")
-                self.Most, self.ExMov = self.calculate_most(period=period, percent=percent)
                 
                 # Run trading simulation for this parameter combination
                 result = self.run_single_optimization_test(period, percent)
@@ -1398,8 +1356,8 @@ class AlgoTrader:
         self.write_optimization_results_to_file_2(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
 
         # Use best parameters for final run and plotting
-        self.Most, self.ExMov = self.calculate_most(period=best_period, percent=best_percent)
-
+        # self.Most, self.ExMov = self.calculate_most(period=best_period, percent=best_percent)
+        self.Most, self.ExMov = self.indicatorManager.calculate_most(period=best_period, percent=best_percent)
 
 if __name__ == "__main__":
     print("Hello, Gemini!")
