@@ -1418,3 +1418,69 @@ class CIndicatorManager(CBase):
                 most[i] = trend_down[i]
 
         return most, exmov
+
+    def calculate_supertrend(self, period: int = 10, multiplier: float = 3.0) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Calculate Supertrend indicator.
+        
+        Args:
+            period: ATR period.
+            multiplier: ATR multiplier.
+            
+        Returns:
+            A tuple containing two numpy arrays: (supertrend, direction)
+        """
+        high_series = pd.Series(self.High)
+        low_series = pd.Series(self.Low)
+        close_series = pd.Series(self.Close)
+        
+        # Calculate True Range
+        tr1 = pd.DataFrame(high_series - low_series)
+        tr2 = pd.DataFrame(abs(high_series - close_series.shift(1)))
+        tr3 = pd.DataFrame(abs(low_series - close_series.shift(1)))
+        tr = pd.concat([tr1, tr2, tr3], axis=1, join='inner').max(axis=1)
+        
+        # Calculate ATR
+        atr = tr.ewm(alpha=1/period, adjust=False).mean()
+        
+        # Basic Upper and Lower Bands
+        upper_band = (high_series + low_series) / 2 + (multiplier * atr)
+        lower_band = (high_series + low_series) / 2 - (multiplier * atr)
+        
+        # Final Upper and Lower Bands
+        final_upper_band = upper_band.copy()
+        final_lower_band = lower_band.copy()
+        
+        for i in range(1, len(close_series)):
+            if close_series[i-1] <= final_upper_band[i-1]:
+                final_upper_band[i] = min(upper_band[i], final_upper_band[i-1])
+            else:
+                final_upper_band[i] = upper_band[i]
+                
+            if close_series[i-1] >= final_lower_band[i-1]:
+                final_lower_band[i] = max(lower_band[i], final_lower_band[i-1])
+            else:
+                final_lower_band[i] = lower_band[i]
+
+        # Supertrend
+        supertrend = np.full(len(close_series), np.nan)
+        direction = np.full(len(close_series), 1)
+
+        for i in range(1, len(close_series)):
+            if close_series[i] > final_upper_band[i-1]:
+                direction[i] = 1
+            elif close_series[i] < final_lower_band[i-1]:
+                direction[i] = -1
+            else:
+                direction[i] = direction[i-1]
+                if direction[i] == 1 and final_lower_band[i] > final_lower_band[i-1]:
+                    final_lower_band[i] = final_lower_band[i-1]
+                if direction[i] == -1 and final_upper_band[i] < final_upper_band[i-1]:
+                    final_upper_band[i] = final_upper_band[i-1]
+
+            if direction[i] == 1:
+                supertrend[i] = final_lower_band[i]
+            else:
+                supertrend[i] = final_upper_band[i]
+                
+        return supertrend, direction
