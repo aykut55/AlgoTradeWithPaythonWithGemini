@@ -4,12 +4,14 @@ import os
 from datetime import datetime
 from src.DataManager import DataManager
 from src.DataPlotter import DataPlotter
+from src.SqliteDataManager import SqliteDataManager
 from src.SystemWrapper import SystemWrapper
 from src.Utils import CUtils
 from src.IndicatorManager import CIndicatorManager
 
 class AlgoTrader:
     def __init__(self):
+        self.sqliteDataManager = SqliteDataManager()
         self.dataManager = DataManager()
         self.dataPlotter = DataPlotter()
         self.mySystem = SystemWrapper()
@@ -511,6 +513,76 @@ class AlgoTrader:
         print("Lot         :", self.dataManager.get_lot_array()[-5:])
         print("========================")
 
+    def loadMarketDataFromSqliteDB(self):
+        # SQLite veritabanından veri yükle
+        db_path = "D:\\Aykut\\Projects\\AlgoTradeWithPaythonWithGemini\\data\\sqlLite\\IMKBH_complete.db"
+        table_name = "period_05"
+
+        # Mevcut tablolari kontrol et
+        available_tables = self.sqliteDataManager.get_available_tables(db_path)
+        print(f"Available tables: {available_tables}")
+
+        # Mevcut sembolleri kontrol et
+        available_symbols = self.sqliteDataManager.get_available_symbols(db_path, table_name)
+        print(f"Available symbols in {table_name}: {available_symbols}")
+        print(f"Total symbols found: {len(available_symbols)}")
+
+        # Her sembol için veri aralığını göster
+        if available_symbols:
+            print("\nSymbol data ranges:")
+            for sym in available_symbols[:5]:  # İlk 5 sembolü göster
+                data_range = self.sqliteDataManager.get_symbol_data_range(db_path, table_name, sym)
+                if data_range:
+                    min_date, max_date, count = data_range
+                    print(f"  {sym}: {count} records, {min_date} to {max_date}")
+
+        # İlk mevcut sembolü kullan
+        if available_symbols:
+            symbol = available_symbols[0]
+            print(f"\nUsing symbol: {symbol}")
+        else:
+            print("No symbols found in database!")
+            return
+
+        self.sqliteDataManager.set_read_mode_last_n(20000)  # Son 20000 satırı okumaya ayarla
+        self.sqliteDataManager.load_prices_from_sqlite(db_path, table_name, symbol)
+        self.sqliteDataManager.add_time_columns()
+
+        self.V          = self.sqliteDataManager
+        self.Df         = self.sqliteDataManager.get_dataframe()
+        self.EpochTime  = self.sqliteDataManager.get_epoch_time_array()
+        self.DateTime   = self.sqliteDataManager.get_date_time_array()
+        self.Date       = self.sqliteDataManager.get_date_array()
+        self.Time       = self.sqliteDataManager.get_time_array()
+        self.Open       = self.sqliteDataManager.get_open_array()
+        self.High       = self.sqliteDataManager.get_high_array()
+        self.Low        = self.sqliteDataManager.get_low_array()
+        self.Close      = self.sqliteDataManager.get_close_array()
+        self.Volume     = self.sqliteDataManager.get_volume_array()
+        self.Lot        = self.sqliteDataManager.get_lot_array()
+        self.BarCount   = self.sqliteDataManager.get_bar_count()
+        self.ItemsCount = self.sqliteDataManager.get_items_count()
+
+        print("========================")
+        print("SQLite Data Manager")
+        print("BarCount    :", self.BarCount)
+        print("ItemsCount  :", self.ItemsCount)
+
+        print("InputTime   :", self.sqliteDataManager.get_timestamp_array()[-5:])
+        print("EpochTime   :", self.sqliteDataManager.get_epoch_time_array()[-5:])
+
+        print("DateTime    :", self.sqliteDataManager.get_date_time_array_as_str()[-5:])
+        print("Date        :", self.sqliteDataManager.get_date_array_as_str()[-5:])
+        print("Time        :", self.sqliteDataManager.get_time_array_as_str()[-5:])
+
+        print("Open        :", self.sqliteDataManager.get_open_array()[-5:])
+        print("High        :", self.sqliteDataManager.get_high_array()[-5:])
+        print("Low         :", self.sqliteDataManager.get_low_array()[-5:])
+        print("Close       :", self.sqliteDataManager.get_close_array()[-5:])
+        print("Volume      :", self.sqliteDataManager.get_volume_array()[-5:])
+        print("Lot         :", self.sqliteDataManager.get_lot_array()[-5:])
+        print("========================")
+
     def plotData(self):
         # --------------------------------------------------------------
         self.dataPlotter.plot_series(
@@ -772,7 +844,8 @@ class AlgoTrader:
         # --------------------------------------------------------------
         # Read market data (equivalent to .GrafikVerileri operations)
         print("Loading market data...")
-        self.loadMarketData()
+        # self.loadMarketData()
+        self.loadMarketDataFromSqliteDB()
 
         # --------------------------------------------------------------
         # Create level series
@@ -943,7 +1016,8 @@ class AlgoTrader:
         # --------------------------------------------------------------
         # Read market data (equivalent to .GrafikVerileri operations)
         print("Loading market data...")
-        self.loadMarketData()
+        # self.loadMarketData()
+        self.loadMarketDataFromSqliteDB()
 
         # --------------------------------------------------------------
         # Create level series
@@ -1225,7 +1299,8 @@ class AlgoTrader:
         # --------------------------------------------------------------
         # Read market data (equivalent to .GrafikVerileri operations)
         print("Loading market data...")
-        self.loadMarketData()
+        # self.loadMarketData()
+        self.loadMarketDataFromSqliteDB()
 
         # --------------------------------------------------------------
         # Create level series
