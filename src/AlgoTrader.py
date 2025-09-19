@@ -844,8 +844,8 @@ class AlgoTrader:
         # --------------------------------------------------------------
         # Read market data (equivalent to .GrafikVerileri operations)
         print("Loading market data...")
-        # self.loadMarketData()
-        self.loadMarketDataFromSqliteDB()
+        self.loadMarketData()
+        # self.loadMarketDataFromSqliteDB()
 
         # --------------------------------------------------------------
         # Create level series
@@ -1016,8 +1016,8 @@ class AlgoTrader:
         # --------------------------------------------------------------
         # Read market data (equivalent to .GrafikVerileri operations)
         print("Loading market data...")
-        # self.loadMarketData()
-        self.loadMarketDataFromSqliteDB()
+        self.loadMarketData()
+        # self.loadMarketDataFromSqliteDB()
 
         # --------------------------------------------------------------
         # Create level series
@@ -1299,8 +1299,8 @@ class AlgoTrader:
         # --------------------------------------------------------------
         # Read market data (equivalent to .GrafikVerileri operations)
         print("Loading market data...")
-        # self.loadMarketData()
-        self.loadMarketDataFromSqliteDB()
+        self.loadMarketData()
+        # self.loadMarketDataFromSqliteDB()
 
         # --------------------------------------------------------------
         # Create level series

@@ -7,7 +7,7 @@ if __name__ == "__main__":
 
     algoTrader = AlgoTrader()
 
-    choice = 2
+    choice = 0
     if choice == 0:
         algoTrader.run_with_single_trader()
     elif choice == 1:
