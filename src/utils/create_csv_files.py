@@ -3,6 +3,7 @@ import os
 import glob
 import csv
 import re
+import json
 from pathlib import Path
 
 # .txt dosyalarının bulunduğu kaynak dizin
@@ -10,6 +11,9 @@ source_dir = r"D:\iDeal\ChartData\_Exports"
 
 # Yeni .csv dosyalarının oluşturulacağı temel dizin
 target_base_dir = r"D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\data\csvFiles"
+
+# Sembol istatistikleri için config dizini
+config_dir = r"D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\config"
 
 # Flagler - varsayılan olarak True
 include_ids = False      # ID sütununu ekle/çıkar
@@ -145,6 +149,151 @@ def parse_data_line(line, include_id=True, separator='auto'):
     else:
         return [date, time, open_price, high_price, low_price, close_price, volume, lot]
 
+# --- Sembol İstatistikleri Helper Fonksiyonları ---
+
+def get_period_sort_order(period):
+    """Periyotları belirli sırada sıralamak için sort key döndürür"""
+    period_order = ['1', '2', '3', '4', '5', '10', '15', '20', '30', '60', '120', '240', 'G', 'H']
+    try:
+        return period_order.index(period)
+    except ValueError:
+        return 999  # Bilinmeyen periyotları sona koy
+
+def sort_symbol_periods(symbol_periods):
+    """Sembol periyotlarını doğru sırada sıralar"""
+    return sorted(symbol_periods, key=lambda x: get_period_sort_order(x['grafik_periyot']))
+
+def write_symbol_statistics(symbol, symbol_periods, all_symbol_groups):
+    """Bir sembolün istatistiklerini toplar ve gruplandırılmış yapıya ekler"""
+    if not symbol_periods:
+        return
+
+    # Periyotları sırala
+    sorted_periods = sort_symbol_periods(symbol_periods)
+
+    # Gruplandırılmış yapıya ekle
+    all_symbol_groups[symbol] = sorted_periods
+
+    print(f"  → Sembol istatistikleri toplandı: {symbol} ({len(sorted_periods)} periyot)")
+
+def format_field(field, width):
+    """Alanı belirtilen genişlikte formatlama"""
+    field_str = str(field) if field else ""
+    return field_str.ljust(width)[:width]
+
+def write_final_statistics(all_symbol_groups, total_files, files_created, files_skipped):
+    """Tüm sembol istatistiklerini JSON ve formatlı CSV olarak yazar"""
+    if not all_symbol_groups:
+        print("Sembol istatistikleri bulunamadı.")
+        return
+
+    # Config dizinini oluştur
+    os.makedirs(config_dir, exist_ok=True)
+
+    csv_output_file = os.path.join(config_dir, "sembolIstatistikleri.csv")
+    json_output_file = os.path.join(config_dir, "sembolIstatistikleri.json")
+
+    total_records = sum(len(periods) for periods in all_symbol_groups.values())
+
+    print(f"\n=== Sembol İstatistikleri Yazılıyor ===")
+    print(f"Toplam sembol: {len(all_symbol_groups)}")
+    print(f"Toplam kayıt: {total_records}")
+
+    # JSON dosyasını oluştur
+    print(f"JSON dosyası oluşturuluyor: {json_output_file}")
+    json_data = {
+        "metadata": {
+            "description": "Sembol istatistikleri - CSV dönüştürme sırasında toplanan sembol bilgileri",
+            "total_records": total_records,
+            "total_symbols": len(all_symbol_groups),
+            "source_files_processed": files_created,
+            "source_files_total": total_files,
+            "source_files_skipped": files_skipped,
+            "columns": {
+                "grafik_periyot": "Grafik periyodu (1, 5, 15, 30, H, D vb.)",
+                "bar_count": "Toplam bar/mum sayısı",
+                "baslangic_tarihi": "Verinin başlangıç tarihi",
+                "bitis_tarihi": "Verinin bitiş tarihi",
+                "kayit_zamani": "Dosyanın kaydedildiği zaman",
+                "dosya_adi": "Kaynak dosya adı"
+            }
+        },
+        "data": all_symbol_groups
+    }
+
+    with open(json_output_file, 'w', encoding='utf-8') as json_file:
+        json.dump(json_data, json_file, ensure_ascii=False, indent=2)
+
+    # Formatlı CSV dosyasını oluştur
+    print(f"Formatlı CSV dosyası oluşturuluyor: {csv_output_file}")
+
+    # Sütun genişlikleri
+    col_widths = {
+        'grafik_sembol': 25,
+        'grafik_periyot': 8,
+        'bar_count': 10,
+        'baslangic_tarihi': 20,
+        'bitis_tarihi': 20,
+        'kayit_zamani': 20,
+        'dosya_adi': 30
+    }
+
+    with open(csv_output_file, 'w', encoding='utf-8') as outfile:
+        # Header açıklamaları
+        outfile.write("# Sembol İstatistikleri:\n")
+        outfile.write("# \n")
+        outfile.write("# Bu dosya CSV dönüştürme sırasında toplanan sembol bilgilerini içerir.\n")
+        outfile.write("# \n")
+        outfile.write("# === SÜTUN AÇIKLAMALARI ===\n")
+        outfile.write("# grafik_sembol: Finansal araç sembolü (örn: IMKBH'ADEL)\n")
+        outfile.write("# grafik_periyot: Grafik periyodu (1, 5, 15, 30, H, D vb.)\n")
+        outfile.write("# bar_count: Toplam bar/mum sayısı\n")
+        outfile.write("# baslangic_tarihi: Verinin başlangıç tarihi\n")
+        outfile.write("# bitis_tarihi: Verinin bitiş tarihi\n")
+        outfile.write("# kayit_zamani: Dosyanın kaydedildiği zaman\n")
+        outfile.write("# dosya_adi: Kaynak dosya adı\n")
+        outfile.write("#\n")
+        outfile.write("# " + "="*150 + "\n")
+        outfile.write("#\n")
+
+        # Formatlı başlık satırı
+        header_line = "# " + format_field("GRAFIK_SEMBOL", col_widths['grafik_sembol']) + \
+                      format_field("PERIYOT", col_widths['grafik_periyot']) + \
+                      format_field("BAR_COUNT", col_widths['bar_count']) + \
+                      format_field("BASLANGIC_TARIHI", col_widths['baslangic_tarihi']) + \
+                      format_field("BITIS_TARIHI", col_widths['bitis_tarihi']) + \
+                      format_field("KAYIT_ZAMANI", col_widths['kayit_zamani']) + \
+                      format_field("DOSYA_ADI", col_widths['dosya_adi']) + "\n"
+        outfile.write(header_line)
+
+        # Ayırıcı çizgi
+        separator_line = "# " + "-" * col_widths['grafik_sembol'] + \
+                        "-" * col_widths['grafik_periyot'] + \
+                        "-" * col_widths['bar_count'] + \
+                        "-" * col_widths['baslangic_tarihi'] + \
+                        "-" * col_widths['bitis_tarihi'] + \
+                        "-" * col_widths['kayit_zamani'] + \
+                        "-" * col_widths['dosya_adi'] + "\n"
+        outfile.write(separator_line)
+
+        # Veri satırları (sıralı)
+        for symbol in sorted(all_symbol_groups.keys()):
+            periods = all_symbol_groups[symbol]
+            for period_data in periods:
+                data_line = "  " + format_field(symbol, col_widths['grafik_sembol']) + \
+                           format_field(period_data.get('grafik_periyot', ''), col_widths['grafik_periyot']) + \
+                           format_field(period_data.get('bar_count', ''), col_widths['bar_count']) + \
+                           format_field(period_data.get('baslangic_tarihi', ''), col_widths['baslangic_tarihi']) + \
+                           format_field(period_data.get('bitis_tarihi', ''), col_widths['bitis_tarihi']) + \
+                           format_field(period_data.get('kayit_zamani', ''), col_widths['kayit_zamani']) + \
+                           format_field(period_data.get('dosya_adi', ''), col_widths['dosya_adi']) + "\n"
+                outfile.write(data_line)
+
+    print(f"✅ JSON dosyası oluşturuldu: {json_output_file}")
+    print(f"✅ CSV dosyası oluşturuldu: {csv_output_file}")
+    print(f"📊 {len(all_symbol_groups)} sembol, {total_records} kayıt işlendi")
+    print("="*50)
+
 def convert_files():
     """
     .txt dosyalarını bulur, içeriklerini okur ve CSV formatına dönüştürür.
@@ -158,17 +307,23 @@ def convert_files():
     os.makedirs(target_base_dir, exist_ok=True)
     print(f"Hedef dizin oluşturuldu: {target_base_dir}")
 
-    # Kaynak dizindeki tüm .txt dosyalarını bul
+    # Kaynak dizindeki tüm .txt dosyalarını bul ve sırala
     txt_files = glob.glob(os.path.join(source_dir, "*.txt"))
+    txt_files.sort()  # Dosyaları sırala (sembol gruplarının birlikte gelmesi için)
 
     if not txt_files:
         print("Kaynak dizinde .txt dosyası bulunamadı.")
         return
 
     print(f"İşlenecek {len(txt_files)} adet .txt dosyası bulundu.")
-    
+
     files_created = 0
     files_skipped = 0
+
+    # Sembol istatistikleri için değişkenler
+    all_symbol_groups = {}  # Tüm sembol grupları (memory'de tutulacak)
+    current_symbol = None
+    current_symbol_periods = []
 
     for i, txt_file_path in enumerate(txt_files, 1):
         file_name = Path(txt_file_path).stem
@@ -205,6 +360,29 @@ def convert_files():
                 print(f"  UYARI: '{file_name}.txt' dosyasindaki '{period_suffix}' periyot soneki icin haritada eslestirme bulunamadi. Atlaniyor.")
                 files_skipped += 1
                 continue
+
+            # Sembol istatistikleri için grafik sembolu oluştur
+            grafik_sembol = header_info.get('GrafikSembol', f"{main_dir_part}'{symbol_part}")
+
+            # Sembol değişti mi kontrol et
+            if current_symbol and current_symbol != grafik_sembol:
+                # Önceki sembolün istatistiklerini yaz
+                write_symbol_statistics(current_symbol, current_symbol_periods, all_symbol_groups)
+                current_symbol_periods.clear()
+
+            # Yeni sembol
+            current_symbol = grafik_sembol
+
+            # Sembol istatistiklerini topla
+            period_data = {
+                'grafik_periyot': period_suffix,
+                'bar_count': header_info.get('BarCount', str(len(data_lines))),
+                'baslangic_tarihi': header_info.get('Baslangic_Tarihi', ''),
+                'bitis_tarihi': header_info.get('Bitis_Tarihi', ''),
+                'kayit_zamani': header_info.get('Kayit_Zamani', ''),
+                'dosya_adi': file_name + '.txt'
+            }
+            current_symbol_periods.append(period_data)
 
             # Hedef dizinin tam yolunu oluştur
             target_dir = Path(target_base_dir) / main_dir_part / target_subdir
@@ -244,11 +422,18 @@ def convert_files():
             print(f"  HATA: '{file_name}.txt' dosyasi islenirken hata olustu: {e}. Atlaniyor.")
             files_skipped += 1
 
+    # Son sembolün istatistiklerini yaz
+    if current_symbol and current_symbol_periods:
+        write_symbol_statistics(current_symbol, current_symbol_periods, all_symbol_groups)
+
     print("\n--- Dönüştürme Özeti ---")
     print(f"Toplam bulunan .txt dosyası: {len(txt_files)}")
     print(f"Başarıyla oluşturulan .csv dosyası: {files_created}")
     print(f"Atlanan dosya sayısı (adlandırma veya eşleştirme sorunları nedeniyle): {files_skipped}")
     print("--------------------------")
+
+    # Sembol istatistiklerini JSON ve CSV olarak yaz
+    write_final_statistics(all_symbol_groups, len(txt_files), files_created, files_skipped)
 
 
 if __name__ == "__main__":
