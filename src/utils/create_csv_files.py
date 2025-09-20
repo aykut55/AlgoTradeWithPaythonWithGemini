@@ -6,10 +6,10 @@ import re
 from pathlib import Path
 
 # .txt dosyalarının bulunduğu kaynak dizin
-source_dir = r"D:\iDeal\ChartData\_ExportsKeepMe"
+source_dir = r"D:\iDeal\ChartData\_Exports"
 
 # Yeni .csv dosyalarının oluşturulacağı temel dizin
-target_base_dir = r"D:\iDeal\ChartData\_csvFiles"
+target_base_dir = r"D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\data\csvFiles"
 
 # Flagler - varsayılan olarak True
 include_ids = False      # ID sütununu ekle/çıkar

@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 
 # .txt dosyalarının bulunduğu kaynak dizin
-source_dir = r"D:\iDeal\ChartData\_ExportsKeepMe"
+source_dir = r"D:\iDeal\ChartData\_Exports"
 
 # Yeni .sqlite dosyalarının oluşturulacağı temel dizin
 target_base_dir = r"D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\data\sqlLite"
