@@ -13,7 +13,8 @@ source_dir = r"D:\iDeal\Config"
 target_dir = r"D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\config"
 
 """Sembol istatistiklerini CSV formatında oluşturur"""
-symbols_dir = r"D:\iDeal\ChartData\_Exports"
+symbols_dir_txt_files = r"D:\iDeal\ChartData\_Exports"
+symbols_dir_csv_files = r"D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\data\csvFiles"
 
 def parse_teminatlar_txt():
     """Teminatlar.txt dosyasını parse eder ve CSV formatında kaydeder"""
@@ -312,21 +313,21 @@ def parse_semboller_txt():
     return output_file
 
 
-def build_sembol_istatiskleri():
+def build_sembol_istatiskleri_from_txt_files():
     csv_output_file = os.path.join(target_dir, "sembolIstatistikleri.csv")
     json_output_file = os.path.join(target_dir, "sembolIstatistikleri.json")
 
     # Hedef dizini oluştur
     os.makedirs(target_dir, exist_ok=True)
 
-    print(f"Scanning chart data files in {symbols_dir}...")
+    print(f"Scanning chart data files in {symbols_dir_txt_files}...")
 
     # Sembol bilgilerini tutacak map
     symbol_data_map = {}
 
     # ChartData/_Exports dizinindeki tüm .txt dosyalarını tara
-    if os.path.exists(symbols_dir):
-        txt_files = glob.glob(os.path.join(symbols_dir, "*.txt"))
+    if os.path.exists(symbols_dir_txt_files):
+        txt_files = glob.glob(os.path.join(symbols_dir_txt_files, "*.txt"))
         print(f"Found {len(txt_files)} chart data files...")
 
         for i, file_path in enumerate(txt_files, 1):
@@ -349,17 +350,17 @@ def build_sembol_istatiskleri():
                     bitis_tarihi = ""
 
                     for line in lines:
-                        if line.startswith("Kayit Zamani"):
+                        if "Kayit Zamani" in line and ":" in line:
                             kayit_zamani = line.split(":", 1)[1].strip()
-                        elif line.startswith("GrafikSembol"):
+                        elif "GrafikSembol" in line and ":" in line:
                             grafik_sembol = line.split(":", 1)[1].strip()
-                        elif line.startswith("GrafikPeriyot"):
+                        elif "GrafikPeriyot" in line and ":" in line:
                             grafik_periyot = line.split(":", 1)[1].strip()
-                        elif line.startswith("BarCount"):
+                        elif "BarCount" in line and ":" in line:
                             bar_count = line.split(":", 1)[1].strip()
-                        elif line.startswith("Başlangiç Tarihi") or line.startswith("BaÅŸlangiÃ§ Tarihi"):
+                        elif ("Başlangiç Tarihi" in line or "BaÅŸlangiÃ§ Tarihi" in line) and ":" in line:
                             baslangic_tarihi = line.split(":", 1)[1].strip()
-                        elif line.startswith("Bitiş Tarihi") or line.startswith("BitiÅŸ Tarihi"):
+                        elif ("Bitiş Tarihi" in line or "BitiÅŸ Tarihi" in line) and ":" in line:
                             bitis_tarihi = line.split(":", 1)[1].strip()
 
                     # Eğer gerekli veriler varsa map'e ekle
@@ -521,6 +522,265 @@ def build_sembol_istatiskleri():
     print(f"Both files created successfully!")
     return csv_output_file, json_output_file
 
+def build_sembol_istatiskleri_from_csv_files():
+    csv_output_file = os.path.join(target_dir, "sembolIstatistikleri.csv")
+    json_output_file = os.path.join(target_dir, "sembolIstatistikleri.json")
+
+    # Hedef dizini oluştur
+    os.makedirs(target_dir, exist_ok=True)
+
+    print(f"Scanning CSV files in {symbols_dir_csv_files}...")
+
+    # Sembol bilgilerini tutacak map
+    symbol_data_map = {}
+
+    # csvFiles dizinindeki tüm alt klasörleri ve CSV dosyalarını tara
+    if os.path.exists(symbols_dir_csv_files):
+        all_csv_files = []
+
+        # Tüm CSV dosyalarını bul
+        for root, dirs, files in os.walk(symbols_dir_csv_files):
+            for file in files:
+                if file.endswith('.csv'):
+                    all_csv_files.append(os.path.join(root, file))
+
+        print(f"Found {len(all_csv_files)} CSV files...")
+
+        for i, file_path in enumerate(all_csv_files, 1):
+            # Progress display
+            progress_percent = (i / len(all_csv_files)) * 100
+            relative_path = os.path.relpath(file_path, symbols_dir_csv_files)
+            print(f"Processing {i}/{len(all_csv_files)} ({progress_percent:.1f}%): {relative_path}")
+
+            try:
+                # Dosya yolundan sembol ve periyot bilgilerini çıkar
+                # Örnek yol: D:\...\data\csvFiles\IMKBH\01\ADEL.csv
+                path_parts = os.path.normpath(file_path).split(os.sep)
+
+                # Son 3 bölümü al: market_type, period, symbol.csv
+                if len(path_parts) >= 3:
+                    market_type = path_parts[-3]  # IMKBH, IMKBX, VIP
+                    grafik_periyot = path_parts[-2]  # 01, 05, 15, 30, 60, 120, 240, G, H
+                    symbol_file = path_parts[-1]  # ADEL.csv
+                    grafik_sembol = f"{market_type}'{os.path.splitext(symbol_file)[0]}"  # IMKBH'ADEL
+                else:
+                    print(f"Warning: Unexpected file path structure: {file_path}")
+                    continue
+
+                # CSV dosyasını oku ve header bilgilerini çıkar
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    # Header bilgilerini başlat
+                    kayit_zamani = ""
+                    grafik_sembol_from_header = ""
+                    grafik_periyot_from_header = ""
+                    bar_count = ""
+                    baslangic_tarihi = ""
+                    bitis_tarihi = ""
+
+                    # İlk satırları oku ve header bilgilerini çıkar
+                    for line_num in range(20):  # İlk 20 satırı kontrol et
+                        line = f.readline().strip()
+                        if not line:
+                            break
+
+                        # Header bilgilerini çıkar
+                        if line.startswith("# Kayit_Zamani:"):
+                            kayit_zamani = line.split(":", 1)[1].strip()
+                        elif line.startswith("# GrafikSembol:"):
+                            grafik_sembol_from_header = line.split(":", 1)[1].strip()
+                        elif line.startswith("# GrafikPeriyot:"):
+                            grafik_periyot_from_header = line.split(":", 1)[1].strip()
+                        elif line.startswith("# BarCount:"):
+                            bar_count = line.split(":", 1)[1].strip()
+                        elif line.startswith("# Baslangic_Tarihi:"):
+                            baslangic_tarihi = line.split(":", 1)[1].strip()
+                        elif line.startswith("# Bitis_Tarihi:"):
+                            bitis_tarihi = line.split(":", 1)[1].strip()
+                        elif line.startswith("Date;Time;Open;High;Low;Close;Volume"):
+                            # CSV başlığına ulaştık, header okuma tamamlandı
+                            break
+
+                    # Header'dan alınan bilgiler varsa bunları kullan
+                    if grafik_sembol_from_header and grafik_periyot_from_header:
+                        # Header'dan gelen sembol ve periyot bilgisini kullan
+                        grafik_sembol = grafik_sembol_from_header
+                        grafik_periyot = grafik_periyot_from_header
+                    else:
+                        # Header bilgisi yoksa dosya yolundan çıkar
+                        print(f"Warning: No header info found in {relative_path}, using path info")
+                        if len(path_parts) >= 3:
+                            market_type = path_parts[-3]  # IMKBH, IMKBX, VIP
+                            grafik_periyot = path_parts[-2]  # 01, 05, 15, 30, 60, 120, 240, G, H
+                            symbol_file = path_parts[-1]  # ADEL.csv
+                            grafik_sembol = f"{market_type}'{os.path.splitext(symbol_file)[0]}"  # IMKBH'ADEL
+                        else:
+                            print(f"Warning: Cannot extract symbol info from {file_path}")
+                            continue
+
+                    # Eğer header'da eksik bilgiler varsa dosya değişiklik zamanını kullan
+                    if not kayit_zamani:
+                        file_stat = os.stat(file_path)
+                        import datetime
+                        kayit_zamani = datetime.datetime.fromtimestamp(file_stat.st_mtime).strftime('%Y.%m.%d %H:%M:%S')
+
+                # Eğer gerekli veriler varsa map'e ekle
+                if grafik_sembol and grafik_periyot:
+                    # Sembol anahtarı oluştur (sembol + periyot)
+                    symbol_key = f"{grafik_sembol}_{grafik_periyot}"
+
+                    symbol_data_map[symbol_key] = {
+                        'grafik_sembol': grafik_sembol,
+                        'grafik_periyot': grafik_periyot,
+                        'bar_count': bar_count,
+                        'baslangic_tarihi': baslangic_tarihi,
+                        'bitis_tarihi': bitis_tarihi,
+                        'kayit_zamani': kayit_zamani,
+                        'dosya_adi': os.path.basename(file_path)
+                    }
+
+            except Exception as e:
+                print(f"Warning: Error processing file {file_path}: {e}")
+                continue
+
+    print(f"Processed {len(symbol_data_map)} symbol-period combinations...")
+
+    # Periyot sıralama fonksiyonu
+    def get_period_sort_order(period):
+        """Periyotları belirli sırada sıralamak için sort key döndürür"""
+        period_order = ['1', '01', '2', '02', '3', '03', '4', '04', '5', '05', '10', '15', '20', '30', '60', '120', '240', 'G', 'H']
+        try:
+            return period_order.index(period)
+        except ValueError:
+            return 999  # Bilinmeyen periyotları sona koy
+
+    def sort_symbol_key(symbol_key):
+        """Sembol anahtarını sıralamak için tuple döndürür: (sembol, periyot_order)"""
+        parts = symbol_key.rsplit('_', 1)
+        if len(parts) == 2:
+            symbol, period = parts
+            return (symbol, get_period_sort_order(period))
+        return (symbol_key, 999)
+
+    # JSON dosyasını oluştur
+    print(f"Creating JSON file: {json_output_file}...")
+
+    # Sembol gruplarını oluştur
+    symbol_groups = {}
+    for symbol_key in sorted(symbol_data_map.keys(), key=sort_symbol_key):
+        data = symbol_data_map[symbol_key]
+        grafik_sembol = data['grafik_sembol']
+
+        # Eğer bu sembol için grup yoksa oluştur
+        if grafik_sembol not in symbol_groups:
+            symbol_groups[grafik_sembol] = []
+
+        # Sembol grubuna veriyi ekle (grafik_sembol alanını çıkar)
+        period_data = {
+            'grafik_periyot': data['grafik_periyot'],
+            'bar_count': data['bar_count'],
+            'baslangic_tarihi': data['baslangic_tarihi'],
+            'bitis_tarihi': data['bitis_tarihi'],
+            'kayit_zamani': data['kayit_zamani'],
+            'dosya_adi': data['dosya_adi']
+        }
+        symbol_groups[grafik_sembol].append(period_data)
+
+    json_data = {
+        "metadata": {
+            "description": "Sembol istatistikleri - CSV dosyalarından çıkarılan sembol bilgileri",
+            "total_records": len(symbol_data_map),
+            "total_symbols": len(symbol_groups),
+            "columns": {
+                "grafik_periyot": "Grafik periyodu (01, 05, 15, 30, H, G vb.)",
+                "bar_count": "Toplam bar/mum sayısı",
+                "baslangic_tarihi": "Verinin başlangıç tarihi",
+                "bitis_tarihi": "Verinin bitiş tarihi",
+                "kayit_zamani": "Dosyanın kaydedildiği zaman",
+                "dosya_adi": "Kaynak dosya adı"
+            }
+        },
+        "data": symbol_groups
+    }
+
+    with open(json_output_file, 'w', encoding='utf-8') as json_file:
+        json.dump(json_data, json_file, ensure_ascii=False, indent=2)
+
+    print(f"Saved JSON file with {len(symbol_data_map)} records to {json_output_file}")
+
+    # Formatlı CSV dosyasını oluştur
+    print(f"Creating formatted CSV file: {csv_output_file}...")
+
+    # Sütun genişliklerini hesapla
+    col_widths = {
+        'grafik_sembol': 25,
+        'grafik_periyot': 8,
+        'bar_count': 10,
+        'baslangic_tarihi': 20,
+        'bitis_tarihi': 20,
+        'kayit_zamani': 20,
+        'dosya_adi': 30
+    }
+
+    def format_field(field, width):
+        """Alanı belirtilen genişlikte formatlama"""
+        field_str = str(field) if field else ""
+        return field_str.ljust(width)[:width]
+
+    with open(csv_output_file, 'w', encoding='utf-8') as outfile:
+        # Sembol istatistikleri açıklamaları (header comment)
+        outfile.write("# Sembol İstatistikleri (CSV Dosyalarından):\n")
+        outfile.write("# \n")
+        outfile.write("# Bu dosya data/csvFiles klasöründeki CSV dosyalarından çıkarılan\n")
+        outfile.write("# sembol bilgilerini içerir.\n")
+        outfile.write("# \n")
+        outfile.write("# === SÜTUN AÇIKLAMALARI ===\n")
+        outfile.write("# grafik_sembol: Finansal araç sembolü (örn: IMKBH'ADEL)\n")
+        outfile.write("# grafik_periyot: Grafik periyodu (01, 05, 15, 30, H, G vb.)\n")
+        outfile.write("# bar_count: Toplam bar/mum sayısı\n")
+        outfile.write("# baslangic_tarihi: Verinin başlangıç tarihi\n")
+        outfile.write("# bitis_tarihi: Verinin bitiş tarihi\n")
+        outfile.write("# kayit_zamani: Dosyanın son değişiklik zamanı\n")
+        outfile.write("# dosya_adi: Kaynak dosya adı\n")
+        outfile.write("#\n")
+        outfile.write("# " + "="*150 + "\n")
+        outfile.write("#\n")
+
+        # Formatlı başlık satırı
+        header_line = "# " + format_field("GRAFIK_SEMBOL", col_widths['grafik_sembol']) + \
+                      format_field("PERIYOT", col_widths['grafik_periyot']) + \
+                      format_field("BAR_COUNT", col_widths['bar_count']) + \
+                      format_field("BASLANGIC_TARIHI", col_widths['baslangic_tarihi']) + \
+                      format_field("BITIS_TARIHI", col_widths['bitis_tarihi']) + \
+                      format_field("KAYIT_ZAMANI", col_widths['kayit_zamani']) + \
+                      format_field("DOSYA_ADI", col_widths['dosya_adi']) + "\n"
+        outfile.write(header_line)
+
+        # Ayırıcı çizgi
+        separator_line = "# " + "-" * col_widths['grafik_sembol'] + \
+                        "-" * col_widths['grafik_periyot'] + \
+                        "-" * col_widths['bar_count'] + \
+                        "-" * col_widths['baslangic_tarihi'] + \
+                        "-" * col_widths['bitis_tarihi'] + \
+                        "-" * col_widths['kayit_zamani'] + \
+                        "-" * col_widths['dosya_adi'] + "\n"
+        outfile.write(separator_line)
+
+        # Veri satırları (formatlı ve sıralı)
+        for symbol_key in sorted(symbol_data_map.keys(), key=sort_symbol_key):
+            data = symbol_data_map[symbol_key]
+
+            data_line = "  " + format_field(data['grafik_sembol'], col_widths['grafik_sembol']) + \
+                       format_field(data['grafik_periyot'], col_widths['grafik_periyot']) + \
+                       format_field(data['bar_count'], col_widths['bar_count']) + \
+                       format_field(data['baslangic_tarihi'], col_widths['baslangic_tarihi']) + \
+                       format_field(data['bitis_tarihi'], col_widths['bitis_tarihi']) + \
+                       format_field(data['kayit_zamani'], col_widths['kayit_zamani']) + \
+                       format_field(data['dosya_adi'], col_widths['dosya_adi']) + "\n"
+            outfile.write(data_line)
+
+    print(f"Saved formatted CSV with {len(symbol_data_map)} records to {csv_output_file}")
+    print(f"Both files created successfully!")
+    return csv_output_file, json_output_file
 
 def convert_files():
     """Tüm dosyaları dönüştür"""
@@ -538,11 +798,16 @@ def convert_files():
     # Teminatlar.txt'yi işle
     parse_teminatlar_txt()
 
+    ## Sembol istatistiklerini oluştur (create_csv_files icinde yapiliyor...)
+    ## build_sembol_istatiskleri_from_txt_files()
+
     # Sembol istatistiklerini oluştur (create_csv_files icinde yapiliyor...)
-    # build_sembol_istatiskleri()
+    # Sayet tekrardan olusturmak istenirse asagidaki satir ENABLE edilecek.
+    # Mesala config klasöründeki dosyalar tekrardan olusturuluyor diye hepsi silinirse!
+    # bu aşağısı ENABLE edilerek tekrardan oluşturulabilir.
+    # build_sembol_istatiskleri_from_csv_files()
 
     print("Conversion completed!")
-
 
 if __name__ == "__main__":
     convert_files()

@@ -17,7 +17,7 @@ config_dir = r"D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\config"
 
 # Flagler - varsayılan olarak True
 include_ids = False      # ID sütununu ekle/çıkar
-include_header = False   # Header bilgilerini ekle/çıkar
+include_header = True   # Header bilgilerini ekle/çıkar
 
 # Veri ayraç tipi - 'auto' (otomatik tespit), 'tab', 'space', ',' vb.
 '''
@@ -142,7 +142,7 @@ def parse_data_line(line, include_id=True, separator='auto'):
     low_price = parts[4].replace(',', '.')
     close_price = parts[5].replace(',', '.')
     volume = parts[6] if len(parts) > 6 else '0'
-    lot = '0'  # Şu an için 0, daha sonra gerçek lot değeri eklenecek
+    lot = parts[7] if len(parts) > 7 else '0'
     
     if include_id:
         return [id_num, date, time, open_price, high_price, low_price, close_price, volume, lot]
@@ -174,7 +174,7 @@ def write_symbol_statistics(symbol, symbol_periods, all_symbol_groups):
     # Gruplandırılmış yapıya ekle
     all_symbol_groups[symbol] = sorted_periods
 
-    print(f"  → Sembol istatistikleri toplandı: {symbol} ({len(sorted_periods)} periyot)")
+    print(f"  -> Sembol istatistikleri toplandi: {symbol} ({len(sorted_periods)} periyot)")
 
 def format_field(field, width):
     """Alanı belirtilen genişlikte formatlama"""
@@ -210,7 +210,7 @@ def write_final_statistics(all_symbol_groups, total_files, files_created, files_
             "source_files_total": total_files,
             "source_files_skipped": files_skipped,
             "columns": {
-                "grafik_periyot": "Grafik periyodu (1, 5, 15, 30, H, D vb.)",
+                "grafik_periyot": "Grafik periyodu (01, 05, 15, 30, H, G vb.)",
                 "bar_count": "Toplam bar/mum sayısı",
                 "baslangic_tarihi": "Verinin başlangıç tarihi",
                 "bitis_tarihi": "Verinin bitiş tarihi",
@@ -398,7 +398,7 @@ def convert_files():
                 
                 # Header bilgilerini yaz (flag'e göre)
                 if include_header:
-                    csvfile.write('# Header Information\n')
+                    # csvfile.write('# Header Information\n')
                     for key, value in header_info.items():
                         csvfile.write(f'# {key}: {value}\n')
                     csvfile.write('\n')  # Boş satır
