@@ -434,7 +434,7 @@ class DataPlotterDearPyGui:
                                    [int(c*255) for c in normalized_color])
                 dpg.add_theme_style(dpg.mvPlotStyleVar_LineWeight, 2)
         
-        dpg.set_item_theme(series_tag, theme_tag)
+        dpg.bind_item_theme(series_tag, theme_tag)
     
     def _add_horizontal_line(self, y_value, name, color, y_axis_tag):
         """Add a horizontal line to the plot."""
@@ -456,7 +456,7 @@ class DataPlotterDearPyGui:
                                    [int(c*255) for c in normalized_color])
                 dpg.add_theme_style(dpg.mvPlotStyleVar_LineWeight, 2)
         
-        dpg.set_item_theme(series_tag, theme_tag)
+        dpg.bind_item_theme(series_tag, theme_tag)
     
     def _plot_direction_levels(self, x_data, yon_list, seviye_list, y_axis_tag):
         """
@@ -521,7 +521,7 @@ class DataPlotterDearPyGui:
                                            [int(c*255) for c in color[:3]] + [160])  # Semi-transparent
                         dpg.add_theme_style(dpg.mvPlotStyleVar_LineWeight, 2)
                 
-                dpg.set_item_theme(series_tag, theme_tag)
+                dpg.bind_item_theme(series_tag, theme_tag)
     
     def _setup_resize_callback(self):
         """Setup window resize callback to dynamically adjust panel heights."""
