@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 from src.DataManager import DataManager
 from src.DataPlotter import DataPlotter
+from src.DataPlotterDearPyGui import DataPlotterDearPyGui
 from src.SqliteDataManager import SqliteDataManager
 from src.SystemWrapper import SystemWrapper
 from src.Utils import CUtils
@@ -14,6 +15,7 @@ class AlgoTrader:
         self.sqliteDataManager = SqliteDataManager()
         self.dataManager = DataManager()
         self.dataPlotter = DataPlotter()
+        self.dataPlotterDearPyGui = DataPlotterDearPyGui()
         self.mySystem = SystemWrapper()
         self.myUtils = CUtils()
         self.indicatorManager = None
@@ -820,6 +822,276 @@ class AlgoTrader:
         print("=== DEBUG: show çağrılıyor ===")
         self.dataPlotter.show()
 
+    def plotData3(self, trader, show_moving_average=False, show_levels=False, show_balance=False, show_kar_zarar_puan=False, show_kar_zarar_fiyat=False):
+        """
+        Dual-panel plotting method with synchronized zoom functionality.
+
+        Args:
+            show_moving_average: Show moving average on price chart
+            show_levels: Show price levels on price chart
+            show_balance: Show balance chart in bottom panel
+            show_kar_zarar_puan: Show kar/zarar puan chart in bottom panel
+            show_kar_zarar_fiyat: Show kar/zarar fiyat chart in bottom panel
+        """
+        # print("=== DEBUG: plotData2 başlıyor ===")
+        # print(f"Time length: {len(self.Time)}")
+        # print(f"Close length: {len(self.Close)}")
+        # print(f"Close type: {type(self.Close)}")
+        # print(f"Time type: {type(self.Time)}")
+        # print(f"Close sample: {self.Close[:5] if len(self.Close) > 5 else self.Close}")
+        # print(f"Time sample: {self.Time[:5] if len(self.Time) > 5 else self.Time}")
+
+        # Time array boşsa, basit index array oluştur
+        if len(self.Time) == 0:
+            print("=== WARNING: Time array boş! Index array oluşturuluyor ===")
+            time_array = list(range(len(self.Close)))
+        else:
+            time_array = self.Time
+
+        # print(f"Final time_array length: {len(time_array)}")
+        # print(f"Final time_array sample: {time_array[:5] if len(time_array) > 5 else time_array}")
+        #
+        # # Sadece Close Price verisi - en basit test
+        # price_data = {'Close Price': self.Close}
+        #
+        # # Alt panel için basit dummy data
+        # bottom_data = {'Dummy': [1] * len(self.Close)}  # Time yerine Close length kullan
+        # bottom_title = "Test"
+        #
+        # print(f"Upper panel data keys: {list(price_data.keys())}")
+        # print(f"Lower panel data keys: {list(bottom_data.keys())}")
+        # print("=== DEBUG: plot_dual_panel çağrılıyor ===")
+        #
+        # # Use multi panel plotting with synchronized zoom
+        # print(f"YonList length: {len(self.YonList)}")
+        # print(f"YonList sample: {self.YonList[:20] if len(self.YonList) > 20 else self.YonList}")
+        # print(f"SeviyeList length: {len(self.SeviyeList)}")
+        # print(f"SeviyeList sample: {self.SeviyeList[:20] if len(self.SeviyeList) > 20 else self.SeviyeList}")
+        #
+        # # Check for direction changes
+        # if len(self.YonList) > 1:
+        #     direction_changes = []
+        #     for i in range(1, len(self.YonList)):
+        #         if self.YonList[i] != self.YonList[i-1]:
+        #             direction_changes.append((i, self.YonList[i-1], self.YonList[i], self.SeviyeList[i] if i < len(self.SeviyeList) else 'N/A'))
+        #     print(f"Direction changes found: {len(direction_changes)}")
+        #     print(f"First 10 changes: {direction_changes[:10]}")
+
+        farkList = [0.0] * len(trader.Lists.BakiyeFiyatList)
+        for i in range(len(trader.Lists.BakiyeFiyatList)):
+            farkList[i] = trader.Lists.BakiyeFiyatList[i] - trader.Lists.GetiriFiyatList[i]
+
+        farkList2 = [0.0] * len(trader.Lists.GetiriKz)
+        for i in range(len(trader.Lists.GetiriKz)):
+            farkList2[i] = trader.Lists.GetiriKz[i] - trader.Lists.GetiriKzNet[i]
+
+        print(f"farkList: {farkList[-1]}")
+        print(f"farkList2: {farkList2[-1]}")
+
+        panels = [
+            {
+                'series_data': {
+                    'Close Price': self.Close,
+                    # 'Level': self.Level,
+                    'MOST': self.Most,
+                    'ExMov': self.ExMov},
+                'title': 'Trading Analysis - Price Chart',
+                'height_ratio': 3,  # Üst panel daha büyük
+                'yon_list': self.YonList,  # A/S/F direction data
+                'seviye_list': self.SeviyeList  # Price level data
+            },
+            # {
+            #     'series_data': {'Balance': trader.Lists.BakiyeFiyatList},
+            #     'title': 'Trading Analysis - Balance Chart',
+            #     'height_ratio': 1  # Alt panel daha küçük
+            # },
+            # {
+            #     'series_data': {'KarZarar': trader.Lists.KarZararPuanList, 'Zero': self.LevelZero},
+            #     'title': 'Trading Analysis - Kar/Zarar Chart (Puan)',
+            #     'height_ratio': 1  # 3. panel
+            # },
+            # {
+            #     'series_data': {'KarZarar': trader.Lists.KarZararFiyatList, 'Zero': self.LevelZero},
+            #     'title': 'Trading Analysis - Kar/Zarar Chart (Fiyat)',
+            #     'height_ratio': 1  # 3. panel
+            # },
+            # {
+            #     'series_data': {'KarZarar': trader.Lists.KarZararFiyatYuzdeList, 'Zero': self.LevelZero},
+            #     'title': 'Trading Analysis - Kar/Zarar Chart (Fiyat %)',
+            #     'height_ratio': 1  # 3. panel
+            # },
+            # {
+            #     'series_data': {'KomisyonIslemSayisiList': trader.Lists.KomisyonIslemSayisiList, 'Zero': self.LevelZero},
+            #     'title': 'Trading Analysis - KomisyonIslemSayisiList',
+            #     'height_ratio': 1
+            # },
+            # {
+            #     'series_data': {
+            #         'YonList': trader.Lists.YonList,
+            #         'SinyalList': trader.Lists.SinyalList,
+            #         'Zero': self.LevelZero
+            #     },
+            #     'title': 'Trading Analysis - YonList',
+            #     'height_ratio': 1
+            # },
+            # # {
+            # #     'series_data': {'KomisyonFiyatList': trader.Lists.KomisyonFiyatList,
+            # #                     # 'Zero': self.LevelZero
+            # #                     },
+            # #     'title': 'Trading Analysis - KomisyonFiyatList',
+            # #     'height_ratio': 1
+            # # }
+            {
+                'series_data': {
+                    'Balance': trader.Lists.BakiyeFiyatList,
+                    'GetiriFiyatList': trader.Lists.GetiriFiyatList,
+                    # 'GetiriFiyatYuzdeList': trader.Lists.GetiriFiyatYuzdeList,
+                    # 'BakiyeFiyatNetList': trader.Lists.BakiyeFiyatNetList,
+                    # 'GetiriFiyatNetList': trader.Lists.GetiriFiyatNetList,
+                    # 'GetiriFiyatYuzdeNetList': trader.Lists.GetiriFiyatYuzdeNetList
+                    'farkList': farkList,
+                },
+                'title': 'Trading Analysis - Balance Chart',
+                'height_ratio': 2  # Alt panel daha küçük
+            },
+            {
+                'series_data': {
+                    # 'Balance': trader.Lists.BakiyeFiyatList,
+                    'GetiriKz': trader.Lists.GetiriKz,
+                    'GetiriKzNet': trader.Lists.GetiriKzNet,
+                    'farkList2': farkList2,
+                },
+                'title': 'Trading Analysis - Balance Chart',
+                'height_ratio': 2  # Alt panel daha küçük
+            },
+
+            # self.BarIndexList = []
+            # self.YonList = []
+            # self.SeviyeList = []
+            # self.SinyalList = []
+            # self.KarZararPuanList = []
+            # self.KarZararFiyatList = []
+            # self.KarZararFiyatYuzdeList = []
+            # self.KarAlList = []
+            # self.IzleyenStopList = []
+            # self.IslemSayisiList = []
+            # self.AlisSayisiList = []
+            # self.SatisSayisiList = []
+            # self.FlatSayisiList = []
+            # self.PassSayisiList = []
+            # self.KontratSayisiList = []
+            # self.VarlikAdedSayisiList = []
+            # self.KomisyonVarlikAdedSayisiList = []
+            # self.KomisyonIslemSayisiList = []
+            # self.KomisyonFiyatList = []
+            # self.KardaBarSayisiList = []
+            # self.ZarardaBarSayisiList = []
+            # self.BakiyePuanList = []
+            # self.BakiyeFiyatList = []
+            # self.GetiriPuanList = []
+            # self.GetiriFiyatList = []
+            # self.GetiriPuanYuzdeList = []
+            # self.GetiriFiyatYuzdeList = []
+            # self.BakiyePuanNetList = []
+            # self.BakiyeFiyatNetList = []
+            # self.GetiriPuanNetList = []
+            # self.GetiriFiyatNetList = []
+            # self.GetiriPuanYuzdeNetList = []
+            # self.GetiriFiyatYuzdeNetList = []
+            # self.GetiriKz = []
+            # self.GetiriKzNet = []
+            # self.GetiriKzSistem = []
+            # self.GetiriKzNetSistem = []
+            # self.EmirKomutList = []
+            # self.EmirStatusList = []
+
+        ]
+
+        self.dataPlotterDearPyGui.plot_multi_panel(
+            timestamps=time_array,
+            panels=panels,
+            synchronized_zoom=True
+        )
+        print("=== DEBUG: show çağrılıyor ===")
+        self.dataPlotterDearPyGui.show()
+
+    def plotData3_DearPyGui(self, trader, show_moving_average=False, show_levels=False, show_balance=False, show_kar_zarar_puan=False, show_kar_zarar_fiyat=False):
+        """
+        Dear PyGui version of plotData3 - plots directly in Trading Analysis window.
+        
+        Args:
+            trader: Trader object with trading data
+            show_moving_average: Show moving average on price chart
+            show_levels: Show price levels on price chart
+            show_balance: Show balance chart in bottom panel
+            show_kar_zarar_puan: Show kar/zarar puan chart in bottom panel
+            show_kar_zarar_fiyat: Show kar/zarar fiyat chart in bottom panel
+        """
+        print("=== plotData3_DearPyGui başlıyor ===")
+        
+        # Time array boşsa, basit index array oluştur
+        if len(self.Time) == 0:
+            print("=== WARNING: Time array boş! Index array oluşturuluyor ===")
+            time_array = list(range(len(self.Close)))
+        else:
+            time_array = self.Time
+
+        # Calculate additional data
+        farkList = [0.0] * len(trader.Lists.BakiyeFiyatList)
+        for i in range(len(trader.Lists.BakiyeFiyatList)):
+            farkList[i] = trader.Lists.BakiyeFiyatList[i] - trader.Lists.GetiriFiyatList[i]
+
+        farkList2 = [0.0] * len(trader.Lists.GetiriKz)
+        for i in range(len(trader.Lists.GetiriKz)):
+            farkList2[i] = trader.Lists.GetiriKz[i] - trader.Lists.GetiriKzNet[i]
+
+        print(f"farkList: {farkList[-1] if farkList else 'Empty'}")
+        print(f"farkList2: {farkList2[-1] if farkList2 else 'Empty'}")
+
+        # Create panels data
+        panels = [
+            {
+                'series_data': {
+                    'Close Price': self.Close,
+                    'MOST': self.Most,
+                    'ExMov': self.ExMov
+                },
+                'title': 'Trading Analysis - Price Chart',
+                'height_ratio': 3,
+                'yon_list': self.YonList,
+                'seviye_list': self.SeviyeList
+            },
+            {
+                'series_data': {
+                    'Balance': trader.Lists.BakiyeFiyatList,
+                    'GetiriFiyatList': trader.Lists.GetiriFiyatList,
+                    'farkList': farkList,
+                },
+                'title': 'Trading Analysis - Balance Chart',
+                'height_ratio': 2
+            },
+            {
+                'series_data': {
+                    'GetiriKz': trader.Lists.GetiriKz,
+                    'GetiriKzNet': trader.Lists.GetiriKzNet,
+                    'farkList2': farkList2,
+                },
+                'title': 'Trading Analysis - GetiriKz Chart',
+                'height_ratio': 2
+            }
+        ]
+
+        print("=== Calling dataPlotterDearPyGui.plot_multi_panel ===")
+        self.dataPlotterDearPyGui.plot_multi_panel(
+            timestamps=time_array,
+            panels=panels,
+            synchronized_zoom=True
+        )
+        
+        print("=== Calling dataPlotterDearPyGui.show ===")
+        self.dataPlotterDearPyGui.show()
+        print("=== plotData3_DearPyGui tamamlandı ===")
+
     def create_config_file(self, configFilePath):
         self.mySystem.write_params_to_file(configFilePath,
                                            self.mySystem.bUseParamsFromInputFile,
@@ -1002,7 +1274,11 @@ class AlgoTrader:
         print("Plotting market data...")
         self.active_trader = self.mySystem.get_trader(0)
         # self.plotData()
-        self.plotData2(self.active_trader)
+        # self.plotData2(self.active_trader)
+        # self.plotData3(self.active_trader)  # matplotlib version - DISABLED
+        
+        # Use Dear PyGui version instead
+        self.plotData3_DearPyGui(self.active_trader)
 
         # --------------------------------------------------------------
         # Show timing reports
@@ -1285,7 +1561,11 @@ class AlgoTrader:
         print("Plotting market data...")
         self.active_trader = self.mySystem.get_trader(0)
         # self.plotData()
-        self.plotData2(self.active_trader)
+        # self.plotData2(self.active_trader)
+        # self.plotData3(self.active_trader)  # matplotlib version - DISABLED
+        
+        # Use Dear PyGui version instead
+        self.plotData3_DearPyGui(self.active_trader)
 
         # --------------------------------------------------------------
         # Show timing reports
