@@ -46,6 +46,8 @@ class DataPlotterDearPyGui:
         self.crosshair_lines = {}
         self.synchronized_zoom = True
         self.context_created = False
+        self.panel_heights = []
+        self.resize_callback_registered = False
         
         # Color schemes
         self.color_schemes = {
@@ -251,17 +253,17 @@ class DataPlotterDearPyGui:
             total_ratio = sum(panel.get('height_ratio', 1) for panel in panels)
             available_height = self.figsize[1] - 100  # Leave space for window decorations
             
-            panel_heights = []
+            self.panel_heights = []
             for panel in panels:
                 ratio = panel.get('height_ratio', 1)
                 height = int((ratio / total_ratio) * available_height)
-                panel_heights.append(max(height, 150))  # Minimum height
+                self.panel_heights.append(max(height, 150))  # Minimum height
             
             # Clear existing plots
             self.plots.clear()
             
             # Create plots for each panel directly in the main window
-            for i, (panel, height) in enumerate(zip(panels, panel_heights)):
+            for i, (panel, height) in enumerate(zip(panels, self.panel_heights)):
                 plot_tag = f"plot_{i}"
                 x_axis_tag = f"x_axis_{i}"
                 y_axis_tag = f"y_axis_{i}"
@@ -289,10 +291,14 @@ class DataPlotterDearPyGui:
                     'panel_data': panel
                 })
             
+            # Setup resize callback for this window
+            self._setup_resize_callback()
+            
             print(f"Multi-panel chart created with {len(panels)} panels using Dear PyGui")
             if synchronized_zoom:
                 print("- Synchronized zoom enabled")
             print("- Interactive crosshair enabled")
+            print("- Dynamic panel resizing enabled")
             
         except Exception as e:
             print(f"Error creating Dear PyGui chart: {e}")
@@ -492,6 +498,65 @@ class DataPlotterDearPyGui:
                         dpg.add_theme_style(dpg.mvPlotStyleVar_LineWeight, 2)
                 
                 dpg.set_item_theme(series_tag, theme_tag)
+    
+    def _setup_resize_callback(self):
+        """Setup window resize callback to dynamically adjust panel heights."""
+        if self.resize_callback_registered or not self.window_tag:
+            return
+            
+        try:
+            def window_resize_callback(sender, app_data, user_data):
+                """Callback function for window resize events."""
+                try:
+                    # Get new window size
+                    new_width = dpg.get_item_width(self.window_tag)
+                    new_height = dpg.get_item_height(self.window_tag)
+                    
+                    if new_height > 100:  # Minimum reasonable height
+                        self._update_panel_heights(new_height)
+                except Exception as e:
+                    print(f"Resize callback error: {e}")
+            
+            # Register resize handler for the window
+            with dpg.item_handler_registry(tag=f"{self.window_tag}_resize_handler"):
+                dpg.add_item_resize_handler(callback=window_resize_callback)
+            
+            dpg.bind_item_handler_registry(self.window_tag, f"{self.window_tag}_resize_handler")
+            self.resize_callback_registered = True
+            
+        except Exception as e:
+            print(f"Warning: Could not setup resize callback: {e}")
+    
+    def _update_panel_heights(self, new_window_height):
+        """Update panel heights based on new window size."""
+        if not self.plots or not self.panels_data:
+            return
+            
+        try:
+            # Calculate new heights based on ratios
+            total_ratio = sum(panel.get('height_ratio', 1) for panel in self.panels_data)
+            available_height = new_window_height - 100  # Leave space for decorations
+            
+            # Update stored panel heights
+            self.panel_heights = []
+            for panel in self.panels_data:
+                ratio = panel.get('height_ratio', 1)
+                height = int((ratio / total_ratio) * available_height)
+                self.panel_heights.append(max(height, 150))  # Minimum height
+            
+            # Apply new heights to existing plots
+            for i, plot_info in enumerate(self.plots):
+                if i < len(self.panel_heights):
+                    plot_tag = plot_info['plot_tag']
+                    new_height = self.panel_heights[i]
+                    
+                    try:
+                        dpg.configure_item(plot_tag, height=new_height)
+                    except:
+                        pass  # Ignore if plot no longer exists
+                        
+        except Exception as e:
+            print(f"Warning: Could not update panel heights: {e}")
     
     def show(self, interactive: bool = True) -> None:
         """
