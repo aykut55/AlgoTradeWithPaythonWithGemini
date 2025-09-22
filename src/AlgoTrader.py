@@ -5,6 +5,7 @@ from datetime import datetime
 from src.DataManager import DataManager
 from src.DataPlotter import DataPlotter
 from src.DataPlotterDearPyGui import DataPlotterDearPyGui
+from src.DataPlotterDearPyGui2 import DataPlotterDearPyGui2
 from src.SqliteDataManager import SqliteDataManager
 from src.SystemWrapper import SystemWrapper
 from src.Utils import CUtils
@@ -16,6 +17,7 @@ class AlgoTrader:
         self.dataManager = DataManager()
         self.dataPlotter = DataPlotter()
         self.dataPlotterDearPyGui = DataPlotterDearPyGui()
+        self.dataPlotterDearPyGui2 = DataPlotterDearPyGui2()
         self.mySystem = SystemWrapper()
         self.myUtils = CUtils()
         self.indicatorManager = None
@@ -1102,6 +1104,369 @@ class AlgoTrader:
         self.dataPlotterDearPyGui.show()
         print("=== plotData3_DearPyGui tamamlandı ===")
 
+    def plotData4_DearPyGui(self, trader, show_moving_average=False, show_levels=False, show_balance=False,
+                                show_kar_zarar_puan=False, show_kar_zarar_fiyat=False):
+        """
+        Modern financial data visualization using DataPlotterDearPyGui2 framework.
+
+        Args:
+            trader: Trader object containing trading data
+            show_moving_average: Show moving average indicators
+            show_levels: Show support/resistance levels
+            show_balance: Show balance chart
+            show_kar_zarar_puan: Show profit/loss points
+            show_kar_zarar_fiyat: Show profit/loss prices
+        """
+        print("=== plotData4_DearPyGui başlıyor ===")
+
+        try:
+            from src.DataPlotterDearPyGui2 import DataPlotterDearPyGui2
+
+            # Initialize the framework
+            self.dataPlotterDearPyGui2 = DataPlotterDearPyGui2(
+                figsize=(1600, 1000),
+                title="AlgoTrader - Financial Data Analysis"
+            )
+
+            # Configure panel visibility before initialization
+            self.dataPlotterDearPyGui2.show_bottom_panel = True
+            self.dataPlotterDearPyGui2.show_left_panel = True
+            self.dataPlotterDearPyGui2.show_right_panel = True
+
+            # Initialize the UI
+            self.dataPlotterDearPyGui2.Initialize()
+
+            # Setup menu bar
+            menu = self.dataPlotterDearPyGui2.GetMainMenu()
+            if menu:
+                # File menu
+                menu.AddItem("File")
+                menu.AddSubItem("File", "Save Chart", self._on_save_chart)
+                menu.AddSubItem("File", "Export Data", self._on_export_data)
+                menu.AddSubItem("File", "Exit", self._on_exit_app)
+
+                # View menu
+                menu.AddItem("View")
+                menu.AddSubItem("View", "Reset Zoom", self._on_reset_zoom)
+                menu.AddSubItem("View", "Toggle Grid", self._on_toggle_grid)
+
+                # Tools menu
+                menu.AddItem("Tools")
+                menu.AddSubItem("Tools", "Analysis", self._on_analysis_tools)
+                menu.AddSubItem("Tools", "Settings", self._on_settings)
+
+            # Setup panel labels to see which panel is where
+            upper_panel = self.dataPlotterDearPyGui2.GetUpperPanel()
+            if upper_panel:
+                upper_panel.AddText("=== UPPER PANEL ===", color=[255, 255, 0, 255])
+                upper_panel.AddText("Window resize: Height adjusts with ratio")
+
+            left_panel = self.dataPlotterDearPyGui2.GetLeftPanel()
+            if left_panel:
+                left_panel.AddText("=== LEFT PANEL ===", color=[255, 255, 0, 255])
+                left_panel.AddText("Fixed width - no resize")
+
+            right_panel = self.dataPlotterDearPyGui2.GetRightPanel()
+            if right_panel:
+                right_panel.AddText("=== RIGHT PANEL ===", color=[255, 255, 0, 255])
+                right_panel.AddText("Fixed width - right aligned")
+
+            main_panel = self.dataPlotterDearPyGui2.GetMainPanel()
+            if main_panel:
+                # Main panel ready for chart content - no test content
+                pass
+
+            bottom_panel = self.dataPlotterDearPyGui2.GetBottomPanel()
+            if bottom_panel:
+                bottom_panel.AddText("=== BOTTOM PANEL ===", color=[255, 255, 0, 255])
+                bottom_panel.AddText("Height ratio: 20% - Trading controls will be here")
+
+            # # Setup left panel with controls
+            # left_panel = self.dataPlotterDearPyGui2.GetLeftPanel()
+            # if left_panel:
+            #     left_panel.AddText("Trading Controls", color=[255, 255, 0, 255])
+            #     left_panel.AddButton("Refresh Data", self._on_refresh_data)
+            #     left_panel.AddButton("Auto Scale", self._on_auto_scale)
+            #
+            #     # Add indicators
+            #     left_panel.AddText("\nIndicators Status:")
+            #     left_panel.AddIndicator("led", True)  # Connection status
+            #     left_panel.AddText("Connected")
+            #
+            #     # Add parameters memo
+            #     left_panel.AddText("\nTrading Parameters:")
+            #     params_text = self._get_trading_params_text(trader)
+            #     left_panel.AddMemo(params_text, height=200)
+            #
+            # # Setup right panel with statistics
+            # right_panel = self.dataPlotterDearPyGui2.GetRightPanel()
+            # if right_panel:
+            #     right_panel.AddText("Statistics", color=[255, 255, 0, 255])
+            #
+            #     # Add trading statistics table
+            #     stats_data = self._get_trading_statistics(trader)
+            #     if stats_data:
+            #         right_panel.AddTable(
+            #             columns=["Metric", "Value"],
+            #             data=stats_data
+            #         )
+            #
+            #     # Add progress indicators
+            #     right_panel.AddText("\nProgress:")
+            #     right_panel.AddIndicator("progress", 0.75)  # Overall progress
+
+
+
+            # # Setup bottom panel with controls
+            # bottom_panel = self.dataPlotterDearPyGui2.GetBottomPanel()
+            # if bottom_panel:
+            #     bottom_panel.AddText("Additional Controls", color=[255, 255, 0, 255])
+            #     bottom_panel.AddButton("Start Trading", self._on_start_trading)
+            #     bottom_panel.AddButton("Stop Trading", self._on_stop_trading)
+            #     bottom_panel.AddButton("Reset System", self._on_reset_system)
+            #
+            #     # Add trading mode controls
+            #     bottom_panel.AddText("\nTrading Mode:")
+            #     bottom_panel.AddButton("Manual Mode", self._on_manual_mode)
+            #     bottom_panel.AddButton("Auto Mode", self._on_auto_mode)
+            #
+            #     # Add additional trading statistics
+            #     bottom_panel.AddText("\nQuick Stats:")
+            #     quick_stats = self._get_quick_statistics(trader)
+            #     if quick_stats:
+            #         bottom_panel.AddTable(
+            #             columns=["Quick Metric", "Value"],
+            #             data=quick_stats
+            #         )
+
+
+
+
+
+            '''
+            # Setup main panels with financial data
+            main_panel = self.dataPlotterDearPyGui2.GetMainPanel()
+
+            # Panel 0: Price chart with candlesticks and moving averages
+            panel0 = main_panel.AddPanel(0, title="Price Chart", height_ratio=3)
+
+            # Prepare OHLC data
+            ohlc_data = self._prepare_ohlc_data(trader)
+            if ohlc_data:
+                panel0.AddPlot(
+                    plot_type="candlestick",
+                    series_data=ohlc_data,
+                    options={"title": "OHLC Chart", "height": 400}
+                )
+
+            # Add moving averages if requested
+            if show_moving_average:
+                ma_data = self._prepare_moving_average_data(trader)
+                if ma_data:
+                    panel0.AddPlot(
+                        plot_type="line",
+                        series_data=ma_data,
+                        options={"title": "Moving Averages", "height": 400}
+                    )
+
+            # Panel 1: Volume chart
+            panel1 = main_panel.AddPanel(1, title="Volume", height_ratio=1)
+            volume_data = self._prepare_volume_data(trader)
+            if volume_data:
+                panel1.AddPlot(
+                    plot_type="bar",
+                    series_data=volume_data,
+                    options={"title": "Volume Chart", "height": 150}
+                )
+
+            # Panel 2: Balance and P&L (if requested)
+            if show_balance or show_kar_zarar_puan or show_kar_zarar_fiyat:
+                panel2 = main_panel.AddPanel(2, title="Balance & P&L", height_ratio=1)
+
+                if show_balance:
+                    balance_data = self._prepare_balance_data(trader)
+                    if balance_data:
+                        panel2.AddPlot(
+                            plot_type="line",
+                            series_data=balance_data,
+                            options={"title": "Account Balance", "height": 150}
+                        )
+
+                if show_kar_zarar_puan:
+                    pnl_points_data = self._prepare_pnl_points_data(trader)
+                    if pnl_points_data:
+                        panel2.AddPlot(
+                            plot_type="line",
+                            series_data=pnl_points_data,
+                            options={"title": "P&L Points", "height": 150}
+                        )
+
+            # Setup status bar
+            status_bar = self.dataPlotterDearPyGui2.GetStatusBar()
+            if status_bar:
+                status_bar.SetText("Chart loaded successfully - Ready for analysis")
+                status_bar.AddIndicator("progress", 1.0)  # Loading complete
+            '''
+
+            print("=== Framework initialized, showing chart ===")
+
+            # Display the application
+            self.dataPlotterDearPyGui2.Show()
+
+        except Exception as e:
+            print(f"Error in plotData4_DearPyGui: {e}")
+            import traceback
+            traceback.print_exc()
+
+        print("=== plotData4_DearPyGui tamamlandı ===")
+
+    def _get_trading_params_text(self, trader):
+        """Get trading parameters as formatted text."""
+        try:
+            params = []
+            params.append(f"Symbol: {getattr(trader, 'symbol', 'N/A')}")
+            params.append(f"Timeframe: {getattr(trader, 'timeframe', 'N/A')}")
+            params.append(f"Balance: {getattr(trader, 'balance', 'N/A')}")
+            params.append(f"Position Size: {getattr(trader, 'position_size', 'N/A')}")
+            params.append(f"Risk %: {getattr(trader, 'risk_percent', 'N/A')}")
+            return "\n".join(params)
+        except:
+            return "Parameters not available"
+
+    def _get_trading_statistics(self, trader):
+        """Get trading statistics as table data."""
+        try:
+            stats = []
+            stats.append(["Total Trades", str(getattr(trader, 'total_trades', 0))])
+            stats.append(["Win Rate", f"{getattr(trader, 'win_rate', 0):.2f}%"])
+            stats.append(["Profit Factor", f"{getattr(trader, 'profit_factor', 0):.2f}"])
+            stats.append(["Max Drawdown", f"{getattr(trader, 'max_drawdown', 0):.2f}%"])
+            stats.append(["Sharpe Ratio", f"{getattr(trader, 'sharpe_ratio', 0):.2f}"])
+            return stats
+        except:
+            return [["No Data", "Available"]]
+
+    def _prepare_ohlc_data(self, trader):
+        """Prepare OHLC data for candlestick chart."""
+        try:
+            if hasattr(trader, 'close_prices') and len(trader.close_prices) > 0:
+                length = len(trader.close_prices)
+                return {
+                    "timestamps": list(range(length)),
+                    "open": getattr(trader, 'open_prices', trader.close_prices),
+                    "high": getattr(trader, 'high_prices', trader.close_prices),
+                    "low": getattr(trader, 'low_prices', trader.close_prices),
+                    "close": trader.close_prices
+                }
+        except Exception as e:
+            print(f"Error preparing OHLC data: {e}")
+        return None
+
+    def _prepare_moving_average_data(self, trader):
+        """Prepare moving average data."""
+        try:
+            ma_data = {}
+            if hasattr(trader, 'ma_values') and trader.ma_values:
+                ma_data["MA"] = trader.ma_values
+            if hasattr(trader, 'ma_fast') and trader.ma_fast:
+                ma_data["MA Fast"] = trader.ma_fast
+            if hasattr(trader, 'ma_slow') and trader.ma_slow:
+                ma_data["MA Slow"] = trader.ma_slow
+            return ma_data if ma_data else None
+        except Exception as e:
+            print(f"Error preparing MA data: {e}")
+        return None
+
+    def _prepare_volume_data(self, trader):
+        """Prepare volume data."""
+        try:
+            if hasattr(trader, 'volume_values') and trader.volume_values:
+                return {"Volume": trader.volume_values}
+            # Generate dummy volume data if not available
+            elif hasattr(trader, 'close_prices') and len(trader.close_prices) > 0:
+                import random
+                volume = [random.randint(1000, 10000) for _ in range(len(trader.close_prices))]
+                return {"Volume": volume}
+        except Exception as e:
+            print(f"Error preparing volume data: {e}")
+        return None
+
+    def _prepare_balance_data(self, trader):
+        """Prepare balance data."""
+        try:
+            if hasattr(trader, 'balance_history') and trader.balance_history:
+                return {"Balance": trader.balance_history}
+            elif hasattr(trader, 'equity_curve') and trader.equity_curve:
+                return {"Equity": trader.equity_curve}
+        except Exception as e:
+            print(f"Error preparing balance data: {e}")
+        return None
+
+    def _prepare_pnl_points_data(self, trader):
+        """Prepare P&L points data."""
+        try:
+            if hasattr(trader, 'pnl_points') and trader.pnl_points:
+                return {"P&L Points": trader.pnl_points}
+        except Exception as e:
+            print(f"Error preparing P&L points data: {e}")
+        return None
+
+    # Callback methods for menu items
+    def _on_save_chart(self, sender, app_data, user_data):
+        print("Save chart requested")
+
+    def _on_export_data(self, sender, app_data, user_data):
+        print("Export data requested")
+
+    def _on_exit_app(self, sender, app_data, user_data):
+        print("Exit application requested")
+
+    def _on_reset_zoom(self, sender, app_data, user_data):
+        print("Reset zoom requested")
+
+    def _on_toggle_grid(self, sender, app_data, user_data):
+        print("Toggle grid requested")
+
+    def _on_analysis_tools(self, sender, app_data, user_data):
+        print("Analysis tools requested")
+
+    def _on_settings(self, sender, app_data, user_data):
+        print("Settings requested")
+
+    def _on_refresh_data(self, sender, app_data, user_data):
+        print("Refresh data requested")
+
+    def _on_auto_scale(self, sender, app_data, user_data):
+        print("Auto scale requested")
+
+    def _on_start_trading(self, sender, app_data, user_data):
+        print("Start trading requested")
+
+    def _on_stop_trading(self, sender, app_data, user_data):
+        print("Stop trading requested")
+
+    def _on_reset_system(self, sender, app_data, user_data):
+        print("Reset system requested")
+
+    def _on_manual_mode(self, sender, app_data, user_data):
+        print("Manual mode activated")
+
+    def _on_auto_mode(self, sender, app_data, user_data):
+        print("Auto mode activated")
+
+    def _get_quick_statistics(self, trader):
+        """Get quick trading statistics as table data."""
+        try:
+            quick_stats = []
+            quick_stats.append(["Current Balance", f"{getattr(trader, 'current_balance', 10000):.2f}"])
+            quick_stats.append(["Position", getattr(trader, 'current_position', 'Flat')])
+            quick_stats.append(["Last Trade", getattr(trader, 'last_trade_type', 'None')])
+            quick_stats.append(["P&L Today", f"{getattr(trader, 'pnl_today', 0):.2f}"])
+            return quick_stats
+        except:
+            return [["Quick Data", "Not Available"]]
+
+
     def create_config_file(self, configFilePath):
         self.mySystem.write_params_to_file(configFilePath,
                                            self.mySystem.bUseParamsFromInputFile,
@@ -1288,7 +1653,8 @@ class AlgoTrader:
         # self.plotData3(self.active_trader)  # matplotlib version - DISABLED
         
         # Use Dear PyGui version instead
-        self.plotData3_DearPyGui(self.active_trader)
+        # self.plotData3_DearPyGui(self.active_trader)
+        self.plotData4_DearPyGui(self.active_trader)
 
         # --------------------------------------------------------------
         # Show timing reports
@@ -1575,7 +1941,8 @@ class AlgoTrader:
         # self.plotData3(self.active_trader)  # matplotlib version - DISABLED
         
         # Use Dear PyGui version instead
-        self.plotData3_DearPyGui(self.active_trader)
+        # self.plotData3_DearPyGui(self.active_trader)
+        self.plotData4_DearPyGui(self.active_trader)
 
         # --------------------------------------------------------------
         # Show timing reports
