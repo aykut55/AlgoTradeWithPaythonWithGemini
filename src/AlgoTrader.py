@@ -1048,6 +1048,16 @@ class AlgoTrader:
         print(f"farkList: {farkList[-1] if farkList else 'Empty'}")
         print(f"farkList2: {farkList2[-1] if farkList2 else 'Empty'}")
 
+        # Configure UI layout BEFORE any data operations
+        try:
+            self.dataPlotterDearPyGui.show_header = True
+            self.dataPlotterDearPyGui.show_footer = False
+        except Exception as e:
+            print(f"Warning: Could not configure UI layout: {e}")
+            # Fallback to safe defaults
+            self.dataPlotterDearPyGui.show_header = True
+            self.dataPlotterDearPyGui.show_footer = False
+
         # Create panels data
         panels = [
             {
@@ -1087,7 +1097,7 @@ class AlgoTrader:
             panels=panels,
             synchronized_zoom=True
         )
-        
+
         print("=== Calling dataPlotterDearPyGui.show ===")
         self.dataPlotterDearPyGui.show()
         print("=== plotData3_DearPyGui tamamlandı ===")

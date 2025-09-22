@@ -48,6 +48,13 @@ class DataPlotterDearPyGui:
         self.context_created = False
         self.panel_heights = []
         self.resize_callback_registered = False
+        self.header_height = 60
+        self.footer_height = 80
+        self.status_text = "Ready"
+        self.show_header = True
+        self.show_footer = True
+        self.header_collapsed = False
+        self.footer_collapsed = False
         
         # Color schemes
         self.color_schemes = {
@@ -141,7 +148,16 @@ class DataPlotterDearPyGui:
         with dpg.window(tag=self.window_tag, label="Trading Analysis", 
                        width=self.figsize[0], height=self.figsize[1],
                        no_close=False):
-            pass
+            # Create header if enabled
+            if self.show_header:
+                self._create_header()
+            
+            # Create content area (plots will be added here)
+            dpg.add_child_window(tag="content_area", height=-self.footer_height if self.show_footer else -1)
+            
+            # Create footer if enabled
+            if self.show_footer:
+                self._create_footer()
     
     def _setup_crosshair(self, plot_tag):
         """Setup crosshair functionality for a plot."""
@@ -270,9 +286,9 @@ class DataPlotterDearPyGui:
                 
                 panel_title = panel.get('title', f'Panel {i}')
                 
-                # Create plot as child of the main window
+                # Create plot as child of the content area
                 dpg.add_plot(tag=plot_tag, label=panel_title, 
-                           height=height, width=-1, parent=self.window_tag)
+                           height=height, width=-1, parent="content_area")
                 
                 # Add axes to the plot
                 dpg.add_plot_axis(dpg.mvXAxis, tag=x_axis_tag, label="Time", parent=plot_tag)
@@ -294,11 +310,15 @@ class DataPlotterDearPyGui:
             # Setup resize callback for this window
             self._setup_resize_callback()
             
+            # Update header info after creating plots
+            self.update_header_info()
+            
             print(f"Multi-panel chart created with {len(panels)} panels using Dear PyGui")
             if synchronized_zoom:
                 print("- Synchronized zoom enabled")
             print("- Interactive crosshair enabled")
             print("- Dynamic panel resizing enabled")
+            print("- Header/Footer UI enabled")
             
         except Exception as e:
             print(f"Error creating Dear PyGui chart: {e}")
@@ -557,6 +577,267 @@ class DataPlotterDearPyGui:
                         
         except Exception as e:
             print(f"Warning: Could not update panel heights: {e}")
+    
+    def _create_header(self):
+        """Create header with menu, buttons, and labels."""
+        # Calculate dynamic height based on collapsed state
+        current_height = 25 if self.header_collapsed else self.header_height
+        
+        with dpg.child_window(tag="header_area", height=current_height, border=True):
+            # Collapsible header title bar
+            with dpg.group(horizontal=True):
+                collapse_icon = "▼" if not self.header_collapsed else "▶"
+                dpg.add_button(label=f"{collapse_icon} Header", tag="header_collapse_btn", callback=self._toggle_header_collapse, width=80)
+                dpg.add_separator()
+                dpg.add_text("Trading Controls & Status")
+            
+            # Only show content if not collapsed
+            if not self.header_collapsed:
+                # Header top row - Menu bar
+                with dpg.menu_bar():
+                    with dpg.menu(label="File"):
+                        dpg.add_menu_item(label="Open Data", callback=self._on_open_data)
+                        dpg.add_menu_item(label="Save Chart", callback=self._on_save_chart)
+                        dpg.add_separator()
+                        dpg.add_menu_item(label="Export PNG", callback=self._on_export_png)
+                        dpg.add_menu_item(label="Export CSV", callback=self._on_export_csv)
+                
+                    with dpg.menu(label="View"):
+                        dpg.add_menu_item(label="Reset Zoom", callback=self._on_reset_zoom)
+                        dpg.add_menu_item(label="Fit to Window", callback=self._on_fit_window)
+                        dpg.add_separator()
+                        dpg.add_checkbox(label="Show Crosshair", default_value=True, callback=self._on_toggle_crosshair)
+                        dpg.add_checkbox(label="Synchronized Zoom", default_value=self.synchronized_zoom, callback=self._on_toggle_sync_zoom)
+                
+                    with dpg.menu(label="Tools"):
+                        dpg.add_menu_item(label="Analysis Tools", callback=self._on_analysis_tools)
+                        dpg.add_menu_item(label="Indicator Panel", callback=self._on_indicator_panel)
+                        dpg.add_separator()
+                        dpg.add_menu_item(label="Settings", callback=self._on_settings)
+            
+                # Header bottom row - Control buttons and info
+                with dpg.group(horizontal=True):
+                    dpg.add_button(label="Refresh", tag="btn_refresh", callback=self._on_refresh)
+                    dpg.add_button(label="Pause", tag="btn_pause", callback=self._on_pause)
+                    dpg.add_separator()
+                    
+                    # Theme selector
+                    dpg.add_text("Theme:")
+                    dpg.add_combo(["dark", "light"], default_value=self.style, tag="theme_combo", 
+                                 callback=self._on_theme_change, width=80)
+                    
+                    dpg.add_separator()
+                    
+                    # Status indicators
+                    dpg.add_text("Panels:")
+                    dpg.add_text("0", tag="panel_count")
+                    
+                    dpg.add_separator()
+                    dpg.add_text("Mode:")
+                    dpg.add_text("Real-time", tag="mode_status")
+                    
+                    # Spacer to push time to the right
+                    dpg.add_spacer(width=50)
+                    
+                    # Current time display
+                    dpg.add_text("Time:")
+                    dpg.add_text(datetime.now().strftime("%H:%M:%S"), tag="current_time")
+    
+    def _create_footer(self):
+        """Create footer with status bar."""
+        # Calculate dynamic height based on collapsed state
+        current_height = 25 if self.footer_collapsed else self.footer_height
+        
+        with dpg.child_window(tag="footer_area", height=current_height, border=True):
+            # Collapsible footer title bar
+            with dpg.group(horizontal=True):
+                collapse_icon = "▲" if not self.footer_collapsed else "▼"
+                dpg.add_button(label=f"{collapse_icon} Footer", tag="footer_collapse_btn", callback=self._toggle_footer_collapse, width=80)
+                dpg.add_separator()
+                dpg.add_text("Status & Statistics")
+            
+            # Only show content if not collapsed
+            if not self.footer_collapsed:
+                with dpg.group(horizontal=True):
+                    # Status text
+                    dpg.add_text(self.status_text, tag="status_text")
+                    
+                    # Spacer to push other elements to the right
+                    dpg.add_spacer(width=200)
+                    
+                    # Progress bar for operations
+                    dpg.add_progress_bar(tag="progress_bar", width=150, default_value=0.0, overlay="Ready")
+                    
+                    # Separator
+                    dpg.add_separator()
+                    
+                    # Chart info
+                    dpg.add_text("Charts: 0", tag="chart_count")
+                    dpg.add_text(" | ")
+                    dpg.add_text("Points: 0", tag="point_count")
+                    dpg.add_text(" | ")
+                    dpg.add_text("FPS: --", tag="fps_counter")
+    
+    # Header callback methods
+    def _on_open_data(self):
+        """Handle open data menu item."""
+        self.update_status("Opening data file...")
+        print("Open data file dialog would appear here")
+    
+    def _on_save_chart(self):
+        """Handle save chart menu item."""
+        self.update_status("Saving chart...")
+        print("Save chart dialog would appear here")
+    
+    def _on_export_png(self):
+        """Handle export PNG menu item."""
+        self.update_status("Exporting to PNG...")
+        print("Export PNG functionality")
+    
+    def _on_export_csv(self):
+        """Handle export CSV menu item."""
+        self.update_status("Exporting to CSV...")
+        print("Export CSV functionality")
+    
+    def _on_reset_zoom(self):
+        """Handle reset zoom menu item."""
+        self.update_status("Resetting zoom...")
+        for plot_info in self.plots:
+            try:
+                dpg.fit_axis_data(plot_info['x_axis_tag'])
+                dpg.fit_axis_data(plot_info['y_axis_tag'])
+            except:
+                pass
+    
+    def _on_fit_window(self):
+        """Handle fit to window menu item."""
+        self.update_status("Fitting to window...")
+        self._on_reset_zoom()
+    
+    def _on_toggle_crosshair(self, sender, app_data):
+        """Handle toggle crosshair checkbox."""
+        if app_data:
+            self.update_status("Crosshair enabled")
+        else:
+            self.update_status("Crosshair disabled")
+    
+    def _on_toggle_sync_zoom(self, sender, app_data):
+        """Handle toggle synchronized zoom checkbox."""
+        self.synchronized_zoom = app_data
+        if app_data:
+            self.update_status("Synchronized zoom enabled")
+        else:
+            self.update_status("Synchronized zoom disabled")
+    
+    def _on_analysis_tools(self):
+        """Handle analysis tools menu item."""
+        self.update_status("Opening analysis tools...")
+        print("Analysis tools panel would open here")
+    
+    def _on_indicator_panel(self):
+        """Handle indicator panel menu item."""
+        self.update_status("Opening indicator panel...")
+        print("Indicator panel would open here")
+    
+    def _on_settings(self):
+        """Handle settings menu item."""
+        self.update_status("Opening settings...")
+        print("Settings dialog would open here")
+    
+    def _on_refresh(self):
+        """Handle refresh button."""
+        self.update_status("Refreshing data...")
+        print("Refreshing chart data")
+    
+    def _on_pause(self):
+        """Handle pause button."""
+        current_text = dpg.get_item_label("btn_pause")
+        if current_text == "Pause":
+            dpg.set_item_label("btn_pause", "Resume")
+            self.update_status("Paused")
+        else:
+            dpg.set_item_label("btn_pause", "Pause")
+            self.update_status("Resumed")
+    
+    def _on_theme_change(self, sender, app_data):
+        """Handle theme change combo."""
+        self.style = app_data
+        self.colors = self.color_schemes.get(app_data, self.color_schemes['dark'])
+        self.update_status(f"Theme changed to {app_data}")
+    
+    def _toggle_header_collapse(self):
+        """Toggle header collapse state."""
+        self.header_collapsed = not self.header_collapsed
+        
+        # Update header area height
+        new_height = 25 if self.header_collapsed else self.header_height
+        try:
+            dpg.configure_item("header_area", height=new_height)
+            
+            # Update button label with new icon
+            collapse_icon = "▼" if not self.header_collapsed else "▶"
+            if dpg.does_item_exist("header_collapse_btn"):
+                dpg.set_item_label("header_collapse_btn", f"{collapse_icon} Header")
+            
+            status = "collapsed" if self.header_collapsed else "expanded"
+            self.update_status(f"Header {status}")
+            
+        except Exception as e:
+            print(f"Error toggling header: {e}")
+    
+    def _toggle_footer_collapse(self):
+        """Toggle footer collapse state."""
+        self.footer_collapsed = not self.footer_collapsed
+        
+        # Update footer area height
+        new_height = 25 if self.footer_collapsed else self.footer_height
+        try:
+            dpg.configure_item("footer_area", height=new_height)
+            
+            # Update button label with new icon
+            collapse_icon = "▲" if not self.footer_collapsed else "▼"
+            if dpg.does_item_exist("footer_collapse_btn"):
+                dpg.set_item_label("footer_collapse_btn", f"{collapse_icon} Footer")
+            
+            status = "collapsed" if self.footer_collapsed else "expanded"
+            self.update_status(f"Footer {status}")
+            
+        except Exception as e:
+            print(f"Error toggling footer: {e}")
+    
+    def update_status(self, message: str):
+        """Update status bar message."""
+        self.status_text = message
+        try:
+            dpg.set_value("status_text", message)
+        except:
+            pass
+    
+    def update_header_info(self):
+        """Update header information displays."""
+        try:
+            # Update panel count
+            dpg.set_value("panel_count", str(len(self.plots)))
+            
+            # Update current time
+            dpg.set_value("current_time", datetime.now().strftime("%H:%M:%S"))
+            
+            # Update chart count in footer
+            dpg.set_value("chart_count", f"Charts: {len(self.plots)}")
+            
+            # Update point count if data is available
+            total_points = 0
+            if self.panels_data:
+                for panel in self.panels_data:
+                    series_data = panel.get('series_data', {})
+                    for name, data in series_data.items():
+                        if isinstance(data, (list, np.ndarray)):
+                            total_points += len(data)
+            
+            dpg.set_value("point_count", f"Points: {total_points}")
+            
+        except Exception as e:
+            pass  # Ignore errors if UI elements don't exist yet
     
     def show(self, interactive: bool = True) -> None:
         """
