@@ -1051,7 +1051,7 @@ class AlgoTrader:
         # Configure UI layout BEFORE any data operations
         try:
             self.dataPlotterDearPyGui.show_header = True
-            self.dataPlotterDearPyGui.show_footer = False
+            self.dataPlotterDearPyGui.show_footer = True
         except Exception as e:
             print(f"Warning: Could not configure UI layout: {e}")
             # Fallback to safe defaults

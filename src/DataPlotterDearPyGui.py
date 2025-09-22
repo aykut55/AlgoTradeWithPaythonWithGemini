@@ -297,6 +297,10 @@ class DataPlotterDearPyGui:
                 # Plot series data
                 self._plot_panel_data(panel, plot_tag, x_axis_tag, y_axis_tag, i)
                 
+                # Setup synchronized zoom/pan callback
+                if self.synchronized_zoom:
+                    self._setup_sync_callback(plot_tag, x_axis_tag, i)
+                
                 # Setup crosshair (simplified to avoid crashes)
                 # self._setup_crosshair(plot_tag)
                 
@@ -578,6 +582,52 @@ class DataPlotterDearPyGui:
         except Exception as e:
             print(f"Warning: Could not update panel heights: {e}")
     
+    def _setup_sync_callback(self, plot_tag, x_axis_tag, panel_index):
+        """Setup synchronized zoom and pan callback for a plot."""
+        if not self.synchronized_zoom:
+            return
+            
+        try:
+            def sync_callback(sender, app_data, user_data):
+                """Callback function for synchronized zoom/pan operations."""
+                try:
+                    # Skip if sync is disabled
+                    if not self.synchronized_zoom:
+                        return
+                    
+                    # Get current x-axis limits from the changed plot
+                    current_limits = dpg.get_axis_limits(x_axis_tag)
+                    if current_limits is None or len(current_limits) != 2:
+                        return
+                    
+                    x_min, x_max = current_limits
+                    
+                    # Apply the same x-axis limits to all other plots
+                    for plot_info in self.plots:
+                        other_x_axis_tag = plot_info['x_axis_tag']
+                        # Skip the current plot that triggered the callback
+                        if other_x_axis_tag != x_axis_tag:
+                            try:
+                                dpg.set_axis_limits(other_x_axis_tag, x_min, x_max)
+                            except:
+                                pass  # Ignore if axis doesn't exist
+                    
+                    # Update status to show synchronization is active
+                    self.update_status(f"Synchronized zoom: {x_min:.2f} - {x_max:.2f}")
+                    
+                except Exception as e:
+                    pass  # Silently ignore sync errors to prevent crash loops
+            
+            # Register callback for zoom and pan events on the plot
+            with dpg.item_handler_registry(tag=f"{plot_tag}_sync_handler"):
+                dpg.add_item_clicked_handler(callback=sync_callback, button=dpg.mvMouseButton_Left)
+                dpg.add_item_hover_handler(callback=sync_callback)
+            
+            dpg.bind_item_handler_registry(plot_tag, f"{plot_tag}_sync_handler")
+            
+        except Exception as e:
+            print(f"Warning: Could not setup sync callback for panel {panel_index}: {e}")
+    
     def _create_header(self):
         """Create header with menu, buttons, and labels."""
         # Calculate dynamic height based on collapsed state
@@ -607,7 +657,7 @@ class DataPlotterDearPyGui:
                         dpg.add_menu_item(label="Fit to Window", callback=self._on_fit_window)
                         dpg.add_separator()
                         dpg.add_checkbox(label="Show Crosshair", default_value=True, callback=self._on_toggle_crosshair)
-                        dpg.add_checkbox(label="Synchronized Zoom", default_value=self.synchronized_zoom, callback=self._on_toggle_sync_zoom)
+                        dpg.add_checkbox(label="Synchronized Zoom", default_value=self.synchronized_zoom, callback=self._on_toggle_sync_zoom, tag="sync_zoom_checkbox")
                 
                     with dpg.menu(label="Tools"):
                         dpg.add_menu_item(label="Analysis Tools", callback=self._on_analysis_tools)
