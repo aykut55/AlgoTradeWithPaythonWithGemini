@@ -1149,6 +1149,12 @@ class AlgoTrader:
                 menu.AddItem("View")
                 menu.AddSubItem("View", "Reset Zoom", self._on_reset_zoom)
                 menu.AddSubItem("View", "Toggle Grid", self._on_toggle_grid)
+                menu.AddSubItem("View", "--- Panels ---", None)  # Separator
+                menu.AddSubItem("View", "Toggle Upper Panel", self._on_toggle_upper_panel)
+                menu.AddSubItem("View", "Toggle Left Panel", self._on_toggle_left_panel)
+                menu.AddSubItem("View", "Toggle Right Panel", self._on_toggle_right_panel)
+                menu.AddSubItem("View", "Toggle Bottom Panel", self._on_toggle_bottom_panel)
+                menu.AddSubItem("View", "Toggle Status Bar", self._on_toggle_status_bar)
 
                 # Tools menu
                 menu.AddItem("Tools")
@@ -1171,15 +1177,15 @@ class AlgoTrader:
                 right_panel.AddText("=== RIGHT PANEL ===", color=[255, 255, 0, 255])
                 right_panel.AddText("Fixed width - right aligned")
 
-            main_panel = self.dataPlotterDearPyGui2.GetMainPanel()
-            if main_panel:
-                # Main panel ready for chart content - no test content
-                pass
-
             bottom_panel = self.dataPlotterDearPyGui2.GetBottomPanel()
             if bottom_panel:
                 bottom_panel.AddText("=== BOTTOM PANEL ===", color=[255, 255, 0, 255])
                 bottom_panel.AddText("Height ratio: 20% - Trading controls will be here")
+
+            main_panel = self.dataPlotterDearPyGui2.GetMainPanel()
+            if main_panel:
+                # Main panel ready for chart content - no test content
+                pass
 
             # # Setup left panel with controls
             # left_panel = self.dataPlotterDearPyGui2.GetLeftPanel()
@@ -1465,6 +1471,52 @@ class AlgoTrader:
             return quick_stats
         except:
             return [["Quick Data", "Not Available"]]
+
+    # Panel visibility toggle callbacks
+    def _on_toggle_upper_panel(self, sender, app_data, user_data):
+        """Toggle upper panel visibility."""
+        if hasattr(self, 'dataPlotterDearPyGui2'):
+            upper_panel = self.dataPlotterDearPyGui2.GetUpperPanel()
+            if upper_panel:
+                current_visibility = getattr(upper_panel, 'visible', True)
+                upper_panel.SetVisibility(not current_visibility)
+                print(f"Upper panel visibility toggled to: {not current_visibility}")
+
+    def _on_toggle_left_panel(self, sender, app_data, user_data):
+        """Toggle left panel visibility."""
+        if hasattr(self, 'dataPlotterDearPyGui2'):
+            left_panel = self.dataPlotterDearPyGui2.GetLeftPanel()
+            if left_panel:
+                current_visibility = getattr(left_panel, 'visible', True)
+                left_panel.SetVisibility(not current_visibility)
+                print(f"Left panel visibility toggled to: {not current_visibility}")
+
+    def _on_toggle_right_panel(self, sender, app_data, user_data):
+        """Toggle right panel visibility."""
+        if hasattr(self, 'dataPlotterDearPyGui2'):
+            right_panel = self.dataPlotterDearPyGui2.GetRightPanel()
+            if right_panel:
+                current_visibility = getattr(right_panel, 'visible', True)
+                right_panel.SetVisibility(not current_visibility)
+                print(f"Right panel visibility toggled to: {not current_visibility}")
+
+    def _on_toggle_bottom_panel(self, sender, app_data, user_data):
+        """Toggle bottom panel visibility."""
+        if hasattr(self, 'dataPlotterDearPyGui2'):
+            bottom_panel = self.dataPlotterDearPyGui2.GetBottomPanel()
+            if bottom_panel:
+                current_visibility = getattr(bottom_panel, 'visible', True)
+                bottom_panel.SetVisibility(not current_visibility)
+                print(f"Bottom panel visibility toggled to: {not current_visibility}")
+
+    def _on_toggle_status_bar(self, sender, app_data, user_data):
+        """Toggle status bar visibility."""
+        if hasattr(self, 'dataPlotterDearPyGui2'):
+            status_bar = self.dataPlotterDearPyGui2.GetStatusBar()
+            if status_bar:
+                current_visibility = getattr(status_bar, 'visible', True)
+                status_bar.SetVisibility(not current_visibility)
+                print(f"Status bar visibility toggled to: {not current_visibility}")
 
 
     def create_config_file(self, configFilePath):
