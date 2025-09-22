@@ -1117,6 +1117,26 @@ class AlgoTrader:
             show_kar_zarar_puan: Show profit/loss points
             show_kar_zarar_fiyat: Show profit/loss prices
         """
+
+        # Time array boşsa, basit index array oluştur
+        if len(self.Time) == 0:
+            print("=== WARNING: Time array boş! Index array oluşturuluyor ===")
+            time_array = list(range(len(self.Close)))
+        else:
+            time_array = self.Time
+
+        # Calculate additional data
+        farkList = [0.0] * len(trader.Lists.BakiyeFiyatList)
+        for i in range(len(trader.Lists.BakiyeFiyatList)):
+            farkList[i] = trader.Lists.BakiyeFiyatList[i] - trader.Lists.GetiriFiyatList[i]
+
+        farkList2 = [0.0] * len(trader.Lists.GetiriKz)
+        for i in range(len(trader.Lists.GetiriKz)):
+            farkList2[i] = trader.Lists.GetiriKz[i] - trader.Lists.GetiriKzNet[i]
+
+        print(f"farkList: {farkList[-1] if farkList else 'Empty'}")
+        print(f"farkList2: {farkList2[-1] if farkList2 else 'Empty'}")
+
         print("=== plotData4_DearPyGui başlıyor ===")
 
         try:
@@ -1129,9 +1149,13 @@ class AlgoTrader:
             )
 
             # Configure panel visibility before initialization
-            self.dataPlotterDearPyGui2.show_bottom_panel = True
+            self.dataPlotterDearPyGui2.show_menu = True
+            self.dataPlotterDearPyGui2.show_status_bar = True
             self.dataPlotterDearPyGui2.show_left_panel = True
             self.dataPlotterDearPyGui2.show_right_panel = True
+            self.dataPlotterDearPyGui2.show_upper_panel = True
+            self.dataPlotterDearPyGui2.show_bottom_panel = True
+            self.dataPlotterDearPyGui2.show_main_panel = True     # bu eklenecek
 
             # Initialize the UI
             self.dataPlotterDearPyGui2.Initialize()
@@ -1152,6 +1176,7 @@ class AlgoTrader:
                 menu.AddSubItem("View", "--- Panels ---", None)  # Separator
                 menu.AddSubItem("View", "Toggle Upper Panel", self._on_toggle_upper_panel)
                 menu.AddSubItem("View", "Toggle Left Panel", self._on_toggle_left_panel)
+                # menu.AddSubItem("View", "Toggle Main Panel", self._on_toggle_main_panel)   bu yapilacak
                 menu.AddSubItem("View", "Toggle Right Panel", self._on_toggle_right_panel)
                 menu.AddSubItem("View", "Toggle Bottom Panel", self._on_toggle_bottom_panel)
                 menu.AddSubItem("View", "Toggle Status Bar", self._on_toggle_status_bar)
@@ -1184,8 +1209,87 @@ class AlgoTrader:
 
             main_panel = self.dataPlotterDearPyGui2.GetMainPanel()
             if main_panel:
+                # main_panel.AddText("=== MAIN PANEL ===", color=[255, 255, 0, 255])   bu yapilacak
+
+                # Panel 0: Price chart with candlesticks and moving averages
+                panel0 = main_panel.AddPanel(0, title="Price Chart", height_ratio=3)
+
+                # Prepare OHLC data
+                ohlc_data = self._prepare_ohlc_data(trader)
+                if ohlc_data:
+                    panel0.AddPlot(
+                        plot_type="candlestick",
+                        series_data=ohlc_data,
+                        options={"title": "OHLC Chart", "height": 400}
+                    )
+
+                # Add moving averages if requested
+                if show_moving_average:
+                    ma_data = self._prepare_moving_average_data(trader)
+                    if ma_data:
+                        panel0.AddPlot(
+                            plot_type="line",
+                            series_data=ma_data,
+                            options={"title": "Moving Averages", "height": 400}
+                        )
+
+                # Panel 1: Volume chart
+                panel1 = main_panel.AddPanel(1, title="Volume", height_ratio=1)
+                volume_data = self._prepare_volume_data(trader)
+                if volume_data:
+                    panel1.AddPlot(
+                        plot_type="bar",
+                        series_data=volume_data,
+                        options={"title": "Volume Chart", "height": 150}
+                    )
+
+                panel2 = main_panel.AddPanel(2, title="panel2", height_ratio=1)
+                panel3 = main_panel.AddPanel(3, title="panel3", height_ratio=1)
+                panel4 = main_panel.AddPanel(4, title="panel4", height_ratio=1)
+
+                # Setup status bar
+                status_bar = self.dataPlotterDearPyGui2.GetStatusBar()
+                if status_bar:
+                    status_bar.SetText("Chart loaded successfully - Ready for analysis")
+                    status_bar.AddIndicator("progress", 1.0)  # Loading complete
+
+
                 # Main panel ready for chart content - no test content
+                # main_panel.AddPanel(0)
+                # main_panel.AddPanel(1)
+                # main_panel.AddPanel(2)
+                # main_panel.AddPanel(3)
+                # main_panel.AddPanel(4)
+                #
+                # panel = main_panel.GetPanel(0)
+                # panel.AddXData(timestamps=time_array)
+                # timestamps = time_array,
+                # panel.AddYData(self.Close, 'Close Price')
+                # panel.AddYData(self.Most, 'MOST')
+                # panel.AddYData(self.ExMov, 'ExMov')
+                # panel.SetTitle('Trading Analysis - Price Chart')
+                # panel.SetHeightRatio(3)
+                # panel.AddYData(self.YonList, 'yon_list')
+                # panel.AddYData(self.SeviyeList, 'seviye_list')
+                #
+                # panel = main_panel.GetPanel(1)
+                # panel.AddXData(timestamps=time_array)
+                # panel.AddYData(trader.Lists.BakiyeFiyatList, 'Balance')
+                # panel.AddYData(trader.Lists.GetiriFiyatList, 'GetiriFiyatList')
+                # panel.AddYData(farkList, 'farkList')
+                # panel.SetTitle('Trading Analysis - Balance Chart')
+                # panel.SetHeightRatio(2)
+                #
+                # panel = main_panel.GetPanel(2)
+                # panel.AddXData(timestamps=time_array)
+                # panel.AddYData(trader.Lists.GetiriKz, 'GetiriKz')
+                # panel.AddYData(trader.Lists.GetiriKzNet, 'GetiriKzNet')
+                # panel.AddYData(farkList2, 'farkList2')
+                # panel.SetTitle('Trading Analysis - GetiriKz Chart')
+                # panel.SetHeightRatio(2)
+                #
                 pass
+
 
             # # Setup left panel with controls
             # left_panel = self.dataPlotterDearPyGui2.GetLeftPanel()
