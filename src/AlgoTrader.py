@@ -1181,6 +1181,7 @@ class AlgoTrader:
 
             main_panel = self.dataPlotterDearPyGui2.GetMainPanel()
 
+
             volume_data_dict = self._prepare_volume_data(self.current_trader)
             volume_data = volume_data_dict['Volume']
 
@@ -1210,13 +1211,82 @@ class AlgoTrader:
                         normalized_vol = price_min + (vol - volume_min) * (price_max - price_min) / (volume_max - volume_min)
                         normalized_vol = k * normalized_vol
                         normalized_volume.append(normalized_vol)
-                    
                     # panel0.AddYData(normalized_volume, 'volume (normalized)')
+
+                # # Dinamik sinyal çizgileri için YonList ve SeviyeList'i işle
+                # if len(self.YonList) > 0 and len(self.SeviyeList) > 0 and len(self.Close) > 0:
+                #     # Buy signal çizgileri için veri hazırla
+                #     buy_signal_data = []
+                #     sell_signal_data = []
+                #
+                #     current_direction = 'F'  # Başlangıç durumu Flat
+                #     signal_start_index = 0
+                #
+                #     for i in range(len(self.YonList)):
+                #         new_direction = self.YonList[i]
+                #
+                #         # Yön değişikliği tespit edildi
+                #         if new_direction != current_direction:
+                #             # Önceki sinyali sonlandır (eğer aktif bir sinyal varsa)
+                #             if current_direction in ['A', 'S'] and i > signal_start_index:
+                #                 signal_price = self.Close[signal_start_index] if signal_start_index < len(self.Close) else self.Close[min(signal_start_index, len(self.Close)-1)]
+                #
+                #                 # Sinyal çizgisini oluştur
+                #                 for j in range(signal_start_index, i):
+                #                     if current_direction == 'A':  # Buy signal
+                #                         buy_signal_data.append(signal_price)
+                #                         sell_signal_data.append(None)  # Boş değer
+                #                     elif current_direction == 'S':  # Sell signal
+                #                         sell_signal_data.append(signal_price)
+                #                         buy_signal_data.append(None)  # Boş değer
+                #
+                #             # Yeni sinyal başlat
+                #             if new_direction in ['A', 'S']:
+                #                 signal_start_index = i
+                #
+                #             current_direction = new_direction
+                #
+                #         # Eğer mevcut durumda aktif sinyal yoksa boş değer ekle
+                #         if current_direction == 'F':
+                #             buy_signal_data.append(None)
+                #             sell_signal_data.append(None)
+                #         elif len(buy_signal_data) == i and len(sell_signal_data) == i:
+                #             # Aktif sinyal devam ediyor, çizgiyi uzat
+                #             signal_price = self.Close[signal_start_index] if signal_start_index < len(self.Close) else self.Close[min(signal_start_index, len(self.Close)-1)]
+                #             if current_direction == 'A':
+                #                 buy_signal_data.append(signal_price)
+                #                 sell_signal_data.append(None)
+                #             elif current_direction == 'S':
+                #                 sell_signal_data.append(signal_price)
+                #                 buy_signal_data.append(None)
+                #
+                #     # Son aktif sinyali sonlandır
+                #     if current_direction in ['A', 'S'] and len(self.YonList) > signal_start_index:
+                #         signal_price = self.SeviyeList[signal_start_index] if signal_start_index < len(self.SeviyeList) else self.Close[signal_start_index]
+                #         for j in range(len(buy_signal_data), len(self.YonList)):
+                #             if current_direction == 'A':
+                #                 buy_signal_data.append(signal_price)
+                #                 sell_signal_data.append(None)
+                #             elif current_direction == 'S':
+                #                 sell_signal_data.append(signal_price)
+                #                 buy_signal_data.append(None)
+                #
+                #     # Veri uzunluklarını eşitle
+                #     while len(buy_signal_data) < len(self.Close):
+                #         buy_signal_data.append(None)
+                #         sell_signal_data.append(None)
+                #
+                #     # Sinyal çizgilerini panel'e ekle
+                #     if any(x is not None for x in buy_signal_data):
+                #         panel0.AddYData(buy_signal_data, 'Buy Signals')
+                #     if any(x is not None for x in sell_signal_data):
+                #         panel0.AddYData(sell_signal_data, 'Sell Signals')
+                
                 panel0.AddYData(self.Ma5, 'MA5')
                 panel0.AddYData(self.Ma8, 'MA8')
                 panel0.AddYData(self.Ma13, 'Ma13')
-                # panel0.AddYData(self.YonList, 'yon_list')
-                # panel0.AddYData(self.SeviyeList, 'seviye_list')
+                panel0.AddYData(self.Ma100, 'Ma100')
+                panel0.AddYData(self.Ma200, 'Ma200')
 
                 panel0.SetTitle('Trading Analysis - Price Chart')
                 # panel0.SetHeightRatio(1)
@@ -1230,6 +1300,8 @@ class AlgoTrader:
                 panel1.AddYData(self.Ma5, 'MA5')
                 panel1.AddYData(self.Ma8, 'MA8')
                 panel1.AddYData(self.Ma13, 'Ma13')
+                panel1.AddYData(self.Ma100, 'Ma100')
+                panel1.AddYData(self.Ma200, 'Ma200')
 
                 panel1.SetTitle('Trading Analysis - Price Chart')
 
@@ -2629,12 +2701,12 @@ class AlgoTrader:
         print("Plotting market data...")
         self.active_trader = self.mySystem.get_trader(0)
         # self.plotData()
-        # self.plotData2(self.active_trader)
+        self.plotData2(self.active_trader)
         # self.plotData3(self.active_trader)  # matplotlib version - DISABLED
         
         # Use Dear PyGui version instead
         # self.plotData3_DearPyGui(self.active_trader)
-        self.plotData4_DearPyGui(self.active_trader)
+        # self.plotData4_DearPyGui(self.active_trader)
 
         # --------------------------------------------------------------
         # Show timing reports
