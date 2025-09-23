@@ -259,6 +259,7 @@ class MainPanel:
         self.main_panel_tag = f"{parent_tag}_main_panel"
         self.panels = {}
         self.panel_order = []
+        self.visible = True
 
     def AddPanel(self, index: int, title: str, height_ratio: float = 1.0) -> PanelWrapper:
         """Add sub-panel to main panel."""
@@ -313,6 +314,19 @@ class MainPanel:
         if index in self.panels:
             return self.panels[index]["wrapper"]
         return None
+
+    def SetVisibility(self, visible: bool) -> None:
+        """Set main panel visibility."""
+        self.visible = visible
+        if dpg.does_item_exist(self.main_panel_tag):
+            dpg.configure_item(self.main_panel_tag, show=visible)
+
+    def AddText(self, value: str, **kwargs) -> str:
+        """Add text directly to main panel."""
+        text_tag = f"{self.main_panel_tag}_text_{len([p for p in self.panels.values() if p.get('type') == 'text'])}"
+        if dpg.does_item_exist(self.main_panel_tag):
+            dpg.add_text(value, tag=text_tag, parent=self.main_panel_tag, **kwargs)
+        return text_tag
 
 
 class DataPlotterDearPyGui2:

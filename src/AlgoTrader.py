@@ -1155,7 +1155,7 @@ class AlgoTrader:
             self.dataPlotterDearPyGui2.show_right_panel = True
             self.dataPlotterDearPyGui2.show_upper_panel = True
             self.dataPlotterDearPyGui2.show_bottom_panel = True
-            self.dataPlotterDearPyGui2.show_main_panel = True     # bu eklenecek
+            self.dataPlotterDearPyGui2.show_main_panel = True
 
             # Initialize the UI
             self.dataPlotterDearPyGui2.Initialize()
@@ -1176,7 +1176,7 @@ class AlgoTrader:
                 menu.AddSubItem("View", "--- Panels ---", None)  # Separator
                 menu.AddSubItem("View", "Toggle Upper Panel", self._on_toggle_upper_panel)
                 menu.AddSubItem("View", "Toggle Left Panel", self._on_toggle_left_panel)
-                # menu.AddSubItem("View", "Toggle Main Panel", self._on_toggle_main_panel)   bu yapilacak
+                menu.AddSubItem("View", "Toggle Main Panel", self._on_toggle_main_panel)
                 menu.AddSubItem("View", "Toggle Right Panel", self._on_toggle_right_panel)
                 menu.AddSubItem("View", "Toggle Bottom Panel", self._on_toggle_bottom_panel)
                 menu.AddSubItem("View", "Toggle Status Bar", self._on_toggle_status_bar)
@@ -1209,7 +1209,7 @@ class AlgoTrader:
 
             main_panel = self.dataPlotterDearPyGui2.GetMainPanel()
             if main_panel:
-                # main_panel.AddText("=== MAIN PANEL ===", color=[255, 255, 0, 255])   bu yapilacak
+                main_panel.AddText("=== MAIN PANEL ===", color=[255, 255, 0, 255])
 
                 # Panel 0: Price chart with candlesticks and moving averages
                 panel0 = main_panel.AddPanel(0, title="Price Chart", height_ratio=3)
@@ -1612,6 +1612,15 @@ class AlgoTrader:
                 current_visibility = getattr(bottom_panel, 'visible', True)
                 bottom_panel.SetVisibility(not current_visibility)
                 print(f"Bottom panel visibility toggled to: {not current_visibility}")
+
+    def _on_toggle_main_panel(self, sender, app_data, user_data):
+        """Toggle main panel visibility."""
+        if hasattr(self, 'dataPlotterDearPyGui2'):
+            main_panel = self.dataPlotterDearPyGui2.GetMainPanel()
+            if main_panel:
+                current_visibility = getattr(main_panel, 'visible', True)
+                main_panel.SetVisibility(not current_visibility)
+                print(f"Main panel visibility toggled to: {not current_visibility}")
 
     def _on_toggle_status_bar(self, sender, app_data, user_data):
         """Toggle status bar visibility."""
