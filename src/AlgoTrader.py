@@ -1157,138 +1157,61 @@ class AlgoTrader:
             self.dataPlotterDearPyGui2.show_bottom_panel = True
             self.dataPlotterDearPyGui2.show_main_panel = True
 
+            # Store parameters for content restoration
+            self.current_trader = trader
+            self.current_show_moving_average = show_moving_average
+
             # Initialize the UI
             self.dataPlotterDearPyGui2.Initialize()
 
             # Setup menu bar
-            menu = self.dataPlotterDearPyGui2.GetMainMenu()
-            if menu:
-                # File menu
-                menu.AddItem("File")
-                menu.AddSubItem("File", "Save Chart", self._on_save_chart)
-                menu.AddSubItem("File", "Export Data", self._on_export_data)
-                menu.AddSubItem("File", "Exit", self._on_exit_app)
+            # Setup menu items
+            self._setup_menu_items()
+            
+            # Set the menu setup callback for RefreshLayout
+            self.dataPlotterDearPyGui2.SetMenuSetupCallback(self._setup_menu_items)
+            
+            # Set the content setup callback for RefreshLayout
+            self.dataPlotterDearPyGui2.SetContentSetupCallback(self._setup_panel_content)
 
-                # View menu
-                menu.AddItem("View")
-                menu.AddSubItem("View", "Reset Zoom", self._on_reset_zoom)
-                menu.AddSubItem("View", "Toggle Grid", self._on_toggle_grid)
-                menu.AddSubItem("View", "--- Panels ---", None)  # Separator
-                menu.AddSubItem("View", "Toggle Upper Panel", self._on_toggle_upper_panel)
-                menu.AddSubItem("View", "Toggle Left Panel", self._on_toggle_left_panel)
-                menu.AddSubItem("View", "Toggle Main Panel", self._on_toggle_main_panel)
-                menu.AddSubItem("View", "Toggle Right Panel", self._on_toggle_right_panel)
-                menu.AddSubItem("View", "Toggle Bottom Panel", self._on_toggle_bottom_panel)
-                menu.AddSubItem("View", "Toggle Status Bar", self._on_toggle_status_bar)
-
-                # Tools menu
-                menu.AddItem("Tools")
-                menu.AddSubItem("Tools", "Analysis", self._on_analysis_tools)
-                menu.AddSubItem("Tools", "Settings", self._on_settings)
-
-            # Setup panel labels to see which panel is where
-            upper_panel = self.dataPlotterDearPyGui2.GetUpperPanel()
-            if upper_panel:
-                upper_panel.AddText("=== UPPER PANEL ===", color=[255, 255, 0, 255])
-                upper_panel.AddText("Window resize: Height adjusts with ratio")
-
-            left_panel = self.dataPlotterDearPyGui2.GetLeftPanel()
-            if left_panel:
-                left_panel.AddText("=== LEFT PANEL ===", color=[255, 255, 0, 255])
-                left_panel.AddText("Fixed width - no resize")
-
-            right_panel = self.dataPlotterDearPyGui2.GetRightPanel()
-            if right_panel:
-                right_panel.AddText("=== RIGHT PANEL ===", color=[255, 255, 0, 255])
-                right_panel.AddText("Fixed width - right aligned")
-
-            bottom_panel = self.dataPlotterDearPyGui2.GetBottomPanel()
-            if bottom_panel:
-                bottom_panel.AddText("=== BOTTOM PANEL ===", color=[255, 255, 0, 255])
-                bottom_panel.AddText("Height ratio: 20% - Trading controls will be here")
-
-            main_panel = self.dataPlotterDearPyGui2.GetMainPanel()
-            if main_panel:
-                main_panel.AddText("=== MAIN PANEL ===", color=[255, 255, 0, 255])
-
-                # Panel 0: Price chart with candlesticks and moving averages
-                panel0 = main_panel.AddPanel(0, title="Price Chart", height_ratio=3)
-
-                # Prepare OHLC data
-                ohlc_data = self._prepare_ohlc_data(trader)
-                if ohlc_data:
-                    panel0.AddPlot(
-                        plot_type="candlestick",
-                        series_data=ohlc_data,
-                        options={"title": "OHLC Chart", "height": 400}
-                    )
-
-                # Add moving averages if requested
-                if show_moving_average:
-                    ma_data = self._prepare_moving_average_data(trader)
-                    if ma_data:
-                        panel0.AddPlot(
-                            plot_type="line",
-                            series_data=ma_data,
-                            options={"title": "Moving Averages", "height": 400}
-                        )
-
-                # Panel 1: Volume chart
-                panel1 = main_panel.AddPanel(1, title="Volume", height_ratio=1)
-                volume_data = self._prepare_volume_data(trader)
-                if volume_data:
-                    panel1.AddPlot(
-                        plot_type="bar",
-                        series_data=volume_data,
-                        options={"title": "Volume Chart", "height": 150}
-                    )
-
-                panel2 = main_panel.AddPanel(2, title="panel2", height_ratio=1)
-                panel3 = main_panel.AddPanel(3, title="panel3", height_ratio=1)
-                panel4 = main_panel.AddPanel(4, title="panel4", height_ratio=1)
-
-                # Setup status bar
-                status_bar = self.dataPlotterDearPyGui2.GetStatusBar()
-                if status_bar:
-                    status_bar.SetText("Chart loaded successfully - Ready for analysis")
-                    status_bar.AddIndicator("progress", 1.0)  # Loading complete
+            # Setup panel content
+            self._setup_panel_content()
 
 
-                # Main panel ready for chart content - no test content
-                # main_panel.AddPanel(0)
-                # main_panel.AddPanel(1)
-                # main_panel.AddPanel(2)
-                # main_panel.AddPanel(3)
-                # main_panel.AddPanel(4)
-                #
-                # panel = main_panel.GetPanel(0)
-                # panel.AddXData(timestamps=time_array)
-                # timestamps = time_array,
-                # panel.AddYData(self.Close, 'Close Price')
-                # panel.AddYData(self.Most, 'MOST')
-                # panel.AddYData(self.ExMov, 'ExMov')
-                # panel.SetTitle('Trading Analysis - Price Chart')
-                # panel.SetHeightRatio(3)
-                # panel.AddYData(self.YonList, 'yon_list')
-                # panel.AddYData(self.SeviyeList, 'seviye_list')
-                #
-                # panel = main_panel.GetPanel(1)
-                # panel.AddXData(timestamps=time_array)
-                # panel.AddYData(trader.Lists.BakiyeFiyatList, 'Balance')
-                # panel.AddYData(trader.Lists.GetiriFiyatList, 'GetiriFiyatList')
-                # panel.AddYData(farkList, 'farkList')
-                # panel.SetTitle('Trading Analysis - Balance Chart')
-                # panel.SetHeightRatio(2)
-                #
-                # panel = main_panel.GetPanel(2)
-                # panel.AddXData(timestamps=time_array)
-                # panel.AddYData(trader.Lists.GetiriKz, 'GetiriKz')
-                # panel.AddYData(trader.Lists.GetiriKzNet, 'GetiriKzNet')
-                # panel.AddYData(farkList2, 'farkList2')
-                # panel.SetTitle('Trading Analysis - GetiriKz Chart')
-                # panel.SetHeightRatio(2)
-                #
-                pass
+
+            # Main panel ready for chart content - no test content
+            # main_panel.AddPanel(0)
+            # main_panel.AddPanel(1)
+            # main_panel.AddPanel(2)
+            # main_panel.AddPanel(3)
+            # main_panel.AddPanel(4)
+            #
+            # panel = main_panel.GetPanel(0)
+            # panel.AddXData(timestamps=time_array)
+            # timestamps = time_array,
+            # panel.AddYData(self.Close, 'Close Price')
+            # panel.AddYData(self.Most, 'MOST')
+            # panel.AddYData(self.ExMov, 'ExMov')
+            # panel.SetTitle('Trading Analysis - Price Chart')
+            # panel.SetHeightRatio(3)
+            # panel.AddYData(self.YonList, 'yon_list')
+            # panel.AddYData(self.SeviyeList, 'seviye_list')
+            #
+            # panel = main_panel.GetPanel(1)
+            # panel.AddXData(timestamps=time_array)
+            # panel.AddYData(trader.Lists.BakiyeFiyatList, 'Balance')
+            # panel.AddYData(trader.Lists.GetiriFiyatList, 'GetiriFiyatList')
+            # panel.AddYData(farkList, 'farkList')
+            # panel.SetTitle('Trading Analysis - Balance Chart')
+            # panel.SetHeightRatio(2)
+            #
+            # panel = main_panel.GetPanel(2)
+            # panel.AddXData(timestamps=time_array)
+            # panel.AddYData(trader.Lists.GetiriKz, 'GetiriKz')
+            # panel.AddYData(trader.Lists.GetiriKzNet, 'GetiriKzNet')
+            # panel.AddYData(farkList2, 'farkList2')
+            # panel.SetTitle('Trading Analysis - GetiriKz Chart')
+            # panel.SetHeightRatio(2)
 
 
             # # Setup left panel with controls
@@ -1576,51 +1499,159 @@ class AlgoTrader:
         except:
             return [["Quick Data", "Not Available"]]
 
+    def _setup_menu_items(self, menu=None):
+        """Setup all menu items. Can be called with a menu parameter or use the main menu."""
+        if menu is None:
+            menu = self.dataPlotterDearPyGui2.GetMainMenu()
+        
+        if menu:
+            # File menu
+            menu.AddItem("File")
+            menu.AddSubItem("File", "Save Chart", self._on_save_chart)
+            menu.AddSubItem("File", "Export Data", self._on_export_data)
+            menu.AddSubItem("File", "Exit", self._on_exit_app)
+
+            # View menu
+            menu.AddItem("View")
+            menu.AddSubItem("View", "Reset Zoom", self._on_reset_zoom)
+            menu.AddSubItem("View", "Toggle Grid", self._on_toggle_grid)
+            menu.AddSubItem("View", "--- Panels ---", None)  # Separator
+            
+            # Panel toggle items with checkmarks
+            upper_check = "[X] " if self.dataPlotterDearPyGui2.show_upper_panel else "[ ] "
+            left_check = "[X] " if self.dataPlotterDearPyGui2.show_left_panel else "[ ] "
+            main_check = "[X] " if self.dataPlotterDearPyGui2.show_main_panel else "[ ] "
+            right_check = "[X] " if self.dataPlotterDearPyGui2.show_right_panel else "[ ] "
+            bottom_check = "[X] " if self.dataPlotterDearPyGui2.show_bottom_panel else "[ ] "
+            status_check = "[X] " if self.dataPlotterDearPyGui2.show_status_bar else "[ ] "
+            
+            menu.AddSubItem("View", f"{upper_check}Upper Panel", self._on_toggle_upper_panel)
+            menu.AddSubItem("View", f"{left_check}Left Panel", self._on_toggle_left_panel)
+            menu.AddSubItem("View", f"{main_check}Main Panel", self._on_toggle_main_panel)
+            menu.AddSubItem("View", f"{right_check}Right Panel", self._on_toggle_right_panel)
+            menu.AddSubItem("View", f"{bottom_check}Bottom Panel", self._on_toggle_bottom_panel)
+            menu.AddSubItem("View", f"{status_check}Status Bar", self._on_toggle_status_bar)
+
+            # Tools menu
+            menu.AddItem("Tools")
+            menu.AddSubItem("Tools", "Analysis", self._on_analysis_tools)
+            menu.AddSubItem("Tools", "Settings", self._on_settings)
+
+    def _setup_panel_content(self):
+        """Setup content for all panels. Called initially and after RefreshLayout."""
+        # Setup panel labels to see which panel is where
+        upper_panel = self.dataPlotterDearPyGui2.GetUpperPanel()
+        if upper_panel:
+            upper_panel.AddText("=== UPPER PANEL ===", color=[255, 255, 0, 255])
+            upper_panel.AddText("Window resize: Height adjusts with ratio")
+
+        left_panel = self.dataPlotterDearPyGui2.GetLeftPanel()
+        if left_panel:
+            left_panel.AddText("=== LEFT PANEL ===", color=[255, 255, 0, 255])
+            left_panel.AddText("Fixed width - no resize")
+
+        right_panel = self.dataPlotterDearPyGui2.GetRightPanel()
+        if right_panel:
+            right_panel.AddText("=== RIGHT PANEL ===", color=[255, 255, 0, 255])
+            right_panel.AddText("Fixed width - right aligned")
+
+        bottom_panel = self.dataPlotterDearPyGui2.GetBottomPanel()
+        if bottom_panel:
+            bottom_panel.AddText("=== BOTTOM PANEL ===", color=[255, 255, 0, 255])
+            bottom_panel.AddText("Height ratio: 20% - Trading controls will be here")
+
+        main_panel = self.dataPlotterDearPyGui2.GetMainPanel()
+        if main_panel and self.dataPlotterDearPyGui2.show_main_panel:
+            main_panel.AddText("=== MAIN PANEL ===", color=[255, 255, 0, 255])
+
+            # Panel 0: Price chart with candlesticks and moving averages
+            panel0 = main_panel.AddPanel(0, title="Price Chart", height_ratio=3)
+
+            # Prepare OHLC data
+            if hasattr(self, 'current_trader'):
+                ohlc_data = self._prepare_ohlc_data(self.current_trader)
+                if ohlc_data:
+                    panel0.AddPlot(
+                        plot_type="candlestick",
+                        series_data=ohlc_data,
+                        options={"title": "OHLC Chart", "height": 400}
+                    )
+
+                # Add moving averages if requested
+                if hasattr(self, 'current_show_moving_average') and self.current_show_moving_average:
+                    ma_data = self._prepare_moving_average_data(self.current_trader)
+                    if ma_data:
+                        panel0.AddPlot(
+                            plot_type="line",
+                            series_data=ma_data,
+                            options={"title": "Moving Averages", "height": 400}
+                        )
+
+                # Panel 1: Volume chart
+                panel1 = main_panel.AddPanel(1, title="Volume", height_ratio=1)
+                volume_data = self._prepare_volume_data(self.current_trader)
+                if volume_data:
+                    panel1.AddPlot(
+                        plot_type="bar",
+                        series_data=volume_data,
+                        options={"title": "Volume Chart", "height": 150}
+                    )
+
+            panel2 = main_panel.AddPanel(2, title="panel2", height_ratio=1)
+            panel3 = main_panel.AddPanel(3, title="panel3", height_ratio=1)
+            panel4 = main_panel.AddPanel(4, title="panel4", height_ratio=1)
+
+            # Setup status bar
+            status_bar = self.dataPlotterDearPyGui2.GetStatusBar()
+            if status_bar:
+                status_bar.SetText("Chart loaded successfully - Ready for analysis")
+                status_bar.AddIndicator("progress", 1.0)  # Loading complete
+
     # Panel visibility toggle callbacks
     def _on_toggle_upper_panel(self, sender, app_data, user_data):
         """Toggle upper panel visibility."""
         if hasattr(self, 'dataPlotterDearPyGui2'):
-            upper_panel = self.dataPlotterDearPyGui2.GetUpperPanel()
-            if upper_panel:
-                current_visibility = getattr(upper_panel, 'visible', True)
-                upper_panel.SetVisibility(not current_visibility)
-                print(f"Upper panel visibility toggled to: {not current_visibility}")
+            # Update the framework's visibility setting
+            self.dataPlotterDearPyGui2.show_upper_panel = not self.dataPlotterDearPyGui2.show_upper_panel
+            # Refresh the layout to reflect changes
+            self.dataPlotterDearPyGui2.RefreshLayout()
+            print(f"Upper panel visibility toggled to: {self.dataPlotterDearPyGui2.show_upper_panel}")
 
     def _on_toggle_left_panel(self, sender, app_data, user_data):
         """Toggle left panel visibility."""
         if hasattr(self, 'dataPlotterDearPyGui2'):
-            left_panel = self.dataPlotterDearPyGui2.GetLeftPanel()
-            if left_panel:
-                current_visibility = getattr(left_panel, 'visible', True)
-                left_panel.SetVisibility(not current_visibility)
-                print(f"Left panel visibility toggled to: {not current_visibility}")
+            # Update the framework's visibility setting
+            self.dataPlotterDearPyGui2.show_left_panel = not self.dataPlotterDearPyGui2.show_left_panel
+            # Refresh the layout to reflect changes
+            self.dataPlotterDearPyGui2.RefreshLayout()
+            print(f"Left panel visibility toggled to: {self.dataPlotterDearPyGui2.show_left_panel}")
 
     def _on_toggle_right_panel(self, sender, app_data, user_data):
         """Toggle right panel visibility."""
         if hasattr(self, 'dataPlotterDearPyGui2'):
-            right_panel = self.dataPlotterDearPyGui2.GetRightPanel()
-            if right_panel:
-                current_visibility = getattr(right_panel, 'visible', True)
-                right_panel.SetVisibility(not current_visibility)
-                print(f"Right panel visibility toggled to: {not current_visibility}")
+            # Update the framework's visibility setting
+            self.dataPlotterDearPyGui2.show_right_panel = not self.dataPlotterDearPyGui2.show_right_panel
+            # Refresh the layout to reflect changes
+            self.dataPlotterDearPyGui2.RefreshLayout()
+            print(f"Right panel visibility toggled to: {self.dataPlotterDearPyGui2.show_right_panel}")
 
     def _on_toggle_bottom_panel(self, sender, app_data, user_data):
         """Toggle bottom panel visibility."""
         if hasattr(self, 'dataPlotterDearPyGui2'):
-            bottom_panel = self.dataPlotterDearPyGui2.GetBottomPanel()
-            if bottom_panel:
-                current_visibility = getattr(bottom_panel, 'visible', True)
-                bottom_panel.SetVisibility(not current_visibility)
-                print(f"Bottom panel visibility toggled to: {not current_visibility}")
+            # Update the framework's visibility setting
+            self.dataPlotterDearPyGui2.show_bottom_panel = not self.dataPlotterDearPyGui2.show_bottom_panel
+            # Refresh the layout to reflect changes
+            self.dataPlotterDearPyGui2.RefreshLayout()
+            print(f"Bottom panel visibility toggled to: {self.dataPlotterDearPyGui2.show_bottom_panel}")
 
     def _on_toggle_main_panel(self, sender, app_data, user_data):
         """Toggle main panel visibility."""
         if hasattr(self, 'dataPlotterDearPyGui2'):
-            main_panel = self.dataPlotterDearPyGui2.GetMainPanel()
-            if main_panel:
-                current_visibility = getattr(main_panel, 'visible', True)
-                main_panel.SetVisibility(not current_visibility)
-                print(f"Main panel visibility toggled to: {not current_visibility}")
+            # Update the framework's visibility setting
+            self.dataPlotterDearPyGui2.show_main_panel = not self.dataPlotterDearPyGui2.show_main_panel
+            # Refresh the layout to reflect changes
+            self.dataPlotterDearPyGui2.RefreshLayout()
+            print(f"Main panel visibility toggled to: {self.dataPlotterDearPyGui2.show_main_panel}")
 
     def _on_toggle_status_bar(self, sender, app_data, user_data):
         """Toggle status bar visibility."""

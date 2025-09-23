@@ -373,6 +373,13 @@ class DataPlotterDearPyGui2:
         self.show_right_panel = True
         self.show_upper_panel = True
         self.show_bottom_panel = True
+        self.show_main_panel = True
+        
+        # Menu recreation callback
+        self.menu_setup_callback = None
+        
+        # Content restoration callback
+        self.content_setup_callback = None
 
     def Initialize(self) -> None:
         """Initialize the framework and create UI structure."""
@@ -543,3 +550,178 @@ class DataPlotterDearPyGui2:
     def SetPanelVisibility(self, panel_name: str, visible: bool) -> None:
         """Set panel visibility."""
         setattr(self, f"show_{panel_name}", visible)
+
+    def RefreshLayout(self) -> None:
+        """Refresh the entire window layout by recreating all panels in correct order."""
+        if not dpg.does_item_exist(self.window_tag):
+            return
+        
+        # Store current content before recreating
+        self._store_current_content()
+            
+        # Delete all window content except the window itself
+        self._clear_window_content()
+        
+        # Recreate the entire window layout in correct order
+        self._recreate_window_layout()
+        
+        # Re-initialize all wrappers
+        self._reinitialize_all_wrappers()
+        
+        # Restore content to panels
+        self._restore_content()
+        
+        print(f"Layout refreshed - Upper: {self.show_upper_panel}, Left: {self.show_left_panel}, Main: {self.show_main_panel}, Right: {self.show_right_panel}, Bottom: {self.show_bottom_panel}")
+
+    def _store_current_content(self) -> None:
+        """Store current panel content before layout refresh."""
+        # This is a placeholder - in a real implementation, you might want to store panel content
+        pass
+
+    def _clear_window_content(self) -> None:
+        """Clear all content from the main window."""
+        # Get all children of the main window and delete them
+        if dpg.does_item_exist(self.window_tag):
+            children = dpg.get_item_children(self.window_tag, slot=1)  # slot=1 for child items
+            if children:
+                for child in children:
+                    if dpg.does_item_exist(child):
+                        dpg.delete_item(child)
+
+    def _recreate_window_layout(self) -> None:
+        """Recreate the entire window layout in correct order."""
+        # 1. Menu bar (if enabled)
+        if self.show_menu:
+            with dpg.menu_bar(tag=f"{self.window_tag}_menu_bar", parent=self.window_tag):
+                pass
+
+        # 2. Upper panel (if enabled)
+        if self.show_upper_panel:
+            dpg.add_child_window(tag=f"{self.window_tag}_upper_panel",
+                               height=int(self.figsize[1] * self.layout_ratios["upper_panel"]),
+                               border=True, parent=self.window_tag)
+
+        # 3. Main content area (Left, Main, Right panels in table layout)
+        with dpg.table(tag=f"{self.window_tag}_main_content", header_row=False,
+                      borders_innerH=False, borders_innerV=False, 
+                      borders_outerH=False, borders_outerV=False, parent=self.window_tag):
+
+            # Define columns based on current panel visibility
+            if self.show_left_panel and self.show_main_panel and self.show_right_panel:
+                dpg.add_table_column(init_width_or_weight=self.layout_ratios["left_panel"], width_fixed=False)
+                dpg.add_table_column(init_width_or_weight=self.layout_ratios["main_panel"], width_fixed=False)
+                dpg.add_table_column(init_width_or_weight=self.layout_ratios["right_panel"], width_fixed=False)
+            elif self.show_left_panel and self.show_main_panel and not self.show_right_panel:
+                dpg.add_table_column(init_width_or_weight=self.layout_ratios["left_panel"], width_fixed=False)
+                dpg.add_table_column(init_width_or_weight=1-self.layout_ratios["left_panel"], width_fixed=False)
+            elif not self.show_left_panel and self.show_main_panel and self.show_right_panel:
+                dpg.add_table_column(init_width_or_weight=1-self.layout_ratios["right_panel"], width_fixed=False)
+                dpg.add_table_column(init_width_or_weight=self.layout_ratios["right_panel"], width_fixed=False)
+            elif self.show_left_panel and not self.show_main_panel and self.show_right_panel:
+                dpg.add_table_column(init_width_or_weight=self.layout_ratios["left_panel"], width_fixed=False)
+                dpg.add_table_column(init_width_or_weight=self.layout_ratios["right_panel"], width_fixed=False)
+            elif self.show_left_panel and not self.show_main_panel and not self.show_right_panel:
+                dpg.add_table_column(init_width_or_weight=1.0, width_fixed=False)
+            elif not self.show_left_panel and not self.show_main_panel and self.show_right_panel:
+                dpg.add_table_column(init_width_or_weight=1.0, width_fixed=False)
+            elif not self.show_left_panel and self.show_main_panel and not self.show_right_panel:
+                dpg.add_table_column(init_width_or_weight=1.0, width_fixed=False)
+            else:
+                # All panels hidden case - show at least something
+                dpg.add_table_column(init_width_or_weight=1.0, width_fixed=False)
+
+            # Add the row with panels
+            with dpg.table_row():
+                # Left panel cell (only if visible)
+                if self.show_left_panel:
+                    with dpg.table_cell():
+                        dpg.add_child_window(tag=f"{self.window_tag}_left_panel",
+                                           width=-1, height=-1, border=True)
+
+                # Main panel cell (only if visible)
+                if self.show_main_panel:
+                    with dpg.table_cell():
+                        dpg.add_child_window(tag=f"{self.window_tag}_main_panel",
+                                           width=-1, height=-1, border=True)
+
+                # Right panel cell (only if visible)
+                if self.show_right_panel:
+                    with dpg.table_cell():
+                        dpg.add_child_window(tag=f"{self.window_tag}_right_panel",
+                                           width=-1, height=-1, border=True)
+
+        # 4. Bottom panel (if enabled)
+        if self.show_bottom_panel:
+            dpg.add_child_window(tag=f"{self.window_tag}_bottom_panel",
+                               height=int(self.figsize[1] * self.layout_ratios["bottom_panel"]),
+                               border=True, parent=self.window_tag)
+
+        # 5. Status bar (if enabled)
+        if self.show_status_bar:
+            with dpg.child_window(tag=f"{self.window_tag}_status_bar", height=30, border=True, parent=self.window_tag):
+                with dpg.group(horizontal=True):
+                    dpg.add_text("Ready", tag=f"{self.window_tag}_status_bar_text")
+
+    def _reinitialize_all_wrappers(self) -> None:
+        """Reinitialize all panel wrappers."""
+        # Menu wrapper
+        if self.show_menu:
+            self.menu_wrapper = MenuWrapper(self.window_tag)
+            # Trigger menu recreation callback if available
+            self._recreate_menu_items()
+
+        # Panel wrappers - recreate based on visibility
+        if self.show_main_panel:
+            self.main_panel = MainPanel(self.window_tag)
+        else:
+            self.main_panel = None
+
+        if self.show_left_panel:
+            self.left_panel = PanelWrapper(f"{self.window_tag}_left_panel", self.window_tag)
+        else:
+            self.left_panel = None
+
+        if self.show_right_panel:
+            self.right_panel = PanelWrapper(f"{self.window_tag}_right_panel", self.window_tag)
+        else:
+            self.right_panel = None
+
+        if self.show_upper_panel:
+            self.upper_panel = PanelWrapper(f"{self.window_tag}_upper_panel", self.window_tag)
+        else:
+            self.upper_panel = None
+
+        if self.show_bottom_panel:
+            self.bottom_panel = PanelWrapper(f"{self.window_tag}_bottom_panel", self.window_tag)
+        else:
+            self.bottom_panel = None
+
+        # Status bar wrapper
+        if self.show_status_bar:
+            self.status_bar_wrapper = StatusBarWrapper(self.window_tag)
+        else:
+            self.status_bar_wrapper = None
+
+    def _restore_content(self) -> None:
+        """Restore content to panels after layout refresh."""
+        if self.content_setup_callback and callable(self.content_setup_callback):
+            try:
+                self.content_setup_callback()
+            except Exception as e:
+                print(f"Error restoring panel content: {e}")
+
+    def _recreate_menu_items(self) -> None:
+        """Recreate menu items using the callback if available."""
+        if self.menu_setup_callback and callable(self.menu_setup_callback):
+            try:
+                self.menu_setup_callback(self.menu_wrapper)
+            except Exception as e:
+                print(f"Error recreating menu items: {e}")
+
+    def SetMenuSetupCallback(self, callback) -> None:
+        """Set the callback function for recreating menu items."""
+        self.menu_setup_callback = callback
+
+    def SetContentSetupCallback(self, callback) -> None:
+        """Set the callback function for restoring panel content."""
+        self.content_setup_callback = callback
