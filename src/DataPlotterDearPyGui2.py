@@ -77,6 +77,7 @@ class PanelWrapper:
         self.y_data = {}
         self.title = ""
         self.height_ratio = 1
+        self.legend_text = None
 
     def SetVisibility(self, visible: bool) -> None:
         """Set panel visibility."""
@@ -133,11 +134,26 @@ class PanelWrapper:
             options = {}
 
         if dpg.does_item_exist(self.panel_tag):
-            height = options.get("height", 300)
-            width = options.get("width", -1)
+            # Get panel dimensions for dynamic sizing
+            panel_width = dpg.get_item_width(self.panel_tag)
+            panel_height = dpg.get_item_height(self.panel_tag)
+            
+            # Use panel dimensions if available, otherwise use defaults/options
+            if panel_width > 0:
+                width = panel_width - 20  # Leave some margin
+            else:
+                width = options.get("width", -1)
+                
+            if panel_height > 0:
+                height = panel_height - 40  # Leave margin for title and padding
+            else:
+                height = options.get("height", 300)
 
             dpg.add_plot(tag=plot_tag, parent=self.panel_tag, height=height, width=width,
-                        label=options.get("title", "Plot"))
+                        label=options.get("title", "Plot"), no_title=True)
+            
+            # Add plot legend to enable click interaction
+            dpg.add_plot_legend(parent=plot_tag)
 
             x_axis_tag = f"{plot_tag}_x_axis"
             y_axis_tag = f"{plot_tag}_y_axis"
@@ -228,8 +244,8 @@ class PanelWrapper:
         if has_ohlc:
             # Extract OHLC data
             ohlc_data = {key: series_data[key] for key in ohlc_keys}
-            # Add candlestick series
-            self._add_candlestick_series(ohlc_data, x_axis_tag, y_axis_tag, options)
+            # Add candlestick series with legend
+            self._add_candlestick_series_with_legend(ohlc_data, x_axis_tag, y_axis_tag, options)
         
         # Add line data (indicators, MA, etc.)
         line_data = {}
@@ -241,6 +257,63 @@ class PanelWrapper:
         if line_data:
             # Add line series for indicators
             self._add_line_series(line_data, x_axis_tag, y_axis_tag, options)
+    
+    def _add_candlestick_series_with_legend(self, series_data: Dict[str, Any],
+                                          x_axis_tag: str, y_axis_tag: str, options: Dict[str, Any]) -> None:
+        """Add candlestick series with legend support."""
+        timestamps = series_data.get("timestamps", [])
+        open_data = series_data.get("open", [])
+        high_data = series_data.get("high", [])
+        low_data = series_data.get("low", [])
+        close_data = series_data.get("close", [])
+
+        # Check if all data exists and has length > 0
+        if (timestamps is not None and len(timestamps) > 0 and 
+            open_data is not None and len(open_data) > 0 and 
+            high_data is not None and len(high_data) > 0 and 
+            low_data is not None and len(low_data) > 0 and 
+            close_data is not None and len(close_data) > 0):
+            
+            x_data = list(range(len(timestamps)))
+            
+            # Use legend text if available, otherwise use default
+            legend_label = self.legend_text if self.legend_text else "OHLC"
+            
+            # Store candlestick series tags for toggling
+            candlestick_tags = []
+            
+            # Create candlestick using multiple series
+            for i in range(len(x_data)):
+                if i < len(open_data) and i < len(high_data) and i < len(low_data) and i < len(close_data):
+                    o, h, l, c = open_data[i], high_data[i], low_data[i], close_data[i]
+                    color = [0, 255, 0, 255] if c >= o else [255, 0, 0, 255]
+
+                    # High-Low line
+                    hl_tag = f"{y_axis_tag}_hl_{i}"
+                    dpg.add_line_series([x_data[i], x_data[i]], [l, h],
+                                       parent=y_axis_tag, tag=hl_tag)
+                    candlestick_tags.append(hl_tag)
+
+                    # Body rectangle (simulated with thick line)
+                    body_top = max(o, c)
+                    body_bottom = min(o, c)
+                    if body_top != body_bottom:
+                        body_tag = f"{y_axis_tag}_body_{i}"
+                        dpg.add_line_series([x_data[i], x_data[i]], [body_bottom, body_top],
+                                           parent=y_axis_tag, tag=body_tag)
+                        candlestick_tags.append(body_tag)
+            
+            # Create a representative line for OHLC legend (use Close data)
+            ohlc_legend_tag = f"{y_axis_tag}_ohlc_legend"
+            dpg.add_line_series(x_data, list(close_data), tag=ohlc_legend_tag, 
+                              parent=y_axis_tag, label=legend_label)
+            
+            # Make the legend line invisible by default (only for legend display)
+            dpg.configure_item(ohlc_legend_tag, show=False)
+            
+            # Store candlestick tags for potential future toggle functionality
+            # Note: DearPyGui doesn't support callbacks on line series
+            # Future: Could add button controls or keyboard shortcuts for toggling
 
     def AddTable(self, columns: List[str], data: List[List[Any]], **kwargs) -> str:
         """Add table to panel."""
