@@ -1531,6 +1531,11 @@ class AlgoTrader:
             menu.AddSubItem("View", f"{right_check}Right Panel", self._on_toggle_right_panel)
             menu.AddSubItem("View", f"{bottom_check}Bottom Panel", self._on_toggle_bottom_panel)
             menu.AddSubItem("View", f"{status_check}Status Bar", self._on_toggle_status_bar)
+            
+            # Panel control shortcuts
+            menu.AddSubItem("View", "---", None)  # Separator
+            menu.AddSubItem("View", "Show All Panels", self._on_show_all_panels)
+            menu.AddSubItem("View", "Hide All Panels", self._on_hide_all_panels)
 
             # Tools menu
             menu.AddItem("Tools")
@@ -1662,6 +1667,33 @@ class AlgoTrader:
                 status_bar.SetVisibility(not current_visibility)
                 print(f"Status bar visibility toggled to: {not current_visibility}")
 
+    def _on_show_all_panels(self, sender, app_data, user_data):
+        """Show all panels."""
+        if hasattr(self, 'dataPlotterDearPyGui2'):
+            # Set all panel visibility flags to True
+            self.dataPlotterDearPyGui2.show_upper_panel = True
+            self.dataPlotterDearPyGui2.show_left_panel = True
+            self.dataPlotterDearPyGui2.show_main_panel = True
+            self.dataPlotterDearPyGui2.show_right_panel = True
+            self.dataPlotterDearPyGui2.show_bottom_panel = True
+            self.dataPlotterDearPyGui2.show_status_bar = True
+            # Refresh layout to apply changes
+            self.dataPlotterDearPyGui2.RefreshLayout()
+            print("All panels shown")
+
+    def _on_hide_all_panels(self, sender, app_data, user_data):
+        """Hide all panels except menu."""
+        if hasattr(self, 'dataPlotterDearPyGui2'):
+            # Set all panel visibility flags to False (except menu)
+            self.dataPlotterDearPyGui2.show_upper_panel = False
+            self.dataPlotterDearPyGui2.show_left_panel = False
+            self.dataPlotterDearPyGui2.show_main_panel = False
+            self.dataPlotterDearPyGui2.show_right_panel = False
+            self.dataPlotterDearPyGui2.show_bottom_panel = False
+            self.dataPlotterDearPyGui2.show_status_bar = False
+            # Refresh layout to apply changes
+            self.dataPlotterDearPyGui2.RefreshLayout()
+            print("All panels hidden")
 
     def create_config_file(self, configFilePath):
         self.mySystem.write_params_to_file(configFilePath,
