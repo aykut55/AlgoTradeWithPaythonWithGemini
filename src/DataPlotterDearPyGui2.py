@@ -300,6 +300,11 @@ class PanelWrapper:
         self.height_ratio = ratio
         print(f"DEBUG: SetHeightRatio called with ratio: {ratio}")
 
+    def SetLegend(self, legend_text: str) -> None:
+        """Set legend text for the panel."""
+        self.legend_text = legend_text
+        print(f"DEBUG: SetLegend called with text: {legend_text}")
+
     def PlotSignals(self) -> None:
         """Plot trading signals on the panel."""
         print("DEBUG: PlotSignals called")
@@ -500,9 +505,9 @@ class DataPlotterDearPyGui2:
         # Component visibility - Default: only menu and main panel visible
         self.show_menu = True
         self.show_status_bar = False
-        self.show_left_panel = True
+        self.show_left_panel = False
         self.show_right_panel = False
-        self.show_upper_panel = True
+        self.show_upper_panel = False
         self.show_bottom_panel = False
         self.show_main_panel = True
         

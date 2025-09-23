@@ -1181,19 +1181,19 @@ class AlgoTrader:
 
             main_panel = self.dataPlotterDearPyGui2.GetMainPanel()
 
-            # --- paneli olustur
+            # ----------------------------------------------------------------------------------------------------------
             chart_type_name = getattr(self, 'chart_type', 'OHLC')
             panel0 = main_panel.AddPanel(0, title=f"Price Chart ({chart_type_name})", height_ratio=1)
             if panel0:
                 # --- panele hangi türde price verisi kullanaılacak onu veriyoruz
-                # panel0.SetLegend("OHLC")
+                panel0.SetLegend("OHLC")
                 panel0.SetPriceData(trader)
                 panel0._setup_price_chart_content2(chart_type_name)
 
                 panel0.AddXData(timestamps=time_array)
-                # panel0.AddYData(self.Ma5, 'MA5')
-                # panel0.AddYData(self.Ma8, 'MA8')
-                # panel0.AddYData(self.Ma13, 'Ma13')
+                panel0.AddYData(self.Ma5, 'MA5')
+                panel0.AddYData(self.Ma8, 'MA8')
+                panel0.AddYData(self.Ma13, 'Ma13')
                 # panel0.AddYData(self.YonList, 'yon_list')
                 # panel0.AddYData(self.SeviyeList, 'seviye_list')
 
@@ -1202,7 +1202,8 @@ class AlgoTrader:
 
                 panel0.PlotSignals()
 
-            panel1 = main_panel.AddPanel(1, title="Volume", height_ratio=1)
+            # ----------------------------------------------------------------------------------------------------------
+            panel1 = main_panel.AddPanel(1, title="ma", height_ratio=1)
             if panel1:
                 panel1.AddXData(timestamps=time_array)
                 panel1.AddYData(self.Ma5, 'MA5')
@@ -1213,8 +1214,18 @@ class AlgoTrader:
 
                 panel1.PlotSignals()
 
+            # ----------------------------------------------------------------------------------------------------------
+            panel2 = main_panel.AddPanel(2, title="Volume", height_ratio=1)
+            if panel2:
+                volume_data = self._prepare_volume_data(self.current_trader)
+                panel2.AddXData(timestamps=time_array)
+                panel2.AddYData(volume_data, 'volume')
 
+                panel2.SetTitle('Trading Analysis - Volume Chart')
 
+                panel2.PlotSignals()
+
+            # ----------------------------------------------------------------------------------------------------------
             # # # Panel 1: Volume chart
             # panel1 = main_panel.AddPanel(1, title="Volume", height_ratio=1)
             # if panel1:
@@ -1247,7 +1258,7 @@ class AlgoTrader:
             #         options={"title": "Volume Chart", "height": 150}
             #     )
             #
-            panel2 = main_panel.AddPanel(2, title="panel2", height_ratio=1)
+            # panel2 = main_panel.AddPanel(2, title="panel2", height_ratio=1)
             panel3 = main_panel.AddPanel(3, title="panel3", height_ratio=1)
             panel4 = main_panel.AddPanel(4, title="panel4", height_ratio=1)
 
