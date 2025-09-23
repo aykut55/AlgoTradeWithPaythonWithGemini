@@ -1125,6 +1125,13 @@ class AlgoTrader:
         else:
             time_array = self.Time
 
+        balance = trader.Lists.BakiyeFiyatList
+        getiriFiyatList = trader.Lists.GetiriFiyatList
+        getiriKz = trader.Lists.GetiriKz
+        getiriKzNet = trader.Lists.GetiriKzNet
+        karZararPuanList = trader.Lists.KarZararPuanList
+        karZararFiyatList = trader.Lists.KarZararFiyatList
+
         # Calculate additional data
         farkList = [0.0] * len(trader.Lists.BakiyeFiyatList)
         for i in range(len(trader.Lists.BakiyeFiyatList)):
@@ -1136,6 +1143,7 @@ class AlgoTrader:
 
         print(f"farkList: {farkList[-1] if farkList else 'Empty'}")
         print(f"farkList2: {farkList2[-1] if farkList2 else 'Empty'}")
+
 
         print("=== plotData4_DearPyGui başlıyor ===")
 
@@ -1213,75 +1221,60 @@ class AlgoTrader:
                         normalized_volume.append(normalized_vol)
                     # panel0.AddYData(normalized_volume, 'volume (normalized)')
 
-                # # Dinamik sinyal çizgileri için YonList ve SeviyeList'i işle
-                # if len(self.YonList) > 0 and len(self.SeviyeList) > 0 and len(self.Close) > 0:
-                #     # Buy signal çizgileri için veri hazırla
-                #     buy_signal_data = []
-                #     sell_signal_data = []
+
+                # Dinamik yatay çizgiler için seviye listesi oluştur
+                # Önce trader'dan güncel verileri al
+                self.YonList = trader.Lists.YonList
+                self.SeviyeList = trader.Lists.SeviyeList
+
+                import numpy as np
+
+                # horizontal_levels = self.get_horizontal_levels()
                 #
-                #     current_direction = 'F'  # Başlangıç durumu Flat
-                #     signal_start_index = 0
+                # for level in horizontal_levels:
+                #     # Tüm seri NaN ile başla
+                #     level_data = np.full(len(self.SeviyeList), np.nan)
                 #
-                #     for i in range(len(self.YonList)):
-                #         new_direction = self.YonList[i]
+                #     current_signal = None
+                #     active_level = None
                 #
-                #         # Yön değişikliği tespit edildi
-                #         if new_direction != current_direction:
-                #             # Önceki sinyali sonlandır (eğer aktif bir sinyal varsa)
-                #             if current_direction in ['A', 'S'] and i > signal_start_index:
-                #                 signal_price = self.Close[signal_start_index] if signal_start_index < len(self.Close) else self.Close[min(signal_start_index, len(self.Close)-1)]
+                #     for i, (yon, seviye) in enumerate(zip(self.YonList, self.SeviyeList)):
+                #         if yon in ['A', 'S']:
+                #             if current_signal != yon:
+                #                 current_signal = yon
+                #                 active_level = round(seviye, 2)
                 #
-                #                 # Sinyal çizgisini oluştur
-                #                 for j in range(signal_start_index, i):
-                #                     if current_direction == 'A':  # Buy signal
-                #                         buy_signal_data.append(signal_price)
-                #                         sell_signal_data.append(None)  # Boş değer
-                #                     elif current_direction == 'S':  # Sell signal
-                #                         sell_signal_data.append(signal_price)
-                #                         buy_signal_data.append(None)  # Boş değer
+                #             if active_level == round(level, 2):
+                #                 # Sinyal boyunca hep aynı seviye doldur
+                #                 level_data[i] = level
+                #             elif active_level is not None:
+                #                 # Aynı sinyal devam ediyorsa seviyeyi sürdür
+                #                 level_data[i] = active_level
                 #
-                #             # Yeni sinyal başlat
-                #             if new_direction in ['A', 'S']:
-                #                 signal_start_index = i
+                #         elif yon == 'F':
+                #             # Sinyal kapandı → tekrar NaN
+                #             current_signal = None
+                #             active_level = None
                 #
-                #             current_direction = new_direction
-                #
-                #         # Eğer mevcut durumda aktif sinyal yoksa boş değer ekle
-                #         if current_direction == 'F':
-                #             buy_signal_data.append(None)
-                #             sell_signal_data.append(None)
-                #         elif len(buy_signal_data) == i and len(sell_signal_data) == i:
-                #             # Aktif sinyal devam ediyor, çizgiyi uzat
-                #             signal_price = self.Close[signal_start_index] if signal_start_index < len(self.Close) else self.Close[min(signal_start_index, len(self.Close)-1)]
-                #             if current_direction == 'A':
-                #                 buy_signal_data.append(signal_price)
-                #                 sell_signal_data.append(None)
-                #             elif current_direction == 'S':
-                #                 sell_signal_data.append(signal_price)
-                #                 buy_signal_data.append(None)
-                #
-                #     # Son aktif sinyali sonlandır
-                #     if current_direction in ['A', 'S'] and len(self.YonList) > signal_start_index:
-                #         signal_price = self.SeviyeList[signal_start_index] if signal_start_index < len(self.SeviyeList) else self.Close[signal_start_index]
-                #         for j in range(len(buy_signal_data), len(self.YonList)):
-                #             if current_direction == 'A':
-                #                 buy_signal_data.append(signal_price)
-                #                 sell_signal_data.append(None)
-                #             elif current_direction == 'S':
-                #                 sell_signal_data.append(signal_price)
-                #                 buy_signal_data.append(None)
-                #
-                #     # Veri uzunluklarını eşitle
-                #     while len(buy_signal_data) < len(self.Close):
-                #         buy_signal_data.append(None)
-                #         sell_signal_data.append(None)
-                #
-                #     # Sinyal çizgilerini panel'e ekle
-                #     if any(x is not None for x in buy_signal_data):
-                #         panel0.AddYData(buy_signal_data, 'Buy Signals')
-                #     if any(x is not None for x in sell_signal_data):
-                #         panel0.AddYData(sell_signal_data, 'Sell Signals')
-                
+                #     # Burada AddYData aslında self.y_data içine atıyor
+                #     panel0.AddYData(level_data, f'Level {level:.2f}')
+                #     print(f"DEBUG: Added horizontal line for level {level:.2f}")
+
+                segments = self.get_signal_segments()
+
+                for seg in segments:
+                    level_data = [np.nan] * len(time_array)
+                    for i in range(seg["start"], seg["end"] + 1):
+                        level_data[i] = seg["level"]
+
+                    label = f"{seg['direction']} {seg['level']:.2f} [{seg['start']}→{seg['end']}]"
+                    panel0.AddYData(level_data, label)
+
+                    print(
+                        f"DEBUG: Added {seg['direction']} segment {seg['start']}→{seg['end']} at level {seg['level']:.2f}")
+
+                panel0.AddYData(self.ExMov, 'ExMov')
+                panel0.AddYData(self.Most, 'Most')
                 panel0.AddYData(self.Ma5, 'MA5')
                 panel0.AddYData(self.Ma8, 'MA8')
                 panel0.AddYData(self.Ma13, 'Ma13')
@@ -1314,11 +1307,11 @@ class AlgoTrader:
                 print(f"DEBUG: Trader attributes: {[attr for attr in dir(self.current_trader) if 'volume' in attr.lower() or 'close' in attr.lower()]}")
 
 
-                print(f"DEBUG: Volume data dict: {volume_data_dict}")
+                # print(f"DEBUG: Volume data dict: {volume_data_dict}")
 
                 if volume_data_dict and 'Volume' in volume_data_dict:
                     volume_data = volume_data_dict['Volume']
-                    print(f"DEBUG: Volume data type: {type(volume_data)}, length: {len(volume_data) if hasattr(volume_data, '__len__') else 'N/A'}")
+                    # print(f"DEBUG: Volume data type: {type(volume_data)}, length: {len(volume_data) if hasattr(volume_data, '__len__') else 'N/A'}")
 
                     panel2.AddXData(timestamps=time_array)
                     panel2.AddYData(volume_data, 'Volume')
@@ -1330,208 +1323,42 @@ class AlgoTrader:
                 print("DEBUG: Panel2 creation failed!")
 
             # ----------------------------------------------------------------------------------------------------------
-            # # # Panel 1: Volume chart
-            # panel1 = main_panel.AddPanel(1, title="Volume", height_ratio=1)
-            # if panel1:
-            #     volume_data = self._prepare_volume_data(self.current_trader)
-            #
-            #     panel1.AddXData(timestamps=time_array)
-            #     panel1.AddYData(volume_data, 'volume')
-            #
-            #     panel1.SetTitle('Trading Analysis - Volume Chart')
-            #     panel1.SetHeightRatio(2)
-            #
-            #     panel1.PlotSignals()
+            panel3 = main_panel.AddPanel(3, title="balance", height_ratio=1)
+            if panel3:
+                panel3.AddXData(timestamps=time_array)
+                panel3.AddYData(balance, 'balance')
+                panel3.AddYData(getiriFiyatList, 'getiriFiyatList')
+                panel3.AddYData(farkList, 'farkList')
+                panel3.SetTitle('Trading Analysis - balance')
+                panel3.PlotSignals()
 
+            # ----------------------------------------------------------------------------------------------------------
 
+            panel4 = main_panel.AddPanel(4, title="GetiriKz", height_ratio=1)
+            if panel4:
+                panel4.AddXData(timestamps=time_array)
+                panel4.AddYData(getiriKz, 'getiriKz')
+                panel4.AddYData(getiriKzNet, 'getiriKzNet')
+                panel4.AddYData(farkList2, 'farkList2')
+                panel4.SetTitle('Trading Analysis - GetiriKz')
+                panel4.PlotSignals()
 
+            # ----------------------------------------------------------------------------------------------------------
 
+            panel5 = main_panel.AddPanel(5, title="karZarar", height_ratio=1)
+            if panel5:
+                panel5.AddXData(timestamps=time_array)
+                panel5.AddYData(karZararFiyatList, 'karZararFiyatList')
+                panel5.SetTitle('Trading Analysis - karZararFiyatList')
+                panel5.PlotSignals()
 
-
-
-
-
-            #
-            # # Panel 1: Volume chart
-            # panel1 = main_panel.AddPanel(1, title="Volume", height_ratio=1)
-            # volume_data = self._prepare_volume_data(self.current_trader)
-            # if volume_data:
-            #     panel1.AddPlot(
-            #         plot_type="bar",
-            #         series_data=volume_data,
-            #         options={"title": "Volume Chart", "height": 150}
-            #     )
-            #
-            # panel2 = main_panel.AddPanel(2, title="panel2", height_ratio=1)
-            panel3 = main_panel.AddPanel(3, title="panel3", height_ratio=1)
-            panel4 = main_panel.AddPanel(4, title="panel4", height_ratio=1)
-
-            # Panel content setup is now handled dynamically above
-            # self._setup_panel_content()  # Removed to prevent interference with dynamic panel structure
-
-
-
-            # Main panel ready for chart content - no test content
-            # main_panel.AddPanel(0)
-            # main_panel.AddPanel(1)
-            # main_panel.AddPanel(2)
-            # main_panel.AddPanel(3)
-            # main_panel.AddPanel(4)
-            #
-            # panel = main_panel.GetPanel(0)
-            # panel.AddXData(timestamps=time_array)
-            # timestamps = time_array,
-            # panel.AddYData(self.Close, 'Close Price')
-            # panel.AddYData(self.Most, 'MOST')
-            # panel.AddYData(self.ExMov, 'ExMov')
-            # panel.SetTitle('Trading Analysis - Price Chart')
-            # panel.SetHeightRatio(3)
-            # panel.AddYData(self.YonList, 'yon_list')
-            # panel.AddYData(self.SeviyeList, 'seviye_list')
-            #
-            # panel = main_panel.GetPanel(1)
-            # panel.AddXData(timestamps=time_array)
-            # panel.AddYData(trader.Lists.BakiyeFiyatList, 'Balance')
-            # panel.AddYData(trader.Lists.GetiriFiyatList, 'GetiriFiyatList')
-            # panel.AddYData(farkList, 'farkList')
-            # panel.SetTitle('Trading Analysis - Balance Chart')
-            # panel.SetHeightRatio(2)
-            #
-            # panel = main_panel.GetPanel(2)
-            # panel.AddXData(timestamps=time_array)
-            # panel.AddYData(trader.Lists.GetiriKz, 'GetiriKz')
-            # panel.AddYData(trader.Lists.GetiriKzNet, 'GetiriKzNet')
-            # panel.AddYData(farkList2, 'farkList2')
-            # panel.SetTitle('Trading Analysis - GetiriKz Chart')
-            # panel.SetHeightRatio(2)
-
-
-            # # Setup left panel with controls
-            # left_panel = self.dataPlotterDearPyGui2.GetLeftPanel()
-            # if left_panel:
-            #     left_panel.AddText("Trading Controls", color=[255, 255, 0, 255])
-            #     left_panel.AddButton("Refresh Data", self._on_refresh_data)
-            #     left_panel.AddButton("Auto Scale", self._on_auto_scale)
-            #
-            #     # Add indicators
-            #     left_panel.AddText("\nIndicators Status:")
-            #     left_panel.AddIndicator("led", True)  # Connection status
-            #     left_panel.AddText("Connected")
-            #
-            #     # Add parameters memo
-            #     left_panel.AddText("\nTrading Parameters:")
-            #     params_text = self._get_trading_params_text(trader)
-            #     left_panel.AddMemo(params_text, height=200)
-            #
-            # # Setup right panel with statistics
-            # right_panel = self.dataPlotterDearPyGui2.GetRightPanel()
-            # if right_panel:
-            #     right_panel.AddText("Statistics", color=[255, 255, 0, 255])
-            #
-            #     # Add trading statistics table
-            #     stats_data = self._get_trading_statistics(trader)
-            #     if stats_data:
-            #         right_panel.AddTable(
-            #             columns=["Metric", "Value"],
-            #             data=stats_data
-            #         )
-            #
-            #     # Add progress indicators
-            #     right_panel.AddText("\nProgress:")
-            #     right_panel.AddIndicator("progress", 0.75)  # Overall progress
-
-
-
-            # # Setup bottom panel with controls
-            # bottom_panel = self.dataPlotterDearPyGui2.GetBottomPanel()
-            # if bottom_panel:
-            #     bottom_panel.AddText("Additional Controls", color=[255, 255, 0, 255])
-            #     bottom_panel.AddButton("Start Trading", self._on_start_trading)
-            #     bottom_panel.AddButton("Stop Trading", self._on_stop_trading)
-            #     bottom_panel.AddButton("Reset System", self._on_reset_system)
-            #
-            #     # Add trading mode controls
-            #     bottom_panel.AddText("\nTrading Mode:")
-            #     bottom_panel.AddButton("Manual Mode", self._on_manual_mode)
-            #     bottom_panel.AddButton("Auto Mode", self._on_auto_mode)
-            #
-            #     # Add additional trading statistics
-            #     bottom_panel.AddText("\nQuick Stats:")
-            #     quick_stats = self._get_quick_statistics(trader)
-            #     if quick_stats:
-            #         bottom_panel.AddTable(
-            #             columns=["Quick Metric", "Value"],
-            #             data=quick_stats
-            #         )
-
-
-
-
-
-            '''
-            # Setup main panels with financial data
-            main_panel = self.dataPlotterDearPyGui2.GetMainPanel()
-
-            # Panel 0: Price chart with candlesticks and moving averages
-            panel0 = main_panel.AddPanel(0, title="Price Chart", height_ratio=3)
-
-            # Prepare OHLC data
-            ohlc_data = self._prepare_ohlc_data(trader)
-            if ohlc_data:
-                panel0.AddPlot(
-                    plot_type="candlestick",
-                    series_data=ohlc_data,
-                    options={"title": "OHLC Chart", "height": 400}
-                )
-
-            # Add moving averages if requested
-            if show_moving_average:
-                ma_data = self._prepare_moving_average_data(trader)
-                if ma_data:
-                    panel0.AddPlot(
-                        plot_type="line",
-                        series_data=ma_data,
-                        options={"title": "Moving Averages", "height": 400}
-                    )
-
-            # Panel 1: Volume chart
-            panel1 = main_panel.AddPanel(1, title="Volume", height_ratio=1)
-            volume_data = self._prepare_volume_data(trader)
-            if volume_data:
-                panel1.AddPlot(
-                    plot_type="bar",
-                    series_data=volume_data,
-                    options={"title": "Volume Chart", "height": 150}
-                )
-
-            # Panel 2: Balance and P&L (if requested)
-            if show_balance or show_kar_zarar_puan or show_kar_zarar_fiyat:
-                panel2 = main_panel.AddPanel(2, title="Balance & P&L", height_ratio=1)
-
-                if show_balance:
-                    balance_data = self._prepare_balance_data(trader)
-                    if balance_data:
-                        panel2.AddPlot(
-                            plot_type="line",
-                            series_data=balance_data,
-                            options={"title": "Account Balance", "height": 150}
-                        )
-
-                if show_kar_zarar_puan:
-                    pnl_points_data = self._prepare_pnl_points_data(trader)
-                    if pnl_points_data:
-                        panel2.AddPlot(
-                            plot_type="line",
-                            series_data=pnl_points_data,
-                            options={"title": "P&L Points", "height": 150}
-                        )
-
+            # ----------------------------------------------------------------------------------------------------------
             # Setup status bar
             status_bar = self.dataPlotterDearPyGui2.GetStatusBar()
             if status_bar:
                 status_bar.SetText("Chart loaded successfully - Ready for analysis")
                 status_bar.AddIndicator("progress", 1.0)  # Loading complete
-            '''
+
 
             print("=== Framework initialized, showing chart ===")
 
@@ -2854,6 +2681,109 @@ class AlgoTrader:
         # Use best parameters for final run and plotting
         # self.Most, self.ExMov = self.calculate_most(period=best_period, percent=best_percent)
         self.Most, self.ExMov = self.indicatorManager.calculate_most(period=best_period, percent=best_percent)
+
+    def get_horizontal_levels(self):
+        """
+        YonList ve SeviyeList verilerine göre yatay çizgi seviyelerini döndürür.
+        KOD2'nin mantığına göre sinyal değişimlerini yakalar,
+        F geldiğinde resetler. Plot etmez, sadece tek liste döndürür.
+
+        Returns:
+            list: Yatay çizgi seviyeleri listesi
+        """
+        if not self.YonList or not self.SeviyeList or len(self.YonList) != len(self.SeviyeList):
+            print("Debug: Geçersiz giriş verisi")
+            return []
+
+        print(f"Debug: YonList length: {len(self.YonList)}, SeviyeList length: {len(self.SeviyeList)}")
+
+        horizontal_levels = []
+        current_signal = None
+
+        # Sinyal değişimlerini yakala
+        for i, direction in enumerate(self.YonList):
+            level = self.SeviyeList[i]
+
+            # Geçerli seviye olmalı
+            if not direction or level == 0.0:
+                continue
+
+            # Yeni sinyal başlıyorsa
+            if direction != current_signal and direction in ['A', 'S']:
+                horizontal_levels.append(level)
+                print(f"Debug: Yeni sinyal {direction} @ {i}, level {level:.2f}")
+                current_signal = direction
+
+            # 'F' geldiğinde sinyal sıfırlanır
+            elif direction == 'F':
+                print(f"Debug: Reset sinyali 'F' @ {i}")
+                current_signal = None
+
+        # Duplicate temizle
+        unique_levels = list(set(horizontal_levels))
+        # unique_levels.sort()  # İstersen açabilirsin
+
+        print(f"Debug: Toplam {len(unique_levels)} seviye bulundu")
+        if unique_levels:
+            print(f"Debug: Seviyeler: {[f'{lvl:.2f}' for lvl in unique_levels[:10]]}")
+
+        return unique_levels
+
+    def get_signal_segments(self):
+        """
+        YonList ve SeviyeList'e göre her aktif sinyal segmentini döndürür.
+        'A' veya 'S' başladığında segment başlar, 'F' veya yön değişimi ile biter.
+
+        Returns:
+            list of dict: [{ "level": float, "start": int, "end": int, "direction": str }]
+        """
+        segments = []
+        current_signal = None
+        start_index = None
+        level = None
+
+        for i, (yon, seviye) in enumerate(zip(self.YonList, self.SeviyeList)):
+            if yon in ['A', 'S']:
+                if current_signal is None:
+                    # yeni sinyal başlat
+                    current_signal = yon
+                    start_index = i
+                    level = seviye
+                elif current_signal != yon:
+                    # yön değişti → önceki segmenti kapat
+                    segments.append({
+                        "level": level,
+                        "start": start_index,
+                        "end": i - 1,
+                        "direction": current_signal
+                    })
+                    # yeni segment aç
+                    current_signal = yon
+                    start_index = i
+                    level = seviye
+            elif yon == 'F' and current_signal is not None:
+                # sinyal kapanıyor
+                segments.append({
+                    "level": level,
+                    "start": start_index,
+                    "end": i - 1,
+                    "direction": current_signal
+                })
+                current_signal = None
+                start_index = None
+                level = None
+
+        # eğer sona kadar açık kaldıysa kapat
+        if current_signal is not None:
+            segments.append({
+                "level": level,
+                "start": start_index,
+                "end": len(self.YonList) - 1,
+                "direction": current_signal
+            })
+
+        print(f"DEBUG: {len(segments)} segments found")
+        return segments
 
 if __name__ == "__main__":
     print("Hello, Gemini!")
