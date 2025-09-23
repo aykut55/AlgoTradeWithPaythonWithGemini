@@ -1156,6 +1156,15 @@ class AlgoTrader:
             
             # Chart type selection
             self.chart_type = "Candlestick"  # Default chart type (Mum Grafikler)
+            
+            # Data cache to prevent recalculation
+            self.data_cache = {
+                "ohlc_data": None,
+                "line_data": None,
+                "heiken_ashi_data": None,
+                "volume_data": None,
+                "ma_data": None
+            }
 
             # Initialize the UI
             self.dataPlotterDearPyGui2.Initialize()
@@ -1170,8 +1179,80 @@ class AlgoTrader:
             # Set the content setup callback for RefreshLayout
             self.dataPlotterDearPyGui2.SetContentSetupCallback(self._setup_panel_content)
 
-            # Setup panel content
-            self._setup_panel_content()
+            main_panel = self.dataPlotterDearPyGui2.GetMainPanel()
+
+            # --- paneli olustur
+            chart_type_name = getattr(self, 'chart_type', 'OHLC')
+            panel0 = main_panel.AddPanel(0, title=f"Price Chart ({chart_type_name})", height_ratio=1)
+            if panel0:
+                # --- panele hangi türde price verisi kullanaılacak onu veriyoruz
+                # panel0.SetLegend("OHLC")
+                panel0.SetPriceData(trader)
+                panel0._setup_price_chart_content2(chart_type_name)
+
+                panel0.AddXData(timestamps=time_array)
+                # panel0.AddYData(self.Ma5, 'MA5')
+                # panel0.AddYData(self.Ma8, 'MA8')
+                # panel0.AddYData(self.Ma13, 'Ma13')
+                # panel0.AddYData(self.YonList, 'yon_list')
+                # panel0.AddYData(self.SeviyeList, 'seviye_list')
+
+                panel0.SetTitle('Trading Analysis - Price Chart')
+                # panel0.SetHeightRatio(1)
+
+                panel0.PlotSignals()
+
+            panel1 = main_panel.AddPanel(1, title="Volume", height_ratio=1)
+            if panel1:
+                panel1.AddXData(timestamps=time_array)
+                panel1.AddYData(self.Ma5, 'MA5')
+                panel1.AddYData(self.Ma8, 'MA8')
+                panel1.AddYData(self.Ma13, 'Ma13')
+
+                panel1.SetTitle('Trading Analysis - Price Chart')
+
+                panel1.PlotSignals()
+
+
+
+            # # # Panel 1: Volume chart
+            # panel1 = main_panel.AddPanel(1, title="Volume", height_ratio=1)
+            # if panel1:
+            #     volume_data = self._prepare_volume_data(self.current_trader)
+            #
+            #     panel1.AddXData(timestamps=time_array)
+            #     panel1.AddYData(volume_data, 'volume')
+            #
+            #     panel1.SetTitle('Trading Analysis - Volume Chart')
+            #     panel1.SetHeightRatio(2)
+            #
+            #     panel1.PlotSignals()
+
+
+
+
+
+
+
+
+
+            #
+            # # Panel 1: Volume chart
+            # panel1 = main_panel.AddPanel(1, title="Volume", height_ratio=1)
+            # volume_data = self._prepare_volume_data(self.current_trader)
+            # if volume_data:
+            #     panel1.AddPlot(
+            #         plot_type="bar",
+            #         series_data=volume_data,
+            #         options={"title": "Volume Chart", "height": 150}
+            #     )
+            #
+            panel2 = main_panel.AddPanel(2, title="panel2", height_ratio=1)
+            panel3 = main_panel.AddPanel(3, title="panel3", height_ratio=1)
+            panel4 = main_panel.AddPanel(4, title="panel4", height_ratio=1)
+
+            # Panel content setup is now handled dynamically above
+            # self._setup_panel_content()  # Removed to prevent interference with dynamic panel structure
 
 
 
@@ -1376,8 +1457,13 @@ class AlgoTrader:
             return [["No Data", "Available"]]
 
     def _prepare_ohlc_data(self, trader):
-        """Prepare OHLC data for candlestick chart."""
+        """Prepare OHLC data for candlestick chart with caching."""
         try:
+            # Check cache first
+            if self.data_cache["ohlc_data"] is not None:
+                print("DEBUG: Using cached OHLC data")
+                return self.data_cache["ohlc_data"]
+            
             print(f"DEBUG: _prepare_ohlc_data called with trader: {trader}")
             
             # Try different attribute names for OHLC data
@@ -1386,13 +1472,21 @@ class AlgoTrader:
             high_data = None
             low_data = None
             
-            # Check for standard attribute names (Close, Open, High, Low)
-            if hasattr(trader, 'Close') and trader.Close is not None:
+            # Check for standard attribute names on self (AlgoTrader instance)
+            if hasattr(self, 'Close') and self.Close is not None:
+                close_data = self.Close
+                open_data = getattr(self, 'Open', close_data)
+                high_data = getattr(self, 'High', close_data)
+                low_data = getattr(self, 'Low', close_data)
+                print(f"DEBUG: Using self.Close/Open/High/Low attributes")
+            
+            # Check for standard attribute names on trader (fallback)
+            elif hasattr(trader, 'Close') and trader.Close is not None:
                 close_data = trader.Close
                 open_data = getattr(trader, 'Open', close_data)
                 high_data = getattr(trader, 'High', close_data)
                 low_data = getattr(trader, 'Low', close_data)
-                print(f"DEBUG: Using Close/Open/High/Low attributes")
+                print(f"DEBUG: Using trader.Close/Open/High/Low attributes")
             
             # Check for alternative names (close_prices, etc.)
             elif hasattr(trader, 'close_prices') and trader.close_prices is not None:
@@ -1411,7 +1505,10 @@ class AlgoTrader:
                     "low": list(low_data) if hasattr(low_data, '__iter__') else [low_data] * length,
                     "close": list(close_data)
                 }
-                print(f"DEBUG: OHLC data created successfully with {length} points")
+                
+                # Cache the result
+                self.data_cache["ohlc_data"] = result
+                print(f"DEBUG: OHLC data created and cached with {length} points")
                 print(f"DEBUG: Sample data - Close[0]: {result['close'][0] if result['close'] else 'None'}")
                 return result
             else:
@@ -1425,8 +1522,13 @@ class AlgoTrader:
         return None
 
     def _prepare_line_data(self, trader):
-        """Prepare line chart data using only Close prices."""
+        """Prepare line chart data using only Close prices with caching."""
         try:
+            # Check cache first
+            if self.data_cache["line_data"] is not None:
+                print("DEBUG: Using cached line data")
+                return self.data_cache["line_data"]
+            
             print(f"DEBUG: _prepare_line_data called with trader: {trader}")
             
             # Get close data
@@ -1447,7 +1549,10 @@ class AlgoTrader:
                 result = {
                     "Close": list(close_data)  # Line chart expects named series
                 }
-                print(f"DEBUG: Line data created successfully with {length} points")
+                
+                # Cache the result
+                self.data_cache["line_data"] = result
+                print(f"DEBUG: Line data created and cached with {length} points")
                 print(f"DEBUG: Sample data - Close[0]: {result['Close'][0] if result['Close'] else 'None'}")
                 return result
             else:
@@ -1472,6 +1577,72 @@ class AlgoTrader:
             return ma_data if ma_data else None
         except Exception as e:
             print(f"Error preparing MA data: {e}")
+        return None
+
+    def _prepare_heiken_ashi_data(self, trader):
+        """Prepare Heiken Ashi candlestick data with caching."""
+        try:
+            # Check cache first
+            if self.data_cache["heiken_ashi_data"] is not None:
+                print("DEBUG: Using cached Heiken Ashi data")
+                return self.data_cache["heiken_ashi_data"]
+            
+            print(f"DEBUG: _prepare_heiken_ashi_data called with trader: {trader}")
+            
+            # First get OHLC data
+            ohlc_data = self._prepare_ohlc_data(trader)
+            if not ohlc_data:
+                print("DEBUG: No OHLC data available for Heiken Ashi calculation")
+                return None
+            
+            open_prices = ohlc_data["open"]
+            high_prices = ohlc_data["high"]
+            low_prices = ohlc_data["low"]
+            close_prices = ohlc_data["close"]
+            
+            length = len(close_prices)
+            if length == 0:
+                return None
+            
+            # Initialize Heiken Ashi arrays
+            ha_open = [0] * length
+            ha_high = [0] * length
+            ha_low = [0] * length
+            ha_close = [0] * length
+            
+            # Calculate Heiken Ashi values
+            for i in range(length):
+                if i == 0:
+                    # First candle
+                    ha_open[i] = (open_prices[i] + close_prices[i]) / 2
+                    ha_close[i] = (open_prices[i] + high_prices[i] + low_prices[i] + close_prices[i]) / 4
+                    ha_high[i] = high_prices[i]
+                    ha_low[i] = low_prices[i]
+                else:
+                    # Subsequent candles
+                    ha_open[i] = (ha_open[i-1] + ha_close[i-1]) / 2
+                    ha_close[i] = (open_prices[i] + high_prices[i] + low_prices[i] + close_prices[i]) / 4
+                    ha_high[i] = max(high_prices[i], ha_open[i], ha_close[i])
+                    ha_low[i] = min(low_prices[i], ha_open[i], ha_close[i])
+            
+            result = {
+                "timestamps": list(range(length)),
+                "open": ha_open,
+                "high": ha_high,
+                "low": ha_low,
+                "close": ha_close
+            }
+            
+            # Cache the result
+            self.data_cache["heiken_ashi_data"] = result
+            print(f"DEBUG: Heiken Ashi data created and cached with {length} points")
+            print(f"DEBUG: Sample HA data - Open[0]: {ha_open[0]:.4f}, Close[0]: {ha_close[0]:.4f}")
+            return result
+            
+        except Exception as e:
+            print(f"Error preparing Heiken Ashi data: {e}")
+            import traceback
+            traceback.print_exc()
         return None
 
     def _prepare_volume_data(self, trader):
@@ -1667,89 +1838,99 @@ class AlgoTrader:
         if main_panel and self.dataPlotterDearPyGui2.show_main_panel:
             main_panel.AddText("=== MAIN PANEL ===", color=[255, 255, 0, 255])
 
-            # Panel 0: Price chart - type depends on chart_type selection
-            chart_type_name = getattr(self, 'chart_type', 'OHLC')
-            panel0 = main_panel.AddPanel(0, title=f"Price Chart ({chart_type_name})", height_ratio=3)
-            print(f"DEBUG: Panel0 created: {panel0}")
+                # # Add moving averages if requested
+                # if hasattr(self, 'current_show_moving_average') and self.current_show_moving_average:
+                #     ma_data = self._prepare_moving_average_data(self.current_trader)
+                #     if ma_data:
+                #         panel0.AddPlot(
+                #             plot_type="line",
+                #             series_data=ma_data,
+                #             options={"title": "Moving Averages", "height": 400}
+                #         )
+                #
+                # # Panel 1: Volume chart
+                # panel1 = main_panel.AddPanel(1, title="Volume", height_ratio=1)
+                # volume_data = self._prepare_volume_data(self.current_trader)
+                # if volume_data:
+                #     panel1.AddPlot(
+                #         plot_type="bar",
+                #         series_data=volume_data,
+                #         options={"title": "Volume Chart", "height": 150}
+                #     )
 
-            # Prepare and add chart data based on selected type
-            if hasattr(self, 'current_trader'):
-                print(f"DEBUG: current_trader exists: {self.current_trader}")
-                print(f"DEBUG: Chart type selected: {chart_type_name}")
-                
-                if chart_type_name in ["BarChart", "Candlestick", "HollowCandles", "VolumeCandles"]:
-                    # OHLC-based charts
-                    ohlc_data = self._prepare_ohlc_data(self.current_trader)
-                    print(f"DEBUG: OHLC data prepared: {ohlc_data is not None}")
-                    if ohlc_data:
-                        print(f"DEBUG: Adding {chart_type_name} plot to panel0")
-                        panel0.AddPlot(
-                            plot_type="candlestick",  # All OHLC types use candlestick for now
-                            series_data=ohlc_data,
-                            options={"title": f"{chart_type_name} Chart", "height": 400}
-                        )
-                        print(f"DEBUG: {chart_type_name} plot added successfully")
-                    else:
-                        print("DEBUG: OHLC data is None or empty")
-                        
-                elif chart_type_name in ["Line", "MarkedLine"]:
-                    # Line charts using only Close prices
-                    line_data = self._prepare_line_data(self.current_trader)
-                    print(f"DEBUG: Line data prepared: {line_data is not None}")
-                    if line_data:
-                        print(f"DEBUG: Adding {chart_type_name} plot to panel0")
-                        panel0.AddPlot(
-                            plot_type="line",
-                            series_data=line_data,
-                            options={"title": f"{chart_type_name} Chart", "height": 400}
-                        )
-                        print(f"DEBUG: {chart_type_name} plot added successfully")
-                    else:
-                        print("DEBUG: Line data is None or empty")
-                        
-                elif chart_type_name in ["HeikinAshi", "Renko"]:
-                    # Alternative chart types (placeholder for future implementation)
-                    print(f"DEBUG: {chart_type_name} not yet implemented, falling back to OHLC")
-                    ohlc_data = self._prepare_ohlc_data(self.current_trader)
-                    if ohlc_data:
-                        panel0.AddPlot(
-                            plot_type="candlestick",
-                            series_data=ohlc_data,
-                            options={"title": f"{chart_type_name} Chart (OHLC fallback)", "height": 400}
-                        )
-                        
-            else:
-                print("DEBUG: current_trader does not exist")
+        # Setup status bar
+        status_bar = self.dataPlotterDearPyGui2.GetStatusBar()
+        if status_bar:
+            status_bar.SetText("Chart loaded successfully - Ready for analysis")
+            status_bar.AddIndicator("progress", 1.0)  # Loading complete
 
-                # Add moving averages if requested
-                if hasattr(self, 'current_show_moving_average') and self.current_show_moving_average:
-                    ma_data = self._prepare_moving_average_data(self.current_trader)
-                    if ma_data:
-                        panel0.AddPlot(
-                            plot_type="line",
-                            series_data=ma_data,
-                            options={"title": "Moving Averages", "height": 400}
-                        )
 
-                # Panel 1: Volume chart
-                panel1 = main_panel.AddPanel(1, title="Volume", height_ratio=1)
-                volume_data = self._prepare_volume_data(self.current_trader)
-                if volume_data:
-                    panel1.AddPlot(
-                        plot_type="bar",
-                        series_data=volume_data,
-                        options={"title": "Volume Chart", "height": 150}
+    def _setup_price_chart_content(self, panel, chart_type_name):
+        # Prepare and add chart data based on selected type
+        if hasattr(self, 'current_trader'):
+            print(f"DEBUG: current_trader exists: {self.current_trader}")
+            print(f"DEBUG: Chart type selected: {chart_type_name}")
+
+            if chart_type_name in ["BarChart", "Candlestick", "HollowCandles", "VolumeCandles"]:
+                # OHLC-based charts
+                ohlc_data = self._prepare_ohlc_data(self.current_trader)
+                print(f"DEBUG: OHLC data prepared: {ohlc_data is not None}")
+                if ohlc_data:
+                    print(f"DEBUG: Adding {chart_type_name} plot to panel")
+                    panel.AddPlot(
+                        plot_type="candlestick",  # All OHLC types use candlestick for now
+                        series_data=ohlc_data,
+                        options={"title": f"{chart_type_name} Chart", "height": 400}
+                    )
+                    print(f"DEBUG: {chart_type_name} plot added successfully")
+                else:
+                    print("DEBUG: OHLC data is None or empty")
+
+            elif chart_type_name in ["Line", "MarkedLine"]:
+                # Line charts using only Close prices
+                line_data = self._prepare_line_data(self.current_trader)
+                print(f"DEBUG: Line data prepared: {line_data is not None}")
+                if line_data:
+                    print(f"DEBUG: Adding {chart_type_name} plot to panel0")
+                    panel.AddPlot(
+                        plot_type="line",
+                        series_data=line_data,
+                        options={"title": f"{chart_type_name} Chart", "height": 400}
+                    )
+                    print(f"DEBUG: {chart_type_name} plot added successfully")
+                else:
+                    print("DEBUG: Line data is None or empty")
+
+            elif chart_type_name == "HeikinAshi":
+                # Heiken Ashi chart
+                ha_data = self._prepare_heiken_ashi_data(self.current_trader)
+                print(f"DEBUG: Heiken Ashi data prepared: {ha_data is not None}")
+                if ha_data:
+                    print("DEBUG: Adding Heiken Ashi candlestick plot to panel0")
+                    panel.AddPlot(
+                        plot_type="candlestick",
+                        series_data=ha_data,
+                        options={"title": "Heiken Ashi Chart", "height": 400}
+                    )
+                    print("DEBUG: Heiken Ashi plot added successfully")
+                else:
+                    print("DEBUG: Heiken Ashi data is None or empty")
+
+            elif chart_type_name == "Renko":
+                # Renko chart (placeholder for future implementation)
+                print("DEBUG: Renko not yet implemented, falling back to OHLC")
+                ohlc_data = self._prepare_ohlc_data(self.current_trader)
+                if ohlc_data:
+                    panel.AddPlot(
+                        plot_type="candlestick",
+                        series_data=ohlc_data,
+                        options={"title": "Renko Chart (OHLC fallback)", "height": 400}
                     )
 
-            panel2 = main_panel.AddPanel(2, title="panel2", height_ratio=1)
-            panel3 = main_panel.AddPanel(3, title="panel3", height_ratio=1)
-            panel4 = main_panel.AddPanel(4, title="panel4", height_ratio=1)
+        else:
+            print("DEBUG: current_trader does not exist")
 
-            # Setup status bar
-            status_bar = self.dataPlotterDearPyGui2.GetStatusBar()
-            if status_bar:
-                status_bar.SetText("Chart loaded successfully - Ready for analysis")
-                status_bar.AddIndicator("progress", 1.0)  # Loading complete
+
 
     # Panel visibility toggle callbacks
     def _on_toggle_upper_panel(self, sender, app_data, user_data):
@@ -1954,6 +2135,14 @@ class AlgoTrader:
         # self.Most, self.ExMov = self.calculate_most(period=21, percent=1.0)
         self.Most, self.ExMov = self.indicatorManager.calculate_most(period=21, percent=1.0)
 
+        self.Ma5 = self.indicatorManager.calculate_ema(self.Close, 5)
+        self.Ma8 = self.indicatorManager.calculate_ema(self.Close, 8)
+        self.Ma13= self.indicatorManager.calculate_ema(self.Close, 13)
+        self.Ma21 = self.indicatorManager.calculate_ema(self.Close, 21)
+        self.Ma50 = self.indicatorManager.calculate_ema(self.Close, 50)
+        self.Ma100 = self.indicatorManager.calculate_ema(self.Close, 100)
+        self.Ma200 = self.indicatorManager.calculate_ema(self.Close, 200)
+
         # --------------------------------------------------------------
         for i in range(self.mySystem.get_trader_count()):
             trader = self.mySystem.get_trader(i)
@@ -2130,6 +2319,11 @@ class AlgoTrader:
 
         # self.Most, self.ExMov = self.calculate_most(period=21, percent=1.0)
         self.Most, self.ExMov = self.indicatorManager.calculate_most(period=21, percent=1.0)
+
+        self.Ma5 = self.indicatorManager.calculate_ema(self.Close, 5)
+        self.Ma8 = self.indicatorManager.calculate_ema(self.Close, 8)
+        self.Ma13 = self.indicatorManager.calculate_ema(self.Close, 13)
+        self.Ma21 = self.indicatorManager.calculate_ema(self.Close, 21)
 
         for i in range(self.mySystem.get_trader_count()):
             trader = self.mySystem.get_trader(i)

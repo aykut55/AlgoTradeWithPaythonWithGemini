@@ -72,6 +72,11 @@ class PanelWrapper:
         self.parent_tag = parent_tag
         self.visible = True
         self.content_items = []
+        self.trader_data = None
+        self.x_data = None
+        self.y_data = {}
+        self.title = ""
+        self.height_ratio = 1
 
     def SetVisibility(self, visible: bool) -> None:
         """Set panel visibility."""
@@ -155,6 +160,8 @@ class PanelWrapper:
             self._add_line_series(series_data, x_axis_tag, y_axis_tag, options)
         elif plot_type == "bar":
             self._add_bar_series(series_data, x_axis_tag, y_axis_tag, options)
+        elif plot_type == "combined":
+            self._add_combined_series(series_data, x_axis_tag, y_axis_tag, options)
 
     def _add_candlestick_series(self, series_data: Dict[str, Any],
                                x_axis_tag: str, y_axis_tag: str, options: Dict[str, Any]) -> None:
@@ -165,7 +172,12 @@ class PanelWrapper:
         low_data = series_data.get("low", [])
         close_data = series_data.get("close", [])
 
-        if timestamps and open_data and high_data and low_data and close_data:
+        # Check if all data exists and has length > 0
+        if (timestamps is not None and len(timestamps) > 0 and 
+            open_data is not None and len(open_data) > 0 and 
+            high_data is not None and len(high_data) > 0 and 
+            low_data is not None and len(low_data) > 0 and 
+            close_data is not None and len(close_data) > 0):
             x_data = list(range(len(timestamps)))
 
             # Create candlestick using multiple series
@@ -206,6 +218,30 @@ class PanelWrapper:
                 # Use line series for bars (DearPyGui doesn't have native bar charts)
                 dpg.add_stem_series(x_data, y_data, tag=series_tag, parent=y_axis_tag, label=name)
 
+    def _add_combined_series(self, series_data: Dict[str, Any],
+                           x_axis_tag: str, y_axis_tag: str, options: Dict[str, Any]) -> None:
+        """Add combined OHLC and line series to the same plot."""
+        # First, add OHLC data if available
+        ohlc_keys = ["timestamps", "open", "high", "low", "close"]
+        has_ohlc = all(key in series_data for key in ohlc_keys)
+        
+        if has_ohlc:
+            # Extract OHLC data
+            ohlc_data = {key: series_data[key] for key in ohlc_keys}
+            # Add candlestick series
+            self._add_candlestick_series(ohlc_data, x_axis_tag, y_axis_tag, options)
+        
+        # Add line data (indicators, MA, etc.)
+        line_data = {}
+        for name, data in series_data.items():
+            # Skip OHLC data keys and only process line data
+            if name not in ohlc_keys and isinstance(data, (list, np.ndarray)) and len(data) > 0:
+                line_data[name] = data
+        
+        if line_data:
+            # Add line series for indicators
+            self._add_line_series(line_data, x_axis_tag, y_axis_tag, options)
+
     def AddTable(self, columns: List[str], data: List[List[Any]], **kwargs) -> str:
         """Add table to panel."""
         table_tag = f"{self.panel_tag}_table_{len(self.content_items)}"
@@ -224,6 +260,91 @@ class PanelWrapper:
         self.content_items.append({"type": "table", "tag": table_tag,
                                  "columns": columns, "data": data})
         return table_tag
+
+    def SetPriceData(self, trader) -> 'PanelWrapper':
+        """Set price data for the panel (trader with OHLC data)."""
+        self.trader_data = trader
+        return self
+
+    def _setup_price_chart_content2(self, chart_type_name: str) -> None:
+        """Setup price chart content based on chart type."""
+        print(f"DEBUG: _setup_price_chart_content2 called with chart_type: {chart_type_name}")
+        # This method should be implemented to handle different chart types
+        # For now, it's a placeholder
+        pass
+
+    def AddXData(self, timestamps) -> None:
+        """Add X-axis data (timestamps) to the panel."""
+        self.x_data = timestamps
+        try:
+            if timestamps is not None and hasattr(timestamps, '__len__'):
+                print(f"DEBUG: AddXData called with {len(timestamps)} timestamps")
+            else:
+                print("DEBUG: AddXData called with None or invalid timestamps")
+        except Exception as e:
+            print(f"DEBUG: AddXData called but error getting length: {e}")
+
+    def AddYData(self, data, label: str) -> None:
+        """Add Y-axis data with label to the panel."""
+        if data is not None:
+            self.y_data[label] = data
+            print(f"DEBUG: AddYData called - {label}: {len(data) if hasattr(data, '__len__') else 'scalar'} points")
+
+    def SetTitle(self, title: str) -> None:
+        """Set panel title."""
+        self.title = title
+        print(f"DEBUG: SetTitle called with title: {title}")
+
+    def SetHeightRatio(self, ratio: float) -> None:
+        """Set panel height ratio."""
+        self.height_ratio = ratio
+        print(f"DEBUG: SetHeightRatio called with ratio: {ratio}")
+
+    def PlotSignals(self) -> None:
+        """Plot trading signals on the panel."""
+        print("DEBUG: PlotSignals called")
+        # Create plots based on collected data
+        self._create_plots()
+
+    def _create_plots(self) -> None:
+        """Create actual plots from the collected data."""
+        try:
+            # Prepare combined data for single plot
+            combined_data = {}
+            
+            # Add OHLC data if trader data is available
+            if self.trader_data and hasattr(self.trader_data, 'Open'):
+                # Safe timestamp handling for numpy arrays
+                if self.x_data is not None and hasattr(self.x_data, '__len__') and len(self.x_data) > 0:
+                    combined_data["timestamps"] = self.x_data
+                else:
+                    combined_data["timestamps"] = list(range(len(self.trader_data.Close)))
+                    
+                combined_data["open"] = list(self.trader_data.Open) if hasattr(self.trader_data.Open, '__iter__') else [self.trader_data.Open] * len(self.trader_data.Close)
+                combined_data["high"] = list(self.trader_data.High) if hasattr(self.trader_data.High, '__iter__') else [self.trader_data.High] * len(self.trader_data.Close)
+                combined_data["low"] = list(self.trader_data.Low) if hasattr(self.trader_data.Low, '__iter__') else [self.trader_data.Low] * len(self.trader_data.Close)
+                combined_data["close"] = list(self.trader_data.Close)
+
+            # Add line data (indicators) to the same data structure
+            if self.y_data:
+                for label, data in self.y_data.items():
+                    if data is not None and hasattr(data, '__len__') and len(data) > 0:
+                        combined_data[label] = list(data)
+
+            # Create single plot with both OHLC and line data
+            if combined_data:
+                self.AddPlot(
+                    plot_type="combined",  # New plot type for mixed data
+                    series_data=combined_data,
+                    options={"title": f"{self.title} - Trading Chart", "height": 400}
+                )
+
+            print(f"DEBUG: _create_plots completed for panel: {self.title}")
+            
+        except Exception as e:
+            print(f"DEBUG: Error in _create_plots: {e}")
+            import traceback
+            traceback.print_exc()
 
 
 class StatusBarWrapper:
