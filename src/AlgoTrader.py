@@ -1217,13 +1217,24 @@ class AlgoTrader:
             # ----------------------------------------------------------------------------------------------------------
             panel2 = main_panel.AddPanel(2, title="Volume", height_ratio=1)
             if panel2:
-                volume_data = self._prepare_volume_data(self.current_trader)
-                panel2.AddXData(timestamps=time_array)
-                panel2.AddYData(volume_data, 'volume')
-
-                panel2.SetTitle('Trading Analysis - Volume Chart')
-
-                panel2.PlotSignals()
+                print(f"DEBUG: Panel2 created successfully: {panel2}")
+                print(f"DEBUG: Trader attributes: {[attr for attr in dir(self.current_trader) if 'volume' in attr.lower() or 'close' in attr.lower()]}")
+                
+                volume_data_dict = self._prepare_volume_data(self.current_trader)
+                print(f"DEBUG: Volume data dict: {volume_data_dict}")
+                
+                if volume_data_dict and 'Volume' in volume_data_dict:
+                    volume_data = volume_data_dict['Volume']
+                    print(f"DEBUG: Volume data type: {type(volume_data)}, length: {len(volume_data) if hasattr(volume_data, '__len__') else 'N/A'}")
+                    
+                    panel2.AddXData(timestamps=time_array)
+                    panel2.AddYData(volume_data, 'Volume')
+                    panel2.SetTitle('Trading Analysis - Volume Chart')
+                    panel2.PlotSignals()
+                else:
+                    print("DEBUG: No volume data available!")
+            else:
+                print("DEBUG: Panel2 creation failed!")
 
             # ----------------------------------------------------------------------------------------------------------
             # # # Panel 1: Volume chart
@@ -1659,15 +1670,39 @@ class AlgoTrader:
     def _prepare_volume_data(self, trader):
         """Prepare volume data."""
         try:
+            print(f"DEBUG: _prepare_volume_data called with trader: {trader}")
+            
+            # Check for volume_values on trader
             if hasattr(trader, 'volume_values') and trader.volume_values:
+                print("DEBUG: Found trader.volume_values")
                 return {"Volume": trader.volume_values}
-            # Generate dummy volume data if not available
+            
+            # Check for close_prices on trader
             elif hasattr(trader, 'close_prices') and len(trader.close_prices) > 0:
+                print("DEBUG: Found trader.close_prices, generating dummy volume")
                 import random
                 volume = [random.randint(1000, 10000) for _ in range(len(trader.close_prices))]
                 return {"Volume": volume}
+            
+            # Check if we can use self.Volume (from market data)
+            elif hasattr(self, 'Volume') and self.Volume is not None and len(self.Volume) > 0:
+                print("DEBUG: Found self.Volume, using market volume data")
+                return {"Volume": list(self.Volume)}
+            
+            # Check if we can use self.Close to generate dummy volume
+            elif hasattr(self, 'Close') and self.Close is not None and len(self.Close) > 0:
+                print("DEBUG: Found self.Close, generating dummy volume based on Close data length")
+                import random
+                volume = [random.randint(1000, 10000) for _ in range(len(self.Close))]
+                return {"Volume": volume}
+            
+            else:
+                print("DEBUG: No suitable data found for volume generation")
+                
         except Exception as e:
             print(f"Error preparing volume data: {e}")
+            import traceback
+            traceback.print_exc()
         return None
 
     def _prepare_balance_data(self, trader):

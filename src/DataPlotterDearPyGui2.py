@@ -771,6 +771,15 @@ class DataPlotterDearPyGui2:
     def SetPanelVisibility(self, panel_name: str, visible: bool) -> None:
         """Set panel visibility."""
         setattr(self, f"show_{panel_name}", visible)
+        
+        # For main_panel, don't do layout refresh - just toggle visibility
+        if panel_name == "main_panel":
+            if self.main_panel:
+                self.main_panel.SetVisibility(visible)
+            return
+        
+        # For other panels, do layout refresh
+        self.RefreshLayout()
 
     def RefreshLayout(self) -> None:
         """Refresh the entire window layout by recreating all panels in correct order."""
