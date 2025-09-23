@@ -1181,6 +1181,9 @@ class AlgoTrader:
 
             main_panel = self.dataPlotterDearPyGui2.GetMainPanel()
 
+            volume_data_dict = self._prepare_volume_data(self.current_trader)
+            volume_data = volume_data_dict['Volume']
+
             # ----------------------------------------------------------------------------------------------------------
             chart_type_name = getattr(self, 'chart_type', 'OHLC')
             panel0 = main_panel.AddPanel(0, title=f"Price Chart ({chart_type_name})", height_ratio=1)
@@ -1191,6 +1194,24 @@ class AlgoTrader:
                 panel0._setup_price_chart_content2(chart_type_name)
 
                 panel0.AddXData(timestamps=time_array)
+                
+                # Volume'u fiyat aralığına normalize et
+                if len(volume_data) > 0 and len(self.Close) > 0:
+                    price_min = min(self.Close)
+                    price_max = max(self.Close)
+                    volume_min = min(volume_data)
+                    volume_max = max(volume_data)
+
+                    k = 0.90 # skale etmek icin
+                    
+                    # Volume'u fiyat aralığına ölçekle
+                    normalized_volume = []
+                    for vol in volume_data:
+                        normalized_vol = price_min + (vol - volume_min) * (price_max - price_min) / (volume_max - volume_min)
+                        normalized_vol = k * normalized_vol
+                        normalized_volume.append(normalized_vol)
+                    
+                    # panel0.AddYData(normalized_volume, 'volume (normalized)')
                 panel0.AddYData(self.Ma5, 'MA5')
                 panel0.AddYData(self.Ma8, 'MA8')
                 panel0.AddYData(self.Ma13, 'Ma13')
@@ -1219,14 +1240,14 @@ class AlgoTrader:
             if panel2:
                 print(f"DEBUG: Panel2 created successfully: {panel2}")
                 print(f"DEBUG: Trader attributes: {[attr for attr in dir(self.current_trader) if 'volume' in attr.lower() or 'close' in attr.lower()]}")
-                
-                volume_data_dict = self._prepare_volume_data(self.current_trader)
+
+
                 print(f"DEBUG: Volume data dict: {volume_data_dict}")
-                
+
                 if volume_data_dict and 'Volume' in volume_data_dict:
                     volume_data = volume_data_dict['Volume']
                     print(f"DEBUG: Volume data type: {type(volume_data)}, length: {len(volume_data) if hasattr(volume_data, '__len__') else 'N/A'}")
-                    
+
                     panel2.AddXData(timestamps=time_array)
                     panel2.AddYData(volume_data, 'Volume')
                     panel2.SetTitle('Trading Analysis - Volume Chart')
