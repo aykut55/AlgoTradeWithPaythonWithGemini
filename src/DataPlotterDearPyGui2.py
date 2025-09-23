@@ -525,10 +525,22 @@ class MainPanel:
         return None
 
     def SetVisibility(self, visible: bool) -> None:
-        """Set main panel visibility."""
+        """Set main panel visibility and all child panels."""
         self.visible = visible
         if dpg.does_item_exist(self.main_panel_tag):
             dpg.configure_item(self.main_panel_tag, show=visible)
+        
+        # Also set visibility for all child panels
+        for panel_info in self.panels.values():
+            panel_wrapper = panel_info["wrapper"]
+            panel_tag = panel_info["tag"]
+            
+            # Update wrapper visibility state
+            panel_wrapper.visible = visible
+            
+            # Update actual panel visibility
+            if dpg.does_item_exist(panel_tag):
+                dpg.configure_item(panel_tag, show=visible)
 
     def AddText(self, value: str, **kwargs) -> str:
         """Add text directly to main panel."""
@@ -784,8 +796,16 @@ class DataPlotterDearPyGui2:
 
     def _store_current_content(self) -> None:
         """Store current panel content before layout refresh."""
-        # This is a placeholder - in a real implementation, you might want to store panel content
-        pass
+        # Store MainPanel state and content
+        if self.main_panel and hasattr(self.main_panel, 'panels'):
+            self.stored_main_panel_state = {
+                'panels': self.main_panel.panels.copy(),
+                'panel_order': self.main_panel.panel_order.copy(),
+                'visible': self.main_panel.visible
+            }
+            print(f"DEBUG: Stored {len(self.main_panel.panels)} panels before layout refresh")
+        else:
+            self.stored_main_panel_state = None
 
     def _clear_window_content(self) -> None:
         """Clear all content from the main window."""
@@ -881,7 +901,35 @@ class DataPlotterDearPyGui2:
 
         # Panel wrappers - recreate based on visibility
         if self.show_main_panel:
+            # Recreate MainPanel
             self.main_panel = MainPanel(self.window_tag)
+            
+            # Restore from stored state if available
+            if hasattr(self, 'stored_main_panel_state') and self.stored_main_panel_state:
+                stored_state = self.stored_main_panel_state
+                self.main_panel.panels = stored_state['panels'].copy()
+                self.main_panel.panel_order = stored_state['panel_order'].copy()
+                self.main_panel.visible = stored_state['visible']
+                
+                # Recreate the actual DearPyGui panel windows
+                for index, panel_info in self.main_panel.panels.items():
+                    panel_tag = panel_info["tag"]
+                    title = panel_info["title"]
+                    height_ratio = panel_info["height_ratio"]
+                    
+                    # Recreate the DearPyGui child window
+                    if dpg.does_item_exist(self.main_panel.main_panel_tag):
+                        available_height = 600  # Should match original calculation
+                        total_ratio = sum(p.get("height_ratio", 1) for p in self.main_panel.panels.values())
+                        if total_ratio == 0:
+                            total_ratio = height_ratio
+                        panel_height = int(available_height * height_ratio / total_ratio)
+                        panel_height = max(panel_height, 150)
+                        
+                        dpg.add_child_window(tag=panel_tag, parent=self.main_panel.main_panel_tag,
+                                           height=panel_height, border=True, label=title)
+                
+                print(f"DEBUG: Restored {len(self.main_panel.panels)} panels to MainPanel with DearPyGui windows")
         else:
             self.main_panel = None
 
