@@ -1148,14 +1148,7 @@ class AlgoTrader:
                 title="AlgoTrader - Financial Data Analysis"
             )
 
-            # Configure panel visibility before initialization
-            self.dataPlotterDearPyGui2.show_menu = True
-            self.dataPlotterDearPyGui2.show_status_bar = True
-            self.dataPlotterDearPyGui2.show_left_panel = True
-            self.dataPlotterDearPyGui2.show_right_panel = True
-            self.dataPlotterDearPyGui2.show_upper_panel = True
-            self.dataPlotterDearPyGui2.show_bottom_panel = True
-            self.dataPlotterDearPyGui2.show_main_panel = True
+            # Panel visibility will use default values from DataPlotterDearPyGui2
 
             # Store parameters for content restoration
             self.current_trader = trader

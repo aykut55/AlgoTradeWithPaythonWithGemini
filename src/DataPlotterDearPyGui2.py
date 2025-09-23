@@ -366,13 +366,13 @@ class DataPlotterDearPyGui2:
         self.upper_panel = None
         self.bottom_panel = None
 
-        # Component visibility
+        # Component visibility - Default: only menu and main panel visible
         self.show_menu = True
-        self.show_status_bar = True
-        self.show_left_panel = True
-        self.show_right_panel = True
-        self.show_upper_panel = True
-        self.show_bottom_panel = True
+        self.show_status_bar = False
+        self.show_left_panel = False
+        self.show_right_panel = False
+        self.show_upper_panel = False
+        self.show_bottom_panel = False
         self.show_main_panel = True
         
         # Menu recreation callback
