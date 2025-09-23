@@ -1153,6 +1153,9 @@ class AlgoTrader:
             # Store parameters for content restoration
             self.current_trader = trader
             self.current_show_moving_average = show_moving_average
+            
+            # Chart type selection
+            self.chart_type = "Candlestick"  # Default chart type (Mum Grafikler)
 
             # Initialize the UI
             self.dataPlotterDearPyGui2.Initialize()
@@ -1375,17 +1378,85 @@ class AlgoTrader:
     def _prepare_ohlc_data(self, trader):
         """Prepare OHLC data for candlestick chart."""
         try:
-            if hasattr(trader, 'close_prices') and len(trader.close_prices) > 0:
-                length = len(trader.close_prices)
-                return {
+            print(f"DEBUG: _prepare_ohlc_data called with trader: {trader}")
+            
+            # Try different attribute names for OHLC data
+            close_data = None
+            open_data = None
+            high_data = None
+            low_data = None
+            
+            # Check for standard attribute names (Close, Open, High, Low)
+            if hasattr(trader, 'Close') and trader.Close is not None:
+                close_data = trader.Close
+                open_data = getattr(trader, 'Open', close_data)
+                high_data = getattr(trader, 'High', close_data)
+                low_data = getattr(trader, 'Low', close_data)
+                print(f"DEBUG: Using Close/Open/High/Low attributes")
+            
+            # Check for alternative names (close_prices, etc.)
+            elif hasattr(trader, 'close_prices') and trader.close_prices is not None:
+                close_data = trader.close_prices
+                open_data = getattr(trader, 'open_prices', close_data)
+                high_data = getattr(trader, 'high_prices', close_data)
+                low_data = getattr(trader, 'low_prices', close_data)
+                print(f"DEBUG: Using close_prices/open_prices/etc. attributes")
+            
+            if close_data is not None and len(close_data) > 0:
+                length = len(close_data)
+                result = {
                     "timestamps": list(range(length)),
-                    "open": getattr(trader, 'open_prices', trader.close_prices),
-                    "high": getattr(trader, 'high_prices', trader.close_prices),
-                    "low": getattr(trader, 'low_prices', trader.close_prices),
-                    "close": trader.close_prices
+                    "open": list(open_data) if hasattr(open_data, '__iter__') else [open_data] * length,
+                    "high": list(high_data) if hasattr(high_data, '__iter__') else [high_data] * length,
+                    "low": list(low_data) if hasattr(low_data, '__iter__') else [low_data] * length,
+                    "close": list(close_data)
                 }
+                print(f"DEBUG: OHLC data created successfully with {length} points")
+                print(f"DEBUG: Sample data - Close[0]: {result['close'][0] if result['close'] else 'None'}")
+                return result
+            else:
+                print("DEBUG: No suitable OHLC data found")
+                print(f"DEBUG: Available trader attributes: {[attr for attr in dir(trader) if not attr.startswith('_') and hasattr(getattr(trader, attr, None), '__len__')]}")
+                
         except Exception as e:
             print(f"Error preparing OHLC data: {e}")
+            import traceback
+            traceback.print_exc()
+        return None
+
+    def _prepare_line_data(self, trader):
+        """Prepare line chart data using only Close prices."""
+        try:
+            print(f"DEBUG: _prepare_line_data called with trader: {trader}")
+            
+            # Get close data
+            close_data = None
+            
+            # Check for standard attribute names (Close)
+            if hasattr(trader, 'Close') and trader.Close is not None:
+                close_data = trader.Close
+                print(f"DEBUG: Using Close attribute for line chart")
+            
+            # Check for alternative names (close_prices)
+            elif hasattr(trader, 'close_prices') and trader.close_prices is not None:
+                close_data = trader.close_prices
+                print(f"DEBUG: Using close_prices attribute for line chart")
+            
+            if close_data is not None and len(close_data) > 0:
+                length = len(close_data)
+                result = {
+                    "Close": list(close_data)  # Line chart expects named series
+                }
+                print(f"DEBUG: Line data created successfully with {length} points")
+                print(f"DEBUG: Sample data - Close[0]: {result['Close'][0] if result['Close'] else 'None'}")
+                return result
+            else:
+                print("DEBUG: No suitable Close data found for line chart")
+                
+        except Exception as e:
+            print(f"Error preparing line data: {e}")
+            import traceback
+            traceback.print_exc()
         return None
 
     def _prepare_moving_average_data(self, trader):
@@ -1530,6 +1601,40 @@ class AlgoTrader:
             menu.AddSubItem("View", "Show All Panels", self._on_show_all_panels)
             menu.AddSubItem("View", "Hide All Panels", self._on_hide_all_panels)
 
+            # Bars menu (organized like TradingView)
+            menu.AddItem("Bars")
+            
+            # Bar/Candle Charts section
+            bar_chart_check = "[X] " if self.chart_type == "BarChart" else "[ ] "
+            candlestick_check = "[X] " if self.chart_type == "Candlestick" else "[ ] "
+            hollow_candles_check = "[X] " if self.chart_type == "HollowCandles" else "[ ] "
+            volume_candles_check = "[X] " if self.chart_type == "VolumeCandles" else "[ ] "
+            
+            menu.AddSubItem("Bars", f"{bar_chart_check}Çubuk Grafikler", self._on_chart_type_bar_chart)
+            menu.AddSubItem("Bars", f"{candlestick_check}Mum Grafikler", self._on_chart_type_candlestick)
+            menu.AddSubItem("Bars", f"{hollow_candles_check}İçi Boş Mumlar", self._on_chart_type_hollow_candles)
+            menu.AddSubItem("Bars", f"{volume_candles_check}Hacimli Mumlar", self._on_chart_type_volume_candles)
+            
+            # Separator
+            menu.AddSubItem("Bars", "---", None)
+            
+            # Line Charts section
+            line_check = "[X] " if self.chart_type == "Line" else "[ ] "
+            marked_line_check = "[X] " if self.chart_type == "MarkedLine" else "[ ] "
+            
+            menu.AddSubItem("Bars", f"{line_check}Çizgi", self._on_chart_type_line)
+            menu.AddSubItem("Bars", f"{marked_line_check}İşaretli Çizgi", self._on_chart_type_marked_line)
+            
+            # Separator
+            menu.AddSubItem("Bars", "---", None)
+            
+            # Alternative Charts section
+            heikin_ashi_check = "[X] " if self.chart_type == "HeikinAshi" else "[ ] "
+            renko_check = "[X] " if self.chart_type == "Renko" else "[ ] "
+            
+            menu.AddSubItem("Bars", f"{heikin_ashi_check}Heiken Ashi", self._on_chart_type_heikin_ashi)
+            menu.AddSubItem("Bars", f"{renko_check}Renko", self._on_chart_type_renko)
+
             # Tools menu
             menu.AddItem("Tools")
             menu.AddSubItem("Tools", "Analysis", self._on_analysis_tools)
@@ -1562,18 +1667,59 @@ class AlgoTrader:
         if main_panel and self.dataPlotterDearPyGui2.show_main_panel:
             main_panel.AddText("=== MAIN PANEL ===", color=[255, 255, 0, 255])
 
-            # Panel 0: Price chart with candlesticks and moving averages
-            panel0 = main_panel.AddPanel(0, title="Price Chart", height_ratio=3)
+            # Panel 0: Price chart - type depends on chart_type selection
+            chart_type_name = getattr(self, 'chart_type', 'OHLC')
+            panel0 = main_panel.AddPanel(0, title=f"Price Chart ({chart_type_name})", height_ratio=3)
+            print(f"DEBUG: Panel0 created: {panel0}")
 
-            # Prepare OHLC data
+            # Prepare and add chart data based on selected type
             if hasattr(self, 'current_trader'):
-                ohlc_data = self._prepare_ohlc_data(self.current_trader)
-                if ohlc_data:
-                    panel0.AddPlot(
-                        plot_type="candlestick",
-                        series_data=ohlc_data,
-                        options={"title": "OHLC Chart", "height": 400}
-                    )
+                print(f"DEBUG: current_trader exists: {self.current_trader}")
+                print(f"DEBUG: Chart type selected: {chart_type_name}")
+                
+                if chart_type_name in ["BarChart", "Candlestick", "HollowCandles", "VolumeCandles"]:
+                    # OHLC-based charts
+                    ohlc_data = self._prepare_ohlc_data(self.current_trader)
+                    print(f"DEBUG: OHLC data prepared: {ohlc_data is not None}")
+                    if ohlc_data:
+                        print(f"DEBUG: Adding {chart_type_name} plot to panel0")
+                        panel0.AddPlot(
+                            plot_type="candlestick",  # All OHLC types use candlestick for now
+                            series_data=ohlc_data,
+                            options={"title": f"{chart_type_name} Chart", "height": 400}
+                        )
+                        print(f"DEBUG: {chart_type_name} plot added successfully")
+                    else:
+                        print("DEBUG: OHLC data is None or empty")
+                        
+                elif chart_type_name in ["Line", "MarkedLine"]:
+                    # Line charts using only Close prices
+                    line_data = self._prepare_line_data(self.current_trader)
+                    print(f"DEBUG: Line data prepared: {line_data is not None}")
+                    if line_data:
+                        print(f"DEBUG: Adding {chart_type_name} plot to panel0")
+                        panel0.AddPlot(
+                            plot_type="line",
+                            series_data=line_data,
+                            options={"title": f"{chart_type_name} Chart", "height": 400}
+                        )
+                        print(f"DEBUG: {chart_type_name} plot added successfully")
+                    else:
+                        print("DEBUG: Line data is None or empty")
+                        
+                elif chart_type_name in ["HeikinAshi", "Renko"]:
+                    # Alternative chart types (placeholder for future implementation)
+                    print(f"DEBUG: {chart_type_name} not yet implemented, falling back to OHLC")
+                    ohlc_data = self._prepare_ohlc_data(self.current_trader)
+                    if ohlc_data:
+                        panel0.AddPlot(
+                            plot_type="candlestick",
+                            series_data=ohlc_data,
+                            options={"title": f"{chart_type_name} Chart (OHLC fallback)", "height": 400}
+                        )
+                        
+            else:
+                print("DEBUG: current_trader does not exist")
 
                 # Add moving averages if requested
                 if hasattr(self, 'current_show_moving_average') and self.current_show_moving_average:
@@ -1687,6 +1833,70 @@ class AlgoTrader:
             # Refresh layout to apply changes
             self.dataPlotterDearPyGui2.RefreshLayout()
             print("All panels hidden")
+
+    # Bar/Candle Chart callbacks
+    def _on_chart_type_bar_chart(self, sender, app_data, user_data):
+        """Switch to Bar Chart type."""
+        if hasattr(self, 'dataPlotterDearPyGui2'):
+            self.chart_type = "BarChart"
+            self._refresh_chart()
+            print("Chart type changed to Çubuk Grafikler")
+
+    def _on_chart_type_candlestick(self, sender, app_data, user_data):
+        """Switch to Candlestick chart type."""
+        if hasattr(self, 'dataPlotterDearPyGui2'):
+            self.chart_type = "Candlestick"
+            self._refresh_chart()
+            print("Chart type changed to Mum Grafikler")
+
+    def _on_chart_type_hollow_candles(self, sender, app_data, user_data):
+        """Switch to Hollow Candles chart type."""
+        if hasattr(self, 'dataPlotterDearPyGui2'):
+            self.chart_type = "HollowCandles"
+            self._refresh_chart()
+            print("Chart type changed to İçi Boş Mumlar")
+
+    def _on_chart_type_volume_candles(self, sender, app_data, user_data):
+        """Switch to Volume Candles chart type."""
+        if hasattr(self, 'dataPlotterDearPyGui2'):
+            self.chart_type = "VolumeCandles"
+            self._refresh_chart()
+            print("Chart type changed to Hacimli Mumlar")
+
+    # Line Chart callbacks
+    def _on_chart_type_line(self, sender, app_data, user_data):
+        """Switch to Line chart type."""
+        if hasattr(self, 'dataPlotterDearPyGui2'):
+            self.chart_type = "Line"
+            self._refresh_chart()
+            print("Chart type changed to Çizgi")
+
+    def _on_chart_type_marked_line(self, sender, app_data, user_data):
+        """Switch to Marked Line chart type."""
+        if hasattr(self, 'dataPlotterDearPyGui2'):
+            self.chart_type = "MarkedLine"
+            self._refresh_chart()
+            print("Chart type changed to İşaretli Çizgi")
+
+    # Alternative Chart callbacks
+    def _on_chart_type_heikin_ashi(self, sender, app_data, user_data):
+        """Switch to Heiken Ashi chart type."""
+        if hasattr(self, 'dataPlotterDearPyGui2'):
+            self.chart_type = "HeikinAshi"
+            self._refresh_chart()
+            print("Chart type changed to Heiken Ashi")
+
+    def _on_chart_type_renko(self, sender, app_data, user_data):
+        """Switch to Renko chart type."""
+        if hasattr(self, 'dataPlotterDearPyGui2'):
+            self.chart_type = "Renko"
+            self._refresh_chart()
+            print("Chart type changed to Renko")
+
+    def _refresh_chart(self):
+        """Refresh chart with new type by recreating content."""
+        # Refresh layout to update menu checkmarks and chart content
+        self.dataPlotterDearPyGui2.RefreshLayout()
 
     def create_config_file(self, configFilePath):
         self.mySystem.write_params_to_file(configFilePath,

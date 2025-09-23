@@ -26,6 +26,7 @@ class MenuWrapper:
         self.menu_bar_tag = f"{parent_tag}_menu_bar"
         self.visible = True
         self.menu_items = {}
+        self.separator_counter = 0  # Counter for unique separator tags
 
     def SetVisibility(self, visible: bool) -> None:
         """Set menu visibility."""
@@ -46,10 +47,19 @@ class MenuWrapper:
         """Add sub menu item."""
         if parent in self.menu_items:
             parent_tag = self.menu_items[parent]["tag"]
-            item_tag = f"{parent_tag}_{label}"
+            
+            # Handle separators with unique tags
+            if label == "---" or label.startswith("---"):
+                self.separator_counter += 1
+                item_tag = f"{parent_tag}_separator_{self.separator_counter}"
+                label_key = f"---_{self.separator_counter}"  # Unique key for storage
+            else:
+                item_tag = f"{parent_tag}_{label.replace(' ', '_')}"  # Replace spaces for better tags
+                label_key = label
+            
             if dpg.does_item_exist(parent_tag):
                 dpg.add_menu_item(label=label, tag=item_tag, parent=parent_tag, callback=callback)
-            self.menu_items[parent]["children"][label] = {"tag": item_tag, "callback": callback}
+            self.menu_items[parent]["children"][label_key] = {"tag": item_tag, "callback": callback}
             return item_tag
         return ""
 
@@ -369,9 +379,9 @@ class DataPlotterDearPyGui2:
         # Component visibility - Default: only menu and main panel visible
         self.show_menu = True
         self.show_status_bar = False
-        self.show_left_panel = False
+        self.show_left_panel = True
         self.show_right_panel = False
-        self.show_upper_panel = False
+        self.show_upper_panel = True
         self.show_bottom_panel = False
         self.show_main_panel = True
         
