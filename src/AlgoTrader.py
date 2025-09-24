@@ -1228,47 +1228,22 @@ class AlgoTrader:
                 self.SeviyeList = trader.Lists.SeviyeList
 
                 import numpy as np
-
-                # horizontal_levels = self.get_horizontal_levels()
-                #
-                # for level in horizontal_levels:
-                #     # Tüm seri NaN ile başla
-                #     level_data = np.full(len(self.SeviyeList), np.nan)
-                #
-                #     current_signal = None
-                #     active_level = None
-                #
-                #     for i, (yon, seviye) in enumerate(zip(self.YonList, self.SeviyeList)):
-                #         if yon in ['A', 'S']:
-                #             if current_signal != yon:
-                #                 current_signal = yon
-                #                 active_level = round(seviye, 2)
-                #
-                #             if active_level == round(level, 2):
-                #                 # Sinyal boyunca hep aynı seviye doldur
-                #                 level_data[i] = level
-                #             elif active_level is not None:
-                #                 # Aynı sinyal devam ediyorsa seviyeyi sürdür
-                #                 level_data[i] = active_level
-                #
-                #         elif yon == 'F':
-                #             # Sinyal kapandı → tekrar NaN
-                #             current_signal = None
-                #             active_level = None
-                #
-                #     # Burada AddYData aslında self.y_data içine atıyor
-                #     panel0.AddYData(level_data, f'Level {level:.2f}')
-                #     print(f"DEBUG: Added horizontal line for level {level:.2f}")
-
                 segments = self.get_signal_segments()
 
-                for seg in segments:
+                for i, seg in enumerate(segments):
                     level_data = [np.nan] * len(time_array)
-                    for i in range(seg["start"], seg["end"] + 1):
-                        level_data[i] = seg["level"]
+                    for j in range(seg["start"], seg["end"] + 1):
+                        level_data[j] = seg["level"]
 
-                    label = f"{seg['direction']} {seg['level']:.2f} [{seg['start']}→{seg['end']}]"
-                    panel0.AddYData(level_data, label)
+                    # Sadece ilk segment için label göster, diğerleri için None
+                    if i == 0:
+                        panel0.AddYData(level_data, "Signal Levels")
+                    else:
+                        # Diğer segmentler için label olmayan versiyonu dene
+                        try:
+                            panel0.AddYData(level_data)  # Label parametresi olmadan
+                        except:
+                            panel0.AddYData(level_data, f"_nolegend_{i}")  # Hidden label
 
                     print(
                         f"DEBUG: Added {seg['direction']} segment {seg['start']}→{seg['end']} at level {seg['level']:.2f}")
