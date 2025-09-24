@@ -361,7 +361,7 @@ class PanelWrapper:
         """Add Y-axis data with label to the panel."""
         if data is not None:
             self.y_data[label] = data
-            print(f"DEBUG: AddYData called - {label}: {len(data) if hasattr(data, '__len__') else 'scalar'} points")
+            # print(f"DEBUG: AddYData called - {label}: {len(data) if hasattr(data, '__len__') else 'scalar'} points")
 
     def SetTitle(self, title: str) -> None:
         """Set panel title."""
@@ -474,21 +474,7 @@ class MainPanel:
         """Add sub-panel to main panel."""
         panel_tag = f"{self.main_panel_tag}_panel_{index}"
 
-        if dpg.does_item_exist(self.main_panel_tag):
-            # Calculate height based on ratio
-            available_height = 600  # Default, should be calculated from parent
-
-            # Calculate total ratio - include current panel being added
-            total_ratio = sum(p.get("height_ratio", 1) for p in self.panels.values()) + height_ratio
-            if total_ratio == 0:  # Safety check to prevent division by zero
-                total_ratio = height_ratio
-
-            panel_height = int(available_height * height_ratio / total_ratio)
-            panel_height = max(panel_height, 150)  # Minimum height
-
-            dpg.add_child_window(tag=panel_tag, parent=self.main_panel_tag,
-                               height=panel_height, border=True, label=title)
-
+        # First add panel to data structure  
         panel_wrapper = PanelWrapper(panel_tag, self.main_panel_tag)
         self.panels[index] = {
             "wrapper": panel_wrapper,
@@ -501,10 +487,92 @@ class MainPanel:
             self.panel_order.append(index)
             self.panel_order.sort()
 
+        # Now create/resize all panels with equal heights
+        if dpg.does_item_exist(self.main_panel_tag):
+            self._resize_all_panels_equal()
+
         return panel_wrapper
+    
+    def _resize_all_panels_equal(self) -> None:
+        """Resize all panels to equal heights while preserving content."""
+        if not dpg.does_item_exist(self.main_panel_tag):
+            return
+            
+        if len(self.panels) == 0:
+            return
+            
+        # Calculate equal height for all panels
+        available_height = 2000  # Increased height for bigger panels
+        equal_height = int(available_height / len(self.panels))
+        equal_height = max(equal_height, 200)  # Increased minimum height
+        
+        # Store content for each panel before deletion
+        stored_contents = {}
+        for index in self.panel_order:
+            if index in self.panels:
+                panel_info = self.panels[index]
+                wrapper = panel_info["wrapper"]
+                if wrapper and hasattr(wrapper, 'content_items'):
+                    stored_contents[index] = wrapper.content_items.copy()
+        
+        # Delete and recreate all panels with equal sizes
+        for index in self.panel_order:
+            if index in self.panels:
+                panel_info = self.panels[index]
+                panel_tag = panel_info["tag"]
+                title = panel_info["title"]
+                
+                # Delete existing panel if it exists
+                if dpg.does_item_exist(panel_tag):
+                    dpg.delete_item(panel_tag)
+                
+                # Recreate with equal height
+                dpg.add_child_window(tag=panel_tag, parent=self.main_panel_tag,
+                                   height=equal_height, border=True, label=title)
+                
+                # Restore content items
+                wrapper = panel_info["wrapper"]
+                if index in stored_contents and wrapper:
+                    wrapper.content_items = stored_contents[index]
+                    self._recreate_panel_content(wrapper)
+                
+        print(f"DEBUG: Created {len(self.panels)} panels with equal height: {equal_height}px")
+
+    def _recreate_panel_content(self, wrapper: 'PanelWrapper') -> None:
+        """Recreate content items in a panel wrapper after resize."""
+        if not wrapper or not hasattr(wrapper, 'content_items'):
+            return
+            
+        for item in wrapper.content_items:
+            try:
+                item_type = item.get("type")
+                if item_type == "plot":
+                    # Recreate plot with stored data
+                    plot_type = item.get("plot_type")
+                    series_data = item.get("series_data")
+                    options = item.get("options", {})
+                    if plot_type and series_data:
+                        # Clear the old content_items entry to avoid duplication
+                        temp_items = wrapper.content_items
+                        wrapper.content_items = []
+                        wrapper.AddPlot(plot_type, series_data, options)
+                        # Restore other items
+                        wrapper.content_items.extend([i for i in temp_items if i != item])
+                elif item_type == "text":
+                    # Recreate text
+                    value = item.get("value", "")
+                    if not dpg.does_item_exist(item.get("tag", "")):
+                        wrapper.AddText(value)
+                elif item_type == "button":
+                    # Recreate button
+                    label = item.get("label", "Button")
+                    if not dpg.does_item_exist(item.get("tag", "")):
+                        wrapper.AddButton(label)
+            except Exception as e:
+                print(f"DEBUG: Error recreating content item {item_type}: {e}")
 
     def RemovePanel(self, index: int) -> None:
-        """Remove panel by index."""
+        """Remove panel by index and resize remaining panels equally."""
         if index in self.panels:
             panel_tag = self.panels[index]["tag"]
             if dpg.does_item_exist(panel_tag):
@@ -512,6 +580,9 @@ class MainPanel:
             del self.panels[index]
             if index in self.panel_order:
                 self.panel_order.remove(index)
+            
+            # Resize remaining panels to equal heights
+            self._resize_all_panels_equal()
 
     def ClearPanels(self) -> None:
         """Clear all panels."""
