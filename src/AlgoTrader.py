@@ -1230,23 +1230,19 @@ class AlgoTrader:
                 import numpy as np
                 segments = self.get_signal_segments()
 
-                for i, seg in enumerate(segments):
-                    level_data = [np.nan] * len(time_array)
+                # Tüm segmentleri tek bir combined data olarak birleştir
+                combined_data = [np.nan] * len(time_array)
+                
+                for seg in segments:
                     for j in range(seg["start"], seg["end"] + 1):
-                        level_data[j] = seg["level"]
+                        if j < len(combined_data):
+                            combined_data[j] = seg["level"]
+                    
+                    print(f"DEBUG: Added {seg['direction']} segment {seg['start']}→{seg['end']} at level {seg['level']:.2f}")
 
-                    # Sadece ilk segment için label göster, diğerleri için None
-                    if i == 0:
-                        panel0.AddYData(level_data, "Signal Levels")
-                    else:
-                        # Diğer segmentler için label olmayan versiyonu dene
-                        try:
-                            panel0.AddYData(level_data)  # Label parametresi olmadan
-                        except:
-                            panel0.AddYData(level_data, f"_nolegend_{i}")  # Hidden label
-
-                    print(
-                        f"DEBUG: Added {seg['direction']} segment {seg['start']}→{seg['end']} at level {seg['level']:.2f}")
+                # Tek bir legend entry ile tüm segmentleri çiz
+                if segments:  # En az bir segment varsa
+                    panel0.AddYData(combined_data, "Signal Levels")
 
                 panel0.AddYData(self.ExMov, 'ExMov')
                 panel0.AddYData(self.Most, 'Most')
