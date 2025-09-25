@@ -16,6 +16,7 @@ class DataPlotter2:
         self.ClearData()
 
     def ClearData(self):
+        self.trader_data = None
         self.full_df = None
         self.chart_df = None
         self.custom_series = {}
@@ -52,7 +53,7 @@ class DataPlotter2:
                 'Lot': get_list('Lot', 1.0, data_length),
             }
             self.full_df = pd.DataFrame(full_data)
-            print(f"DEBUG: Created Full DataFrame with {len(self.full_df)} rows")
+            # print(f"DEBUG: Created Full DataFrame with {len(self.full_df)} rows")
             
         except Exception as e:
             print(f"ERROR in _set_full_data: {e}")
@@ -88,7 +89,7 @@ class DataPlotter2:
             for col in ['open', 'high', 'low', 'close', 'volume']:
                 self.chart_df[col] = pd.to_numeric(self.chart_df[col], errors='coerce').fillna(0)
 
-            print(f"DEBUG: Created Chart DataFrame with {len(self.chart_df)} rows")
+            # print(f"DEBUG: Created Chart DataFrame with {len(self.chart_df)} rows")
 
         except Exception as e:
             print(f"ERROR in _set_chart_data: {e}")
@@ -120,13 +121,14 @@ class DataPlotter2:
         Set the chart title.
         """
         self.title = title
-        print(f"DEBUG: Chart title set to '{title}'")
+        # print(f"DEBUG: Chart title set to '{title}'")
 
     def GetTitle(self):
         """
         Get the current chart title.
         """
         return self.title
+
 
     def AddYData(self, series_id, data_list, series_name):
         """
@@ -145,7 +147,7 @@ class DataPlotter2:
 
         self.custom_series[series_name] = data_list
         # Do not automatically assign to panel - require explicit registration
-        print(f"DEBUG: Added custom series '{series_name}'. Use RegisterDataSeriesToPanel() to display it.")
+        # print(f"DEBUG: Added custom series '{series_name}'. Use RegisterDataSeriesToPanel() to display it.")
 
     def RegisterDataSeriesToPanel(self, series_name, panel_id):
         """
@@ -191,8 +193,8 @@ class DataPlotter2:
                 main_height = 0.4
                 sub_height = 0.6 / (num_panels - 1) if num_panels > 1 else 0.2
 
-            # Create main chart (Panel 0) - increase width to fill space
-            chart = Chart(inner_width=0.95, inner_height=main_height)
+            # Create main chart (Panel 0) - larger size
+            chart = Chart(width=1400, height=900, inner_width=1.0, inner_height=main_height)
             chart.legend(visible=True, font_size=16)
 
             # Add title if set
@@ -250,6 +252,8 @@ class DataPlotter2:
 
             # chart.grid(False, False)
             chart.set(self.chart_df)
+
+
             self.panels[0] = {'series': [], 'chart': chart}
 
             # Create subcharts for panels 1, 2, 3, etc.
@@ -257,7 +261,7 @@ class DataPlotter2:
             subcharts = {}
 
             for panel_id in sorted_panels:
-                subchart = chart.create_subchart(position='bottom', width=0.95, height=sub_height, sync=True)
+                subchart = chart.create_subchart(position='bottom', width=1.0, height=sub_height, sync=True)
                 subchart.legend(visible=True, font_size=16)
                 subcharts[panel_id] = subchart
                 if panel_id not in self.panels:
@@ -281,7 +285,7 @@ class DataPlotter2:
                         series_name: data
                     })
                     line.set(line_df)
-                    print(f"DEBUG: Added series '{series_name}' to main panel (Panel 0)")
+                    # print(f"DEBUG: Added series '{series_name}' to main panel (Panel 0)")
 
                 elif panel_id in subcharts:
                     # Add to subchart
@@ -292,7 +296,7 @@ class DataPlotter2:
                         series_name: data
                     })
                     line.set(line_df)
-                    print(f"DEBUG: Added series '{series_name}' to Panel {panel_id}")
+                    # print(f"DEBUG: Added series '{series_name}' to Panel {panel_id}")
                 else:
                     print(f"WARNING: Panel {panel_id} not found for series '{series_name}'")
 
@@ -303,7 +307,7 @@ class DataPlotter2:
                 except:
                     pass
 
-            print(f"DEBUG: Displaying chart '{self.title}' with {num_panels} panels...")
+            # print(f"DEBUG: Displaying chart '{self.title}' with {num_panels} panels...")
             chart.show(block=True)
 
         except Exception as e:
