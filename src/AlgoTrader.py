@@ -11,6 +11,7 @@ from src.SqliteDataManager import SqliteDataManager
 from src.SystemWrapper import SystemWrapper
 from src.Utils import CUtils
 from src.IndicatorManager import CIndicatorManager
+import matplotlib.pyplot as plt
 
 class AlgoTrader:
     def __init__(self):
@@ -2079,7 +2080,7 @@ class AlgoTrader:
         self.indicatorManager = self.mySystem.myIndicators
 
         # self.Most, self.ExMov = self.calculate_most(period=21, percent=1.0)
-        self.Most, self.ExMov = self.indicatorManager.calculate_most(period=21, percent=1.0)
+        self.Most, self.ExMov = self.indicatorManager.calculate_most(period=21, percent=0.05)
 
         self.Ma5 = self.indicatorManager.calculate_ema(self.Close, 5)
         self.Ma8 = self.indicatorManager.calculate_ema(self.Close, 8)
@@ -2509,12 +2510,12 @@ class AlgoTrader:
         print("Plotting market data...")
         self.active_trader = self.mySystem.get_trader(0)
         # self.plotData()
-        self.plotData2(self.active_trader)
+        # self.plotData2(self.active_trader)
         # self.plotData3(self.active_trader)  # matplotlib version - DISABLED
         
         # Use Dear PyGui version instead
         # self.plotData3_DearPyGui(self.active_trader)
-        # self.plotData4_DearPyGui(self.active_trader)
+        self.plotData4_DearPyGui(self.active_trader)
 
         # --------------------------------------------------------------
         # Show timing reports
@@ -2791,20 +2792,58 @@ class AlgoTrader:
         for i in range(len(trader.Lists.GetiriKz)):
             farkList2[i] = trader.Lists.GetiriKz[i] - trader.Lists.GetiriKzNet[i]
 
+        # # Listenin sonunda
+        # plt.figure(figsize=(12, 6))
+        # plt.plot(farkList)
+        # plt.title('farkList Debug Plot')
+        # plt.grid(True)
+        # plt.show()
+        #
+        # plt.figure(figsize=(12, 8))
+        # plt.subplot(2, 1, 1)
+        # plt.plot(farkList)
+        # plt.title('farkList')
+        # plt.grid(True)
+        #
+        # plt.subplot(2, 1, 2)
+        # plt.plot(farkList2)
+        # plt.title('farkList2')
+        # plt.grid(True)
+        #
+        # plt.tight_layout()
+        # plt.show()
+
         print(f"farkList: {farkList[-1] if farkList else 'Empty'}")
         print(f"farkList2: {farkList2[-1] if farkList2 else 'Empty'}")
 
         print("=== plotData başlıyor ===")
-        self.dataPlotter2.ClearData()
+        self.dataPlotter2.Clear()
 
         self.dataPlotter2.SetData(trader)
 
-        self.dataPlotter2.AddData(0, balance, "balance")
-        self.dataPlotter2.AddData(1, getiriFiyatList, "getiriFiyatList")
-        self.dataPlotter2.AddData(2, getiriKz, "getiriKz")
-        self.dataPlotter2.AddData(3, getiriKzNet, "getiriKzNet")
-        self.dataPlotter2.AddData(4, karZararPuanList, "karZararPuanList")
-        self.dataPlotter2.AddData(5, karZararFiyatList, "karZararFiyatList")
+        self.dataPlotter2.AddYData(0, self.Ma5, "Ma5")
+        self.dataPlotter2.AddYData(1, self.Ma8, "Ma8")
+        self.dataPlotter2.AddYData(2, self.Ma13, "Ma13")
+        self.dataPlotter2.AddYData(3, self.Ma21, "Ma21")
+        self.dataPlotter2.AddYData(4, self.Ma50, "Ma50")
+        self.dataPlotter2.AddYData(5, self.Ma100, "Ma100")
+        self.dataPlotter2.AddYData(6, self.Ma200, "Ma200")
+        self.dataPlotter2.AddYData(7, balance, "balance")
+        self.dataPlotter2.AddYData(8, getiriFiyatList, "getiriFiyatList")
+        self.dataPlotter2.AddYData(9, farkList, "farkList")
+        self.dataPlotter2.AddYData(10, getiriKz, "getiriKz")
+        self.dataPlotter2.AddYData(11, getiriKzNet, "getiriKzNet")
+        self.dataPlotter2.AddYData(12, farkList2, "farkList2")
+        self.dataPlotter2.AddYData(13, karZararPuanList, "karZararPuanList")
+        self.dataPlotter2.AddYData(14, karZararFiyatList, "karZararFiyatList")
+        self.dataPlotter2.AddYData(15, self.ExMov, "ExMov")
+        self.dataPlotter2.AddYData(16, self.Most, "Most")
+
+        self.dataPlotter2.RegisterDataSeriesToPanel("ExMov", 0)
+        self.dataPlotter2.RegisterDataSeriesToPanel("Most", 0)
+
+        self.dataPlotter2.RegisterDataSeriesToPanel("karZararFiyatList", 1)
+        self.dataPlotter2.RegisterDataSeriesToPanel("getiriFiyatList", 2)
 
         self.dataPlotter2.Show()
         print("=== plotData bitti ===")
