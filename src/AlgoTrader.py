@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 from src.DataManager import DataManager
 from src.DataPlotter import DataPlotter
+from src.DataPlotter2 import DataPlotter2
 from src.DataPlotterDearPyGui import DataPlotterDearPyGui
 from src.DataPlotterDearPyGui2 import DataPlotterDearPyGui2
 from src.SqliteDataManager import SqliteDataManager
@@ -18,6 +19,7 @@ class AlgoTrader:
         self.dataPlotter = DataPlotter()
         self.dataPlotterDearPyGui = DataPlotterDearPyGui()
         self.dataPlotterDearPyGui2 = DataPlotterDearPyGui2()
+        self.dataPlotter2 = DataPlotter2()
         self.mySystem = SystemWrapper()
         self.myUtils = CUtils()
         self.indicatorManager = None
@@ -2218,7 +2220,8 @@ class AlgoTrader:
         
         # Use Dear PyGui version instead
         # self.plotData3_DearPyGui(self.active_trader)
-        self.plotData4_DearPyGui(self.active_trader)
+        # self.plotData4_DearPyGui(self.active_trader)
+        self.plotDataFinal(self.active_trader)
 
         # --------------------------------------------------------------
         # Show timing reports
@@ -2762,6 +2765,52 @@ class AlgoTrader:
 
         print(f"DEBUG: {len(segments)} segments found")
         return segments
+
+    def plotDataFinal(self, trader):
+
+        # Time array boşsa, basit index array oluştur
+        if len(self.Time) == 0:
+            print("=== WARNING: Time array boş! Index array oluşturuluyor ===")
+            time_array = list(range(len(self.Close)))
+        else:
+            time_array = self.Time
+
+        balance = trader.Lists.BakiyeFiyatList
+        getiriFiyatList = trader.Lists.GetiriFiyatList
+        getiriKz = trader.Lists.GetiriKz
+        getiriKzNet = trader.Lists.GetiriKzNet
+        karZararPuanList = trader.Lists.KarZararPuanList
+        karZararFiyatList = trader.Lists.KarZararFiyatList
+
+        # Calculate additional data
+        farkList = [0.0] * len(trader.Lists.BakiyeFiyatList)
+        for i in range(len(trader.Lists.BakiyeFiyatList)):
+            farkList[i] = trader.Lists.BakiyeFiyatList[i] - trader.Lists.GetiriFiyatList[i]
+
+        farkList2 = [0.0] * len(trader.Lists.GetiriKz)
+        for i in range(len(trader.Lists.GetiriKz)):
+            farkList2[i] = trader.Lists.GetiriKz[i] - trader.Lists.GetiriKzNet[i]
+
+        print(f"farkList: {farkList[-1] if farkList else 'Empty'}")
+        print(f"farkList2: {farkList2[-1] if farkList2 else 'Empty'}")
+
+        print("=== plotData başlıyor ===")
+        self.dataPlotter2.ClearData()
+
+        self.dataPlotter2.SetData(trader)
+
+        self.dataPlotter2.AddData(0, balance, "balance")
+        self.dataPlotter2.AddData(1, getiriFiyatList, "getiriFiyatList")
+        self.dataPlotter2.AddData(2, getiriKz, "getiriKz")
+        self.dataPlotter2.AddData(3, getiriKzNet, "getiriKzNet")
+        self.dataPlotter2.AddData(4, karZararPuanList, "karZararPuanList")
+        self.dataPlotter2.AddData(5, karZararFiyatList, "karZararFiyatList")
+
+        self.dataPlotter2.Show()
+        print("=== plotData bitti ===")
+
+
+
 
 if __name__ == "__main__":
     print("Hello, Gemini!")

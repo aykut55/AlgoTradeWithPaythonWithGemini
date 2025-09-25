@@ -392,7 +392,7 @@ class PanelWrapper:
         self._create_plots()
 
     def _create_plots(self) -> None:
-        """Create actual plots from the collected data."""
+        """Create actual plots from the collected data with control buttons."""
         try:
             # Prepare combined data for single plot
             combined_data = {}
@@ -416,13 +416,20 @@ class PanelWrapper:
                     if data is not None and hasattr(data, '__len__') and len(data) > 0:
                         combined_data[label] = list(data)
 
-            # Create single plot with both OHLC and line data
-            if combined_data:
-                self.AddPlot(
-                    plot_type="combined",  # New plot type for mixed data
-                    series_data=combined_data,
-                    options={"title": f"{self.title} - Trading Chart", "height": 400}
-                )
+            # Create layout with buttons and plot in separate inner panels
+            if combined_data and dpg.does_item_exist(self.panel_tag):
+                # Create horizontal group for left and right panels
+                horizontal_group = dpg.add_group(horizontal=True, parent=self.panel_tag)
+                
+                # Left inner panel for control buttons
+                left_panel_tag = f"{self.panel_tag}_left_inner"
+                with dpg.child_window(tag=left_panel_tag, parent=horizontal_group, width=120, height=-1, horizontal_scrollbar=False, vertical_scrollbar=False):
+                    self._create_control_buttons(left_panel_tag)
+                
+                # Right inner panel for plot
+                right_panel_tag = f"{self.panel_tag}_right_inner"
+                with dpg.child_window(tag=right_panel_tag, parent=horizontal_group, width=-1, height=-1, horizontal_scrollbar=False, vertical_scrollbar=False):
+                    self._create_plot_with_data(combined_data, right_panel_tag)
 
             print(f"DEBUG: _create_plots completed for panel: {self.title}")
             
@@ -430,6 +437,93 @@ class PanelWrapper:
             print(f"DEBUG: Error in _create_plots: {e}")
             import traceback
             traceback.print_exc()
+    
+    def _create_control_buttons(self, parent_panel) -> None:
+        """Create control buttons for zoom and pan operations."""
+        button_width = 80
+        
+        # Reset button
+        dpg.add_button(label="Reset", width=button_width, parent=parent_panel,
+                      callback=self._on_reset_chart,
+                      user_data={"panel_id": id(self)})
+        
+        dpg.add_separator(parent=parent_panel)
+        
+        # X-axis controls
+        dpg.add_text("X-Axis:", parent=parent_panel)
+        dpg.add_button(label="X-Zoom+", width=button_width, parent=parent_panel,
+                      callback=self._on_x_zoom_plus,
+                      user_data={"panel_id": id(self)})
+        dpg.add_button(label="X-Zoom-", width=button_width, parent=parent_panel,
+                      callback=self._on_x_zoom_minus,
+                      user_data={"panel_id": id(self)})
+        
+        dpg.add_separator(parent=parent_panel)
+        
+        # Y-axis controls
+        dpg.add_text("Y-Axis:", parent=parent_panel)
+        dpg.add_button(label="Y-Zoom+", width=button_width, parent=parent_panel,
+                      callback=self._on_y_zoom_plus,
+                      user_data={"panel_id": id(self)})
+        dpg.add_button(label="Y-Zoom-", width=button_width, parent=parent_panel,
+                      callback=self._on_y_zoom_minus,
+                      user_data={"panel_id": id(self)})
+        
+        dpg.add_separator(parent=parent_panel)
+        
+        # Pan controls
+        dpg.add_text("Pan:", parent=parent_panel)
+        dpg.add_button(label="panLeft", width=button_width, parent=parent_panel,
+                      callback=self._on_pan_left,
+                      user_data={"panel_id": id(self)})
+        dpg.add_button(label="panRight", width=button_width, parent=parent_panel,
+                      callback=self._on_pan_right,
+                      user_data={"panel_id": id(self)})
+        
+        dpg.add_separator(parent=parent_panel)
+        
+        # Sync buttons
+        dpg.add_text("Sync:", parent=parent_panel)
+        dpg.add_button(label="ButtonZoom", width=button_width, parent=parent_panel,
+                      callback=self._on_button_sync_zoom,
+                      user_data={"panel_id": id(self)})
+        dpg.add_button(label="ButtonPan", width=button_width, parent=parent_panel,
+                      callback=self._on_button_sync_pan,
+                      user_data={"panel_id": id(self)})
+
+    def _create_plot_with_data(self, combined_data: Dict[str, Any], right_panel_tag) -> None:
+        """Create the actual plot with the provided data."""
+        plot_tag = f"{self.panel_tag}_plot_{len(self.content_items)}"
+        options = {"title": f"{self.title} - Trading Chart", "height": 400}
+        
+        if dpg.does_item_exist(self.panel_tag):
+            # Use full width and height of the right panel (-1 means use all available space)
+            width = -1  # Use all available width in the right panel
+            height = -1  # Use all available height in the right panel
+
+            dpg.add_plot(tag=plot_tag, parent=right_panel_tag, height=height, width=width,
+                        label=options.get("title", "Plot"), no_title=True,
+                        callback=self._on_plot_interaction)
+            
+            # Add plot legend to enable click interaction
+            dpg.add_plot_legend(parent=plot_tag)
+
+            x_axis_tag = f"{plot_tag}_x_axis"
+            y_axis_tag = f"{plot_tag}_y_axis"
+
+            dpg.add_plot_axis(dpg.mvXAxis, tag=x_axis_tag, parent=plot_tag, label="Time")
+            dpg.add_plot_axis(dpg.mvYAxis, tag=y_axis_tag, parent=plot_tag, label="Value")
+
+            # Store axis info in plot for callback access
+            self._store_plot_axis_info(plot_tag, x_axis_tag, y_axis_tag)
+
+            # Register axes with MainPanel for synchronization
+            self._register_axes_with_main_panel(x_axis_tag, y_axis_tag)
+
+            self._add_series_to_plot("combined", combined_data, x_axis_tag, y_axis_tag, options)
+
+        self.content_items.append({"type": "plot", "tag": plot_tag, "plot_type": "combined",
+                                 "series_data": combined_data, "options": options})
 
     def _register_axes_with_main_panel(self, x_axis_tag: str, y_axis_tag: str) -> None:
         """Register plot axes with the MainPanel for synchronization."""
@@ -505,6 +599,199 @@ class PanelWrapper:
         """Set reference to MainPanel for synchronization."""
         self._main_panel_ref = main_panel
         print("DEBUG: MainPanel reference set for synchronization")
+
+    # Button callback functions
+    def _on_button_sync_zoom(self, sender, app_data, user_data) -> None:
+        """ButtonZoom: Apply this panel's zoom level to all other charts."""
+        try:
+            print("ButtonZoom pressed - syncing zoom to other charts")
+            
+            # Get current panel's plot axis info
+            current_plot_axis = self._get_current_plot_axis()
+            if current_plot_axis and self._main_panel_ref:
+                x_axis_tag = current_plot_axis['x_axis']
+                y_axis_tag = current_plot_axis['y_axis']
+                
+                # Get current zoom limits
+                if dpg.does_item_exist(x_axis_tag):
+                    x_min, x_max = dpg.get_axis_limits(x_axis_tag)
+                    
+                    # Apply to all other charts via MainPanel
+                    main_panel = self._main_panel_ref
+                    main_panel.CollectAllPlotAxes()
+                    
+                    # Apply current zoom to all other axes
+                    for other_x_axis in main_panel.plot_axes["x_axes"]:
+                        if other_x_axis != x_axis_tag and dpg.does_item_exist(other_x_axis):
+                            dpg.set_axis_limits(other_x_axis, x_min, x_max)
+                    
+                    print(f"Applied zoom level ({x_min:.2f}, {x_max:.2f}) to all charts")
+                    
+        except Exception as e:
+            print(f"Error in ButtonZoom: {e}")
+
+    def _on_button_sync_pan(self, sender, app_data, user_data) -> None:
+        """ButtonPan: Apply this panel's pan level to all other charts."""
+        try:
+            print("ButtonPan pressed - syncing pan to other charts")
+            
+            # Get current panel's plot axis info
+            current_plot_axis = self._get_current_plot_axis()
+            if current_plot_axis and self._main_panel_ref:
+                x_axis_tag = current_plot_axis['x_axis']
+                y_axis_tag = current_plot_axis['y_axis']
+                
+                # Get current pan limits
+                if dpg.does_item_exist(x_axis_tag):
+                    x_min, x_max = dpg.get_axis_limits(x_axis_tag)
+                    
+                    # Apply to all other charts via MainPanel
+                    main_panel = self._main_panel_ref
+                    main_panel.CollectAllPlotAxes()
+                    
+                    # Apply current pan to all other axes
+                    for other_x_axis in main_panel.plot_axes["x_axes"]:
+                        if other_x_axis != x_axis_tag and dpg.does_item_exist(other_x_axis):
+                            dpg.set_axis_limits(other_x_axis, x_min, x_max)
+                    
+                    print(f"Applied pan level ({x_min:.2f}, {x_max:.2f}) to all charts")
+                    
+        except Exception as e:
+            print(f"Error in ButtonPan: {e}")
+
+    def _on_x_zoom_plus(self, sender, app_data, user_data) -> None:
+        """X Zoom+: Zoom in on X-axis of this chart."""
+        try:
+            print("X Zoom+ pressed")
+            current_plot_axis = self._get_current_plot_axis()
+            if current_plot_axis:
+                x_axis_tag = current_plot_axis['x_axis']
+                if dpg.does_item_exist(x_axis_tag):
+                    x_min, x_max = dpg.get_axis_limits(x_axis_tag)
+                    x_range = x_max - x_min
+                    new_range = x_range / 1.5  # Zoom in
+                    center = (x_min + x_max) / 2
+                    new_x_min = center - new_range / 2
+                    new_x_max = center + new_range / 2
+                    dpg.set_axis_limits(x_axis_tag, new_x_min, new_x_max)
+                    print(f"X-axis zoomed in: ({new_x_min:.2f}, {new_x_max:.2f})")
+        except Exception as e:
+            print(f"Error in X Zoom+: {e}")
+
+    def _on_x_zoom_minus(self, sender, app_data, user_data) -> None:
+        """X Zoom-: Zoom out on X-axis of this chart."""
+        try:
+            print("X Zoom- pressed")
+            current_plot_axis = self._get_current_plot_axis()
+            if current_plot_axis:
+                x_axis_tag = current_plot_axis['x_axis']
+                if dpg.does_item_exist(x_axis_tag):
+                    x_min, x_max = dpg.get_axis_limits(x_axis_tag)
+                    x_range = x_max - x_min
+                    new_range = x_range * 1.5  # Zoom out
+                    center = (x_min + x_max) / 2
+                    new_x_min = center - new_range / 2
+                    new_x_max = center + new_range / 2
+                    dpg.set_axis_limits(x_axis_tag, new_x_min, new_x_max)
+                    print(f"X-axis zoomed out: ({new_x_min:.2f}, {new_x_max:.2f})")
+        except Exception as e:
+            print(f"Error in X Zoom-: {e}")
+
+    def _on_y_zoom_plus(self, sender, app_data, user_data) -> None:
+        """Y Zoom+: Zoom in on Y-axis of this chart."""
+        try:
+            print("Y Zoom+ pressed")
+            current_plot_axis = self._get_current_plot_axis()
+            if current_plot_axis:
+                y_axis_tag = current_plot_axis['y_axis']
+                if dpg.does_item_exist(y_axis_tag):
+                    y_min, y_max = dpg.get_axis_limits(y_axis_tag)
+                    y_range = y_max - y_min
+                    new_range = y_range / 1.5  # Zoom in
+                    center = (y_min + y_max) / 2
+                    new_y_min = center - new_range / 2
+                    new_y_max = center + new_range / 2
+                    dpg.set_axis_limits(y_axis_tag, new_y_min, new_y_max)
+                    print(f"Y-axis zoomed in: ({new_y_min:.2f}, {new_y_max:.2f})")
+        except Exception as e:
+            print(f"Error in Y Zoom+: {e}")
+
+    def _on_y_zoom_minus(self, sender, app_data, user_data) -> None:
+        """Y Zoom-: Zoom out on Y-axis of this chart."""
+        try:
+            print("Y Zoom- pressed")
+            current_plot_axis = self._get_current_plot_axis()
+            if current_plot_axis:
+                y_axis_tag = current_plot_axis['y_axis']
+                if dpg.does_item_exist(y_axis_tag):
+                    y_min, y_max = dpg.get_axis_limits(y_axis_tag)
+                    y_range = y_max - y_min
+                    new_range = y_range * 1.5  # Zoom out
+                    center = (y_min + y_max) / 2
+                    new_y_min = center - new_range / 2
+                    new_y_max = center + new_range / 2
+                    dpg.set_axis_limits(y_axis_tag, new_y_min, new_y_max)
+                    print(f"Y-axis zoomed out: ({new_y_min:.2f}, {new_y_max:.2f})")
+        except Exception as e:
+            print(f"Error in Y Zoom-: {e}")
+
+    def _on_reset_chart(self, sender, app_data, user_data) -> None:
+        """Reset: Reset zoom and pan on this chart."""
+        try:
+            print("Reset pressed - resetting chart zoom and pan")
+            current_plot_axis = self._get_current_plot_axis()
+            if current_plot_axis:
+                x_axis_tag = current_plot_axis['x_axis']
+                y_axis_tag = current_plot_axis['y_axis']
+                
+                if dpg.does_item_exist(x_axis_tag):
+                    dpg.fit_axis_data(x_axis_tag)
+                if dpg.does_item_exist(y_axis_tag):
+                    dpg.fit_axis_data(y_axis_tag)
+                    
+                print("Chart reset completed")
+        except Exception as e:
+            print(f"Error in Reset: {e}")
+
+    def _on_pan_left(self, sender, app_data, user_data) -> None:
+        """panLeft: Pan chart to the left."""
+        try:
+            print("Pan Left pressed")
+            current_plot_axis = self._get_current_plot_axis()
+            if current_plot_axis:
+                x_axis_tag = current_plot_axis['x_axis']
+                if dpg.does_item_exist(x_axis_tag):
+                    x_min, x_max = dpg.get_axis_limits(x_axis_tag)
+                    x_range = x_max - x_min
+                    pan_amount = x_range * 0.1  # Pan 10% of current range
+                    dpg.set_axis_limits(x_axis_tag, x_min - pan_amount, x_max - pan_amount)
+                    print(f"Panned left by {pan_amount:.2f}")
+        except Exception as e:
+            print(f"Error in Pan Left: {e}")
+
+    def _on_pan_right(self, sender, app_data, user_data) -> None:
+        """panRight: Pan chart to the right."""
+        try:
+            print("Pan Right pressed")
+            current_plot_axis = self._get_current_plot_axis()
+            if current_plot_axis:
+                x_axis_tag = current_plot_axis['x_axis']
+                if dpg.does_item_exist(x_axis_tag):
+                    x_min, x_max = dpg.get_axis_limits(x_axis_tag)
+                    x_range = x_max - x_min
+                    pan_amount = x_range * 0.1  # Pan 10% of current range
+                    dpg.set_axis_limits(x_axis_tag, x_min + pan_amount, x_max + pan_amount)
+                    print(f"Panned right by {pan_amount:.2f}")
+        except Exception as e:
+            print(f"Error in Pan Right: {e}")
+
+    def _get_current_plot_axis(self):
+        """Get the current plot's axis information."""
+        if hasattr(self, '_plot_axis_info') and self._plot_axis_info:
+            # Return the first (and likely only) plot's axis info
+            for plot_tag, axis_info in self._plot_axis_info.items():
+                return axis_info
+        return None
 
 
 class StatusBarWrapper:
@@ -634,6 +921,23 @@ class MainPanel:
         if not wrapper or not hasattr(wrapper, 'content_items'):
             return
             
+        # Check if this wrapper has any plot content that needs buttons
+        has_plot_content = False
+        for item in wrapper.content_items:
+            if item.get("type") == "plot":
+                has_plot_content = True
+                break
+        
+        # If wrapper has any plot and (trader_data or y_data), recreate using PlotSignals() which includes buttons
+        if has_plot_content and (wrapper.trader_data or wrapper.y_data):
+            try:
+                print(f"DEBUG: Recreating panel content with buttons for {wrapper.title}")
+                wrapper.PlotSignals()  # This will recreate the plot with buttons
+                return
+            except Exception as e:
+                print(f"DEBUG: Error recreating with PlotSignals: {e}")
+                
+        # Fallback to individual item recreation
         for item in wrapper.content_items:
             try:
                 item_type = item.get("type")
