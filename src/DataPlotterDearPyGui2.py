@@ -150,7 +150,8 @@ class PanelWrapper:
                 height = options.get("height", 300)
 
             dpg.add_plot(tag=plot_tag, parent=self.panel_tag, height=height, width=width,
-                        label=options.get("title", "Plot"), no_title=True)
+                        label=options.get("title", "Plot"), no_title=True,
+                        callback=self._on_plot_interaction)
             
             # Add plot legend to enable click interaction
             dpg.add_plot_legend(parent=plot_tag)
@@ -160,6 +161,12 @@ class PanelWrapper:
 
             dpg.add_plot_axis(dpg.mvXAxis, tag=x_axis_tag, parent=plot_tag, label="Time")
             dpg.add_plot_axis(dpg.mvYAxis, tag=y_axis_tag, parent=plot_tag, label="Value")
+
+            # Store axis info in plot for callback access
+            self._store_plot_axis_info(plot_tag, x_axis_tag, y_axis_tag)
+
+            # Register axes with MainPanel for synchronization
+            self._register_axes_with_main_panel(x_axis_tag, y_axis_tag)
 
             self._add_series_to_plot(plot_type, series_data, x_axis_tag, y_axis_tag, options)
 
@@ -424,6 +431,81 @@ class PanelWrapper:
             import traceback
             traceback.print_exc()
 
+    def _register_axes_with_main_panel(self, x_axis_tag: str, y_axis_tag: str) -> None:
+        """Register plot axes with the MainPanel for synchronization."""
+        try:
+            # Find the MainPanel by looking at parent hierarchy
+            # This is a bit of a hack, but necessary to link PanelWrapper to MainPanel
+            main_panel_tag = self.parent_tag  # This should be the main_panel_tag from MainPanel
+            
+            # We need access to the main DataPlotterDearPyGui2 instance
+            # For now, we'll use a simple approach - store axes info locally and 
+            # let MainPanel discover them when needed
+            if not hasattr(self, '_plot_axes'):
+                self._plot_axes = {"x_axes": [], "y_axes": []}
+                
+            if x_axis_tag not in self._plot_axes["x_axes"]:
+                self._plot_axes["x_axes"].append(x_axis_tag)
+            if y_axis_tag not in self._plot_axes["y_axes"]:
+                self._plot_axes["y_axes"].append(y_axis_tag)
+                
+            print(f"DEBUG: PanelWrapper registered axes - X: {x_axis_tag}, Y: {y_axis_tag}")
+            
+            # Try to find and register with MainPanel if possible
+            # This is a temporary solution - in real usage, you would pass the MainPanel reference
+            
+        except Exception as e:
+            print(f"DEBUG: Error registering axes: {e}")
+
+    def _store_plot_axis_info(self, plot_tag: str, x_axis_tag: str, y_axis_tag: str) -> None:
+        """Store plot axis information for callback access."""
+        if not hasattr(self, '_plot_axis_info'):
+            self._plot_axis_info = {}
+        self._plot_axis_info[plot_tag] = {
+            'x_axis': x_axis_tag,
+            'y_axis': y_axis_tag
+        }
+        print(f"DEBUG: Stored axis info for plot {plot_tag}")
+
+    def _on_plot_interaction(self, sender, app_data, user_data) -> None:
+        """Handle plot interaction events (mouse zoom/pan)."""
+        try:
+            plot_tag = sender
+            if hasattr(self, '_plot_axis_info') and plot_tag in self._plot_axis_info:
+                axis_info = self._plot_axis_info[plot_tag]
+                x_axis_tag = axis_info['x_axis']
+                y_axis_tag = axis_info['y_axis']
+                
+                print(f"DEBUG: Plot interaction detected on {plot_tag}")
+                print(f"DEBUG: Axes - X: {x_axis_tag}, Y: {y_axis_tag}")
+                
+                # Try to find and trigger MainPanel synchronization
+                # This is a simplified approach - in real usage you'd need better coupling
+                self._trigger_sync_from_main_panel(x_axis_tag, y_axis_tag)
+                
+        except Exception as e:
+            print(f"DEBUG: Error in plot interaction callback: {e}")
+
+    def _trigger_sync_from_main_panel(self, source_x_axis: str, source_y_axis: str) -> None:
+        """Try to trigger synchronization from MainPanel."""
+        try:
+            # This is a workaround - we need to find a way to access MainPanel
+            # For now, we'll use a global approach or signal system
+            if hasattr(self, '_main_panel_ref'):
+                main_panel = self._main_panel_ref
+                if main_panel and hasattr(main_panel, 'SyncAxesLimits'):
+                    main_panel.SyncAxesLimits(source_x_axis, source_y_axis)
+                    print(f"DEBUG: Triggered sync from MainPanel")
+            else:
+                print("DEBUG: No MainPanel reference found for synchronization")
+        except Exception as e:
+            print(f"DEBUG: Error triggering sync: {e}")
+
+    def SetMainPanelRef(self, main_panel) -> None:
+        """Set reference to MainPanel for synchronization."""
+        self._main_panel_ref = main_panel
+        print("DEBUG: MainPanel reference set for synchronization")
+
 
 class StatusBarWrapper:
     """Status bar management wrapper."""
@@ -469,6 +551,11 @@ class MainPanel:
         self.panels = {}
         self.panel_order = []
         self.visible = True
+        
+        # Synchronized zoom and pan system
+        self.sync_enabled = True
+        self.plot_axes = {"x_axes": [], "y_axes": []}
+        self._updating_axes = False  # Prevent recursive updates
 
     def AddPanel(self, index: int, title: str, height_ratio: float = 1.0) -> PanelWrapper:
         """Add sub-panel to main panel."""
@@ -476,6 +563,10 @@ class MainPanel:
 
         # First add panel to data structure  
         panel_wrapper = PanelWrapper(panel_tag, self.main_panel_tag)
+        
+        # Set MainPanel reference in wrapper for synchronization
+        panel_wrapper.SetMainPanelRef(self)
+        
         self.panels[index] = {
             "wrapper": panel_wrapper,
             "title": title,
@@ -619,6 +710,146 @@ class MainPanel:
         if dpg.does_item_exist(self.main_panel_tag):
             dpg.add_text(value, tag=text_tag, parent=self.main_panel_tag, **kwargs)
         return text_tag
+
+    def RegisterPlotAxes(self, x_axis_tag: str, y_axis_tag: str) -> None:
+        """Register plot axes for synchronized operations."""
+        if x_axis_tag not in self.plot_axes["x_axes"]:
+            self.plot_axes["x_axes"].append(x_axis_tag)
+        if y_axis_tag not in self.plot_axes["y_axes"]:
+            self.plot_axes["y_axes"].append(y_axis_tag)
+        print(f"DEBUG: Registered axes - X: {x_axis_tag}, Y: {y_axis_tag}")
+
+    def SetSyncZoom(self, enabled: bool) -> None:
+        """Enable or disable synchronized zoom."""
+        self.sync_enabled = enabled
+        print(f"DEBUG: Sync zoom {'enabled' if enabled else 'disabled'}")
+
+    def SyncAxesLimits(self, source_x_axis: str, source_y_axis: str = None) -> None:
+        """Synchronize all axes limits to match source axis."""
+        if not self.sync_enabled or self._updating_axes:
+            return
+            
+        self._updating_axes = True
+        try:
+            # Get source axis limits
+            if dpg.does_item_exist(source_x_axis):
+                x_min, x_max = dpg.get_axis_limits(source_x_axis)
+                
+                # Apply to all other X axes
+                for x_axis in self.plot_axes["x_axes"]:
+                    if x_axis != source_x_axis and dpg.does_item_exist(x_axis):
+                        dpg.set_axis_limits(x_axis, x_min, x_max)
+                        
+            if source_y_axis and dpg.does_item_exist(source_y_axis):
+                y_min, y_max = dpg.get_axis_limits(source_y_axis)
+                
+                # Apply to all other Y axes
+                for y_axis in self.plot_axes["y_axes"]:
+                    if y_axis != source_y_axis and dpg.does_item_exist(y_axis):
+                        dpg.set_axis_limits(y_axis, y_min, y_max)
+                        
+            print(f"DEBUG: Synchronized axes limits from {source_x_axis}")
+        finally:
+            self._updating_axes = False
+
+    def ZoomAll(self, zoom_factor: float = 1.5, center_x: float = None) -> None:
+        """Zoom all registered axes synchronously."""
+        if not self.sync_enabled:
+            return
+            
+        for x_axis in self.plot_axes["x_axes"]:
+            if dpg.does_item_exist(x_axis):
+                x_min, x_max = dpg.get_axis_limits(x_axis)
+                x_range = x_max - x_min
+                new_range = x_range / zoom_factor
+                
+                if center_x is None:
+                    center_x = (x_min + x_max) / 2
+                    
+                new_x_min = center_x - new_range / 2
+                new_x_max = center_x + new_range / 2
+                dpg.set_axis_limits(x_axis, new_x_min, new_x_max)
+                
+        print(f"DEBUG: Zoom applied to all axes with factor: {zoom_factor}")
+
+    def ZoomOut(self, zoom_factor: float = 0.7) -> None:
+        """Zoom out on all registered axes."""
+        self.ZoomAll(zoom_factor)
+
+    def PanAll(self, dx: float, dy: float = 0) -> None:
+        """Pan all registered axes synchronously."""
+        if not self.sync_enabled:
+            return
+            
+        for x_axis in self.plot_axes["x_axes"]:
+            if dpg.does_item_exist(x_axis):
+                x_min, x_max = dpg.get_axis_limits(x_axis)
+                dpg.set_axis_limits(x_axis, x_min + dx, x_max + dx)
+                
+        if dy != 0:
+            for y_axis in self.plot_axes["y_axes"]:
+                if dpg.does_item_exist(y_axis):
+                    y_min, y_max = dpg.get_axis_limits(y_axis)
+                    dpg.set_axis_limits(y_axis, y_min + dy, y_max + dy)
+                    
+        print(f"DEBUG: Pan applied to all axes - dx: {dx}, dy: {dy}")
+
+    def ResetZoom(self) -> None:
+        """Reset zoom on all registered axes."""
+        if not self.sync_enabled:
+            return
+            
+        for x_axis in self.plot_axes["x_axes"]:
+            if dpg.does_item_exist(x_axis):
+                dpg.fit_axis_data(x_axis)
+                
+        for y_axis in self.plot_axes["y_axes"]:
+            if dpg.does_item_exist(y_axis):
+                dpg.fit_axis_data(y_axis)
+                
+        print("DEBUG: Reset zoom on all axes")
+
+    def CollectAllPlotAxes(self) -> None:
+        """Collect all plot axes from all panels automatically."""
+        self.plot_axes = {"x_axes": [], "y_axes": []}
+        
+        for panel_info in self.panels.values():
+            wrapper = panel_info["wrapper"]
+            if wrapper and hasattr(wrapper, 'content_items'):
+                for item in wrapper.content_items:
+                    if item.get("type") == "plot":
+                        plot_tag = item.get("tag")
+                        if plot_tag and dpg.does_item_exist(plot_tag):
+                            # Find all axes in this plot
+                            x_axis_tag = f"{plot_tag}_x_axis"
+                            y_axis_tag = f"{plot_tag}_y_axis"
+                            
+                            if dpg.does_item_exist(x_axis_tag) and x_axis_tag not in self.plot_axes["x_axes"]:
+                                self.plot_axes["x_axes"].append(x_axis_tag)
+                            if dpg.does_item_exist(y_axis_tag) and y_axis_tag not in self.plot_axes["y_axes"]:
+                                self.plot_axes["y_axes"].append(y_axis_tag)
+        
+        print(f"DEBUG: Collected {len(self.plot_axes['x_axes'])} X axes and {len(self.plot_axes['y_axes'])} Y axes")
+        
+    def ZoomAllWithCollection(self, zoom_factor: float = 1.5, center_x: float = None) -> None:
+        """Zoom all axes after collecting them automatically."""
+        self.CollectAllPlotAxes()  # First collect all axes
+        self.ZoomAll(zoom_factor, center_x)
+        
+    def ZoomOutWithCollection(self, zoom_factor: float = 0.7) -> None:
+        """Zoom out all axes after collecting them automatically."""
+        self.CollectAllPlotAxes()  # First collect all axes
+        self.ZoomOut(zoom_factor)
+        
+    def PanAllWithCollection(self, dx: float, dy: float = 0) -> None:
+        """Pan all axes after collecting them automatically."""
+        self.CollectAllPlotAxes()  # First collect all axes
+        self.PanAll(dx, dy)
+        
+    def ResetZoomWithCollection(self) -> None:
+        """Reset zoom on all axes after collecting them automatically."""
+        self.CollectAllPlotAxes()  # First collect all axes
+        self.ResetZoom()
 
 
 class DataPlotterDearPyGui2:
