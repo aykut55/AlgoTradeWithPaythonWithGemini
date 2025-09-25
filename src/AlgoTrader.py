@@ -1627,7 +1627,14 @@ class AlgoTrader:
         print("Exit application requested")
 
     def _on_reset_zoom(self, sender, app_data, user_data):
+        """Reset zoom on all charts."""
         print("Reset zoom requested")
+        try:
+            if hasattr(self, 'dataPlotterDearPyGui2') and self.dataPlotterDearPyGui2:
+                self.dataPlotterDearPyGui2.ResetZoomWithCollection()
+                print("Zoom reset completed on all charts")
+        except Exception as e:
+            print(f"Error resetting zoom: {e}")
 
     def _on_toggle_grid(self, sender, app_data, user_data):
         print("Toggle grid requested")

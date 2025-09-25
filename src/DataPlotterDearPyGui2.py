@@ -1066,6 +1066,17 @@ class DataPlotterDearPyGui2:
         except:
             pass
 
+    def ResetZoomWithCollection(self) -> None:
+        """Reset zoom on all charts by delegating to main panel."""
+        try:
+            if self.main_panel and hasattr(self.main_panel, 'ResetZoomWithCollection'):
+                self.main_panel.ResetZoomWithCollection()
+                print("Reset zoom completed on all charts via main panel")
+            else:
+                print("Main panel not available or doesn't support ResetZoomWithCollection")
+        except Exception as e:
+            print(f"Error in ResetZoomWithCollection: {e}")
+
     def SetLayoutRatios(self, **ratios) -> None:
         """Set layout ratios for panels."""
         self.layout_ratios.update(ratios)
