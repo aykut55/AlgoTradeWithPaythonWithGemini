@@ -2821,6 +2821,10 @@ class AlgoTrader:
 
         self.dataPlotter2.SetData(trader)
 
+        symbol = "BTCUSD"
+        timeframe = "1min"
+        self.dataPlotter2.SetTitle(f"{symbol} {timeframe}")
+
         self.dataPlotter2.AddYData(0, self.Ma5, "Ma5")
         self.dataPlotter2.AddYData(1, self.Ma8, "Ma8")
         self.dataPlotter2.AddYData(2, self.Ma13, "Ma13")

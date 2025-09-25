@@ -10,6 +10,7 @@ class DataPlotter2:
         self.custom_series = {}  # For custom data series
         self.panel_series = {}   # Panel assignments: {series_name: panel_id}
         self.panels = {}         # Panel information: {panel_id: {'series': [series_names], 'chart': chart_object}}
+        self.title = ""          # Chart title
 
     def Clear(self):
         self.ClearData()
@@ -20,6 +21,7 @@ class DataPlotter2:
         self.custom_series = {}
         self.panel_series = {}
         self.panels = {}
+        self.title = ""
 
     def _set_full_data(self, trader):
         """
@@ -113,6 +115,19 @@ class DataPlotter2:
     def GetChartData(self):
         return self.chart_df
 
+    def SetTitle(self, title):
+        """
+        Set the chart title.
+        """
+        self.title = title
+        print(f"DEBUG: Chart title set to '{title}'")
+
+    def GetTitle(self):
+        """
+        Get the current chart title.
+        """
+        return self.title
+
     def AddYData(self, series_id, data_list, series_name):
         """
         Adds a custom data series to be plotted as a line on the main chart.
@@ -152,7 +167,7 @@ class DataPlotter2:
         if series_name not in self.panels[panel_id]['series']:
             self.panels[panel_id]['series'].append(series_name)
 
-        print(f"DEBUG: Registered series '{series_name}' to panel {panel_id}")
+        # print(f"DEBUG: Registered series '{series_name}' to panel {panel_id}")
 
     def Show(self):
         """
@@ -176,9 +191,63 @@ class DataPlotter2:
                 main_height = 0.4
                 sub_height = 0.6 / (num_panels - 1) if num_panels > 1 else 0.2
 
-            # Create main chart (Panel 0)
-            chart = Chart(inner_width=0.9, inner_height=main_height)
+            # Create main chart (Panel 0) - increase width to fill space
+            chart = Chart(inner_width=0.95, inner_height=main_height)
             chart.legend(visible=True, font_size=16)
+
+            # Add title if set
+            if self.title:
+                chart.topbar.textbox('title', self.title)
+
+            # Add spacer to push buttons to the right side
+            chart.topbar.textbox('spacer', '                    ')  # Long space
+
+            # Add buttons to topbar (will appear on the right)
+            chart.topbar.button('reset_zoom', 'Reset Zoom')
+            chart.topbar.button('show_all', 'Show All Data')
+            chart.topbar.button('show_recent', 'Show Recent')
+
+            # Add panel-specific buttons for each subchart
+            for panel_id in sorted([p for p in unique_panels if p > 0]):
+                chart.topbar.button(f'panel_{panel_id}_toggle', f'Panel {panel_id}')
+
+            # Implement button handlers
+            def handle_reset_zoom(chart):
+                try:
+                    chart.time_scale().fit_content()
+                    print("DEBUG: Zoom reset")
+                except Exception as e:
+                    print(f"ERROR: Reset zoom failed: {e}")
+
+            def handle_show_all(chart):
+                try:
+                    # Show all data points
+                    chart.time_scale().set_visible_range({
+                        'from': self.chart_df['time'].min(),
+                        'to': self.chart_df['time'].max()
+                    })
+                    print("DEBUG: Showing all data")
+                except Exception as e:
+                    print(f"ERROR: Show all failed: {e}")
+
+            def handle_show_recent(chart):
+                try:
+                    # Show last N bars (e.g., last 100 bars)
+                    recent_count = min(100, len(self.chart_df))
+                    if recent_count > 0:
+                        chart.time_scale().set_visible_range({
+                            'from': self.chart_df['time'].iloc[-recent_count],
+                            'to': self.chart_df['time'].iloc[-1]
+                        })
+                    print(f"DEBUG: Showing recent {recent_count} bars")
+                except Exception as e:
+                    print(f"ERROR: Show recent failed: {e}")
+
+            # Button handlers - lightweight-charts Python wrapper may not support click events
+            # For now, these are visual buttons only
+            # To implement functionality, you would need to use keyboard shortcuts or other methods
+            print("INFO: Buttons are visual only. Click events may not be supported in this version.")
+
             # chart.grid(False, False)
             chart.set(self.chart_df)
             self.panels[0] = {'series': [], 'chart': chart}
@@ -188,7 +257,7 @@ class DataPlotter2:
             subcharts = {}
 
             for panel_id in sorted_panels:
-                subchart = chart.create_subchart(position='bottom', width=0.9, height=sub_height, sync=True)
+                subchart = chart.create_subchart(position='bottom', width=0.95, height=sub_height, sync=True)
                 subchart.legend(visible=True, font_size=16)
                 subcharts[panel_id] = subchart
                 if panel_id not in self.panels:
@@ -227,7 +296,14 @@ class DataPlotter2:
                 else:
                     print(f"WARNING: Panel {panel_id} not found for series '{series_name}'")
 
-            print(f"DEBUG: Displaying chart with {num_panels} panels...")
+            # Set browser window title if possible
+            if self.title:
+                try:
+                    chart.run_script(f"document.title = '{self.title}';")
+                except:
+                    pass
+
+            print(f"DEBUG: Displaying chart '{self.title}' with {num_panels} panels...")
             chart.show(block=True)
 
         except Exception as e:
