@@ -8,6 +8,7 @@ class DataPlotter2:
         self.full_df = None      # Complete trader data DataFrame
         self.chart_df = None     # Chart-optimized DataFrame (time|open|high|low|close|volume)
         self.custom_series = {}  # For custom data series
+        self.series_ids = {}     # Series ID mapping: {series_name: series_id}
         self.panel_series = {}   # Panel assignments: {series_name: panel_id}
         self.panels = {}         # Panel information: {panel_id: {'series': [series_names], 'chart': chart_object}}
         self.title = ""          # Chart title
@@ -24,6 +25,7 @@ class DataPlotter2:
         self.full_df = None
         self.chart_df = None
         self.custom_series = {}
+        self.series_ids = {}
         self.panel_series = {}
         self.panels = {}
         self.title = ""
@@ -152,6 +154,7 @@ class DataPlotter2:
             return
 
         self.custom_series[series_name] = data_list
+        self.series_ids[series_name] = series_id  # Store series_id for special handling
         # Do not automatically assign to panel - require explicit registration
         # print(f"DEBUG: Added custom series '{series_name}'. Use RegisterDataSeriesToPanel() to display it.")
 
@@ -459,10 +462,40 @@ class DataPlotter2:
             for series_name in registered_series:
                 data = self.custom_series[series_name]
                 panel_id = self.panel_series[series_name]
+                series_id = self.series_ids.get(series_name, 0)  # Get series_id
 
                 if panel_id == 0:
                     # Add to main chart as overlay
-                    line = chart.create_line(name=series_name)
+                    # Special coloring for Trading Signals (series_id = 1000)
+                    if series_id == 1000:
+                        # Try different approaches for Trading Signals
+                        try:
+                            # Method 1: color parameter in create_line
+                            line = chart.create_line(name=series_name, color='red')
+                            print(f"DEBUG: Applied red color to Trading Signals '{series_name}' (Method 1)")
+                        except:
+                            try:
+                                # Method 2: options in create_line
+                                line = chart.create_line(
+                                    name=series_name, 
+                                    options={
+                                        'color': '#FF0000',
+                                        'lineWidth': 3
+                                    }
+                                )
+                                print(f"DEBUG: Applied red color to Trading Signals '{series_name}' (Method 2)")
+                            except:
+                                # Method 3: standard line, set color after
+                                line = chart.create_line(name=series_name)
+                                try:
+                                    line.color = '#FF0000'
+                                    line.lineWidth = 3
+                                    print(f"DEBUG: Applied red color to Trading Signals '{series_name}' (Method 3)")
+                                except:
+                                    print(f"DEBUG: Could not apply color to Trading Signals '{series_name}' - using default")
+                    else:
+                        line = chart.create_line(name=series_name)
+                    
                     line_df = pd.DataFrame({
                         'time': self.chart_df['time'],
                         series_name: data
@@ -473,7 +506,18 @@ class DataPlotter2:
                 elif panel_id in subcharts:
                     # Add to subchart
                     subchart = subcharts[panel_id]
-                    line = subchart.create_line(name=series_name)
+                    
+                    # Special coloring for Trading Signals in subcharts too
+                    if series_id == 1000:
+                        try:
+                            line = subchart.create_line(name=series_name, color='red')
+                            print(f"DEBUG: Applied red color to Trading Signals '{series_name}' in Panel {panel_id}")
+                        except:
+                            line = subchart.create_line(name=series_name)
+                            print(f"DEBUG: Could not apply color to Trading Signals '{series_name}' in Panel {panel_id}")
+                    else:
+                        line = subchart.create_line(name=series_name)
+                    
                     line_df = pd.DataFrame({
                         'time': self.chart_df['time'],
                         series_name: data
