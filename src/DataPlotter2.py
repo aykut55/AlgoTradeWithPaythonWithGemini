@@ -10,6 +10,7 @@ class DataPlotter2:
         self.custom_series = {}  # For custom data series
         self.series_ids = {}     # Series ID mapping: {series_name: series_id}
         self.panel_series = {}   # Panel assignments: {series_name: panel_id}
+        self.line_properties = {}  # Line properties: {series_name: {'color': '#FF0000', 'lineWidth': 2, 'lineStyle': 0}}
         self.panels = {}         # Panel information: {panel_id: {'series': [series_names], 'chart': chart_object}}
         self.title = ""          # Chart title
         self.pan_bars = 20       # Number of bars to pan left/right
@@ -27,6 +28,7 @@ class DataPlotter2:
         self.custom_series = {}
         self.series_ids = {}
         self.panel_series = {}
+        self.line_properties = {}
         self.panels = {}
         self.title = ""
         self.current_start = 0
@@ -180,17 +182,147 @@ class DataPlotter2:
 
         # print(f"DEBUG: Registered series '{series_name}' to panel {panel_id}")
 
-    def ShowTradingSignals(self, tradingSignals):
+    def SetLineProperties(self, series_name, color=None, lineWidth=None, lineStyle=None, lineType=None):
+        """
+        Set line properties for a specific data series
+        
+        Args:
+            series_name: Name of the data series
+            color: Line color (e.g., '#FF0000', 'red', 'green')
+            lineWidth: Line thickness (1-10)
+            lineStyle: Line style (0=solid, 1=dotted, 2=dashed)
+            lineType: Chart type ('line', 'area', 'histogram')
+        """
+        if series_name not in self.line_properties:
+            self.line_properties[series_name] = {}
+        
+        if color is not None:
+            self.line_properties[series_name]['color'] = color
+        if lineWidth is not None:
+            self.line_properties[series_name]['lineWidth'] = lineWidth
+        if lineStyle is not None:
+            self.line_properties[series_name]['lineStyle'] = lineStyle
+        if lineType is not None:
+            self.line_properties[series_name]['lineType'] = lineType
+            
+        print(f"DEBUG: Set line properties for '{series_name}': {self.line_properties[series_name]}")
+
+    def ShowTradingSignals(self, tradingSignals, tradingSignalsInfo, panelNo=0):
         """
         Create trading signals visualization from trader's YönList and SeviyeList
-        Displays buy/sell signal segments on the main chart
+        Displays buy/sell signal segments on the main chart with segment-based coloring
         """
 
         # Add Trading Signals to chart
         self.AddYData(series_id=1000, data_list=tradingSignals, series_name="Trading Signals")
-        self.RegisterDataSeriesToPanel("Trading Signals", panel_id=0)
+        self.RegisterDataSeriesToPanel("Trading Signals", panel_id=panelNo)
+        self.tradingSignals = tradingSignals
+        self.tradingSignalsInfo = tradingSignalsInfo
 
-        print("DEBUG: Trading signals added successfully")
+        self.SetLineProperties("Trading Signals", color='red', lineWidth=2)
+
+        # Create segment-based colored series for A (Buy) and S (Sell) signals
+        # self._createSegmentColoredSeries(panelNo)
+
+        # Create individual marker series for each signal change (as fallback approach)
+        # self._createMarkerSeries(panelNo)
+
+        print("DEBUG: Trading signals added successfully with segment-based coloring")
+
+    def _createSegmentColoredSeries(self, panelNo):
+        """
+        Add signal change markers (A, S, F) as text annotations on chart
+        """
+        try:
+            if not hasattr(self, 'tradingSignalsInfo') or not self.tradingSignalsInfo:
+                print("WARNING: No tradingSignalsInfo available for segment coloring")
+                return
+            
+            # Store text markers for plotting
+            self.signal_markers = []
+            
+            # Process each segment to find signal changes
+            for segment in self.tradingSignalsInfo:
+                start_idx = segment.get("start", 0)
+                direction = segment.get("direction", "")
+                level = segment.get("level", 0)
+                
+                # Determine marker text
+                marker_text = ""
+                if direction == "BUY" or direction == "A":
+                    marker_text = "A"
+                elif direction == "SELL" or direction == "S":
+                    marker_text = "S"
+                elif direction == "FLAT" or direction == "F":
+                    marker_text = "F"
+                else:
+                    continue
+                
+                # Store marker info for later use in Show()
+                marker_info = {
+                    'index': start_idx,
+                    'text': marker_text,
+                    'level': level if level != 0 else (self.tradingSignals[start_idx] if start_idx < len(self.tradingSignals) and self.tradingSignals[start_idx] is not None else 0)
+                }
+                self.signal_markers.append(marker_info)
+                
+                print(f"DEBUG: Added marker '{marker_text}' at index {start_idx}, level {marker_info['level']}")
+                
+        except Exception as e:
+            print(f"ERROR in _createSegmentColoredSeries: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def _createMarkerSeries(self, panelNo):
+        """
+        Create visible marker series for signal changes - each marker as a single point
+        """
+        try:
+            if not hasattr(self, 'tradingSignalsInfo') or not self.tradingSignalsInfo:
+                return
+            
+            for idx, segment in enumerate(self.tradingSignalsInfo):
+                start_idx = segment.get("start", 0)
+                direction = segment.get("direction", "")
+                level = segment.get("level", 0)
+                
+                # Skip if no valid direction
+                if direction not in ["BUY", "A", "SELL", "S", "FLAT", "F"]:
+                    continue
+                    
+                # Get marker level 
+                marker_level = level
+                if marker_level == 0 and start_idx < len(self.tradingSignals):
+                    marker_level = self.tradingSignals[start_idx]
+                if marker_level is None:
+                    marker_level = self.chart_df['close'].iloc[start_idx] if start_idx < len(self.chart_df) else 0
+                
+                # Create single point series for the marker
+                marker_data = [None] * len(self.tradingSignals)
+                marker_data[start_idx] = marker_level
+                
+                # Determine marker properties
+                marker_text = direction[0] if len(direction) > 0 else "?"  # A, S, F etc
+                
+                if direction in ["BUY", "A"]:
+                    color = '#00FF00'  # Green
+                elif direction in ["SELL", "S"]:
+                    color = '#FF0000'  # Red
+                else:
+                    color = '#0000FF'  # Blue for other signals
+                
+                # Add marker series
+                series_name = f"Signal_{marker_text}_{idx}"
+                self.AddYData(series_id=5000 + idx, data_list=marker_data, series_name=series_name)
+                self.RegisterDataSeriesToPanel(series_name, panel_id=panelNo)
+                self.SetLineProperties(series_name, color=color, lineWidth=5)  # Thick point
+                
+                print(f"DEBUG: Added marker series '{series_name}' at index {start_idx}, level {marker_level}")
+                
+        except Exception as e:
+            print(f"ERROR in _createMarkerSeries: {e}")
+            import traceback
+            traceback.print_exc()
 
     def get_signal_segments(self):
         """
@@ -462,70 +594,33 @@ class DataPlotter2:
             for series_name in registered_series:
                 data = self.custom_series[series_name]
                 panel_id = self.panel_series[series_name]
-                series_id = self.series_ids.get(series_name, 0)  # Get series_id
-
+                
+                # Get line properties for this series
+                properties = self.line_properties.get(series_name, {})
+                
                 if panel_id == 0:
                     # Add to main chart as overlay
-                    # Special coloring for Trading Signals (series_id = 1000)
-                    if series_id == 1000:
-                        # Try different approaches for Trading Signals
-                        try:
-                            # Method 1: color parameter in create_line
-                            line = chart.create_line(name=series_name, color='red')
-                            print(f"DEBUG: Applied red color to Trading Signals '{series_name}' (Method 1)")
-                        except:
-                            try:
-                                # Method 2: options in create_line
-                                line = chart.create_line(
-                                    name=series_name, 
-                                    options={
-                                        'color': '#FF0000',
-                                        'lineWidth': 3
-                                    }
-                                )
-                                print(f"DEBUG: Applied red color to Trading Signals '{series_name}' (Method 2)")
-                            except:
-                                # Method 3: standard line, set color after
-                                line = chart.create_line(name=series_name)
-                                try:
-                                    line.color = '#FF0000'
-                                    line.lineWidth = 3
-                                    print(f"DEBUG: Applied red color to Trading Signals '{series_name}' (Method 3)")
-                                except:
-                                    print(f"DEBUG: Could not apply color to Trading Signals '{series_name}' - using default")
-                    else:
-                        line = chart.create_line(name=series_name)
+                    line = self._createLineWithProperties(chart, series_name, properties)
                     
-                    line_df = pd.DataFrame({
-                        'time': self.chart_df['time'],
-                        series_name: data
-                    })
-                    line.set(line_df)
-                    # print(f"DEBUG: Added series '{series_name}' to main panel (Panel 0)")
-
                 elif panel_id in subcharts:
                     # Add to subchart
                     subchart = subcharts[panel_id]
+                    line = self._createLineWithProperties(subchart, series_name, properties)
                     
-                    # Special coloring for Trading Signals in subcharts too
-                    if series_id == 1000:
-                        try:
-                            line = subchart.create_line(name=series_name, color='red')
-                            print(f"DEBUG: Applied red color to Trading Signals '{series_name}' in Panel {panel_id}")
-                        except:
-                            line = subchart.create_line(name=series_name)
-                            print(f"DEBUG: Could not apply color to Trading Signals '{series_name}' in Panel {panel_id}")
-                    else:
-                        line = subchart.create_line(name=series_name)
-                    
-                    line_df = pd.DataFrame({
-                        'time': self.chart_df['time'],
-                        series_name: data
-                    })
-                    line.set(line_df)
-                    # print(f"DEBUG: Added series '{series_name}' to Panel {panel_id}")
                 else:
                     print(f"WARNING: Panel {panel_id} not found for series '{series_name}'")
+                    continue
+                
+                # Set data for the line
+                line_df = pd.DataFrame({
+                    'time': self.chart_df['time'],
+                    series_name: data
+                })
+                line.set(line_df)
+                # print(f"DEBUG: Added series '{series_name}' to Panel {panel_id}")
+
+            # Add signal change markers as text annotations
+            self._addSignalMarkers(chart, subcharts)
 
             # Set browser window title if possible
             if self.title:
@@ -539,6 +634,120 @@ class DataPlotter2:
 
         except Exception as e:
             print(f"ERROR in Show: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def _createLineWithProperties(self, chart_obj, series_name, properties):
+        """
+        Create a line with specified properties (color, width, style)
+        """
+        try:
+            color = properties.get('color', None)
+            lineWidth = properties.get('lineWidth', None)
+            lineStyle = properties.get('lineStyle', None)
+            
+            # Try different methods to apply properties
+            if color:
+                try:
+                    # Method 1: color parameter
+                    line = chart_obj.create_line(name=series_name, color=color)
+                    print(f"DEBUG: Applied color '{color}' to '{series_name}' (Method 1)")
+                    return line
+                except Exception as e1:
+                    try:
+                        # Method 2: options dictionary
+                        options = {}
+                        if color:
+                            options['color'] = color
+                        if lineWidth:
+                            options['lineWidth'] = lineWidth
+                        if lineStyle is not None:
+                            options['lineStyle'] = lineStyle
+                            
+                        line = chart_obj.create_line(name=series_name, **options)
+                        print(f"DEBUG: Applied properties {options} to '{series_name}' (Method 2)")
+                        return line
+                    except Exception as e2:
+                        # Method 3: set properties after creation
+                        line = chart_obj.create_line(name=series_name)
+                        try:
+                            if color:
+                                line.color = color
+                            if lineWidth:
+                                line.lineWidth = lineWidth
+                            print(f"DEBUG: Applied properties to '{series_name}' (Method 3)")
+                        except Exception as e3:
+                            print(f"DEBUG: Could not apply properties to '{series_name}' - using default")
+                        return line
+            else:
+                # No special properties, create standard line
+                return chart_obj.create_line(name=series_name)
+                
+        except Exception as e:
+            print(f"ERROR creating line for '{series_name}': {e}")
+            # Fallback to basic line
+            return chart_obj.create_line(name=series_name)
+
+    def _addSignalMarkers(self, chart, subcharts):
+        """
+        Add signal change markers (A, S, F) as text annotations on chart
+        """
+        try:
+            if not hasattr(self, 'signal_markers') or not self.signal_markers:
+                return
+            
+            for marker in self.signal_markers:
+                index = marker['index']
+                text = marker['text']
+                level = marker['level']
+                
+                # Create marker data point
+                if index < len(self.chart_df):
+                    marker_time = self.chart_df['time'].iloc[index]
+                    
+                    # Try different methods to add text marker
+                    try:
+                        # Method 1: Using chart marker/annotation
+                        chart.marker(
+                            time=marker_time,
+                            position='above_bar',
+                            color='black',
+                            shape='text',
+                            text=text
+                        )
+                        print(f"DEBUG: Added text marker '{text}' at index {index} (Method 1)")
+                    except:
+                        try:
+                            # Method 2: Using tooltip or label
+                            chart.add_marker({
+                                'time': marker_time,
+                                'position': 'aboveBar',
+                                'color': 'black',
+                                'shape': 'circle',
+                                'text': text
+                            })
+                            print(f"DEBUG: Added text marker '{text}' at index {index} (Method 2)")
+                        except:
+                            # Method 3: Create as a very short line series with specific styling
+                            marker_data = [None] * len(self.chart_df)
+                            marker_data[index] = level
+                            
+                            marker_series_name = f"Marker_{text}_{index}"
+                            self.custom_series[marker_series_name] = marker_data
+                            self.series_ids[marker_series_name] = 9000 + index
+                            
+                            # Add as point/circle marker
+                            marker_line = chart.create_line(name=f"{text}")
+                            marker_df = pd.DataFrame({
+                                'time': self.chart_df['time'],
+                                marker_series_name: marker_data
+                            })
+                            marker_line.set(marker_df)
+                            
+                            print(f"DEBUG: Added fallback marker '{text}' at index {index} (Method 3)")
+                            
+        except Exception as e:
+            print(f"ERROR in _addSignalMarkers: {e}")
             import traceback
             traceback.print_exc()
     

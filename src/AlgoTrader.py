@@ -1225,7 +1225,7 @@ class AlgoTrader:
                     # panel0.AddYData(normalized_volume, 'volume (normalized)')
 
                 # Create signal segments and plot
-                combined_data, segments = self.create_signal_segments(trader)
+                segments, combined_data, combined_data_normalized = self.create_signal_segments(trader)
                 # if combined_data:
                 #     self.plot_combined_signals(combined_data)
 
@@ -2066,7 +2066,7 @@ class AlgoTrader:
         self.indicatorManager = self.mySystem.myIndicators
 
         # self.Most, self.ExMov = self.calculate_most(period=21, percent=1.0)
-        self.Most, self.ExMov = self.indicatorManager.calculate_most(period=21, percent=0.1)
+        self.Most, self.ExMov = self.indicatorManager.calculate_most(period=21, percent=0.5)
 
         self.Ma5 = self.indicatorManager.calculate_ema(self.Close, 5)
         self.Ma8 = self.indicatorManager.calculate_ema(self.Close, 8)
@@ -2203,11 +2203,14 @@ class AlgoTrader:
 
         # --------------------------------------------------------------
         combined_data = []
-        combined_data, segments = self.create_signal_segments(self.active_trader)
+        combined_data_normalized = []
+        segments, combined_data, combined_data_normalized  = self.create_signal_segments(self.active_trader)
         if segments:  # En az bir segment varsa
+            self.active_trader.segments = segments
             self.active_trader.combined_data = combined_data
-            if self.active_trader.combined_data:
-                self.plot_combined_signals(self.active_trader.combined_data, 1000)
+            self.active_trader.combined_data_normalized = combined_data_normalized
+            # if self.active_trader.combined_data:
+            #     self.plot_combined_signals(self.active_trader.combined_data, 1000)
 
         # --------------------------------------------------------------
         print("Plotting market data...")
@@ -2772,10 +2775,18 @@ class AlgoTrader:
         else:
             time_array = self.Time
 
+        LevelZero1 = self.create_level_series(self.BarCount, 0)
+        LevelZero2 = self.create_level_series(self.BarCount, 0)
+
         balance = trader.Lists.BakiyeFiyatList
+        bakiye = trader.Lists.BakiyeFiyatList
+
         getiriFiyatList = trader.Lists.GetiriFiyatList
+        getiriFiyatNetList = trader.Lists.GetiriFiyatNetList
+
         getiriKz = trader.Lists.GetiriKz
         getiriKzNet = trader.Lists.GetiriKzNet
+
         karZararPuanList = trader.Lists.KarZararPuanList
         karZararFiyatList = trader.Lists.KarZararFiyatList
 
@@ -2821,38 +2832,56 @@ class AlgoTrader:
         timeframe = "1min"
         self.dataPlotter2.SetTitle(f"{symbol} {timeframe}")
 
-        self.dataPlotter2.AddYData(0, self.Ma5, "Ma5")
-        self.dataPlotter2.AddYData(1, self.Ma8, "Ma8")
-        self.dataPlotter2.AddYData(2, self.Ma13, "Ma13")
-        self.dataPlotter2.AddYData(3, self.Ma21, "Ma21")
-        self.dataPlotter2.AddYData(4, self.Ma50, "Ma50")
-        self.dataPlotter2.AddYData(5, self.Ma100, "Ma100")
-        self.dataPlotter2.AddYData(6, self.Ma200, "Ma200")
-        self.dataPlotter2.AddYData(7, balance, "balance")
-        self.dataPlotter2.AddYData(8, getiriFiyatList, "getiriFiyatList")
-        self.dataPlotter2.AddYData(9, farkList, "farkList")
-        self.dataPlotter2.AddYData(10, getiriKz, "getiriKz")
-        self.dataPlotter2.AddYData(11, getiriKzNet, "getiriKzNet")
-        self.dataPlotter2.AddYData(12, farkList2, "farkList2")
-        self.dataPlotter2.AddYData(13, karZararPuanList, "karZararPuanList")
-        self.dataPlotter2.AddYData(14, karZararFiyatList, "karZararFiyatList")
-        self.dataPlotter2.AddYData(15, self.ExMov, "ExMov")
-        self.dataPlotter2.AddYData(16, self.Most, "Most")
+        self.dataPlotter2.AddYData(0, trader.combined_data_normalized, "_TradingSignals")
+        self.dataPlotter2.AddYData(1, LevelZero1, "LevelZero1")
+        self.dataPlotter2.AddYData(2, balance, "balance")
+        self.dataPlotter2.AddYData(3, bakiye, "bakiye")
+        self.dataPlotter2.AddYData(4, getiriFiyatList, "getiriFiyatList")
+        self.dataPlotter2.AddYData(5, getiriFiyatNetList, "getiriFiyatNetList")
+        self.dataPlotter2.AddYData(6, getiriKz, "getiriKz")
+        self.dataPlotter2.AddYData(7, getiriKzNet, "getiriKzNet")
+        self.dataPlotter2.AddYData(8, karZararPuanList, "karZararPuanList")
+        self.dataPlotter2.AddYData(9, karZararFiyatList, "karZararFiyatList")
+        self.dataPlotter2.AddYData(10, farkList, "farkList")
+        self.dataPlotter2.AddYData(11, farkList2, "farkList2")
+
+        self.dataPlotter2.AddYData(12, self.Ma5, "Ma5")
+        self.dataPlotter2.AddYData(13, self.Ma8, "Ma8")
+        self.dataPlotter2.AddYData(14, self.Ma13, "Ma13")
+        self.dataPlotter2.AddYData(15, self.Ma21, "Ma21")
+        self.dataPlotter2.AddYData(16, self.Ma50, "Ma50")
+        self.dataPlotter2.AddYData(17, self.Ma100, "Ma100")
+        self.dataPlotter2.AddYData(18, self.Ma200, "Ma200")
+        self.dataPlotter2.AddYData(19, self.Most, "Most")
+        self.dataPlotter2.AddYData(20, self.ExMov, "ExMov")
+
+        self.dataPlotter2.AddYData(21, LevelZero2, "LevelZero2")
+
+        self.dataPlotter2.RegisterDataSeriesToPanel("_TradingSignals", 1)
+        self.dataPlotter2.RegisterDataSeriesToPanel("LevelZero1", 1)
+        self.dataPlotter2.SetLineProperties("_TradingSignals", color='cyan', lineWidth=1)
+        self.dataPlotter2.SetLineProperties("LevelZero1", color='red', lineWidth=1)
+        # self.dataPlotter2.ShowTradingSignals(trader.combined_data, trader.segments)  # Al/sat sinyallerini ekle
 
         self.dataPlotter2.RegisterDataSeriesToPanel("ExMov", 0)
         self.dataPlotter2.RegisterDataSeriesToPanel("Most", 0)
 
-        self.dataPlotter2.RegisterDataSeriesToPanel("karZararFiyatList", 1)
-        self.dataPlotter2.RegisterDataSeriesToPanel("getiriFiyatList", 2)
+        self.dataPlotter2.RegisterDataSeriesToPanel("LevelZero2", 2)
+        self.dataPlotter2.RegisterDataSeriesToPanel("karZararFiyatList", 2)
+        self.dataPlotter2.RegisterDataSeriesToPanel("getiriFiyatNetList", 3)
 
-        self.dataPlotter2.ShowTradingSignals(trader.combined_data)  # Al/sat sinyallerini ekle
+        self.dataPlotter2.SetLineProperties("LevelZero2", color='red', lineWidth=1)
+
+        self.dataPlotter2.SetLineProperties("MA5", color='blue', lineWidth=2)
+        self.dataPlotter2.SetLineProperties("MA200", color='orange', lineWidth=3)
+
         self.dataPlotter2.Show()
         print("=== plotData bitti ===")
 
     def create_signal_segments(self, trader):
         """
         Create signal segments from trader's YönList and SeviyeList
-        Returns combined_data array for plotting
+        Returns combined_data, segments, and combined_data_normalized
         """
         try:
             # Dinamik yatay çizgiler için seviye listesi oluştur
@@ -2866,20 +2895,40 @@ class AlgoTrader:
             # Tüm segmentleri tek bir combined data olarak birleştir
             combined_data = [np.nan] * len(self.Close)
             
+            # Combined data normalized - 0 çizgisine oturtulmuş sinyal değerleri
+            combined_data_normalized = [0] * len(self.Close)
+            
             for seg in segments:
+                # Combined data için level değerleri
                 for j in range(seg["start"], seg["end"] + 1):
                     if j < len(combined_data):
                         combined_data[j] = seg["level"]
                 
-                print(f"DEBUG: Added {seg['direction']} segment {seg['start']}→{seg['end']} at level {seg['level']:.2f}")
+                # Combined data normalized için sinyal tipine göre değer
+                signal_value = 0  # Default for unknown signals
+                direction = seg.get("direction", "")
+                
+                if direction == "BUY" or direction == "A":
+                    signal_value = 1  # Buy signal = 1
+                elif direction == "SELL" or direction == "S":
+                    signal_value = -1  # Sell signal = -1
+                elif direction == "FLAT" or direction == "F":
+                    signal_value = 0  # Flat signal = 0
+                
+                # Fill normalized data for this segment
+                for j in range(seg["start"], seg["end"] + 1):
+                    if j < len(combined_data_normalized):
+                        combined_data_normalized[j] = signal_value
+                
+                print(f"DEBUG: Added {seg['direction']} segment {seg['start']}→{seg['end']} at level {seg['level']:.2f}, normalized: {signal_value}")
 
-            return combined_data, segments
+            return segments, combined_data, combined_data_normalized
             
         except Exception as e:
             print(f"ERROR in create_signal_segments: {e}")
             import traceback
             traceback.print_exc()
-            return []
+            return [], [], []
 
     def plot_combined_signals(self, combined_data, bar_count=-1):
         """
