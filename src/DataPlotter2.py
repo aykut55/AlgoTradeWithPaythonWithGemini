@@ -4,25 +4,31 @@ from datetime import datetime
 
 class DataPlotter2:
     def __init__(self):
-        self.trader_data = None
+        self.trader = None
         self.full_df = None      # Complete trader data DataFrame
         self.chart_df = None     # Chart-optimized DataFrame (time|open|high|low|close|volume)
         self.custom_series = {}  # For custom data series
         self.panel_series = {}   # Panel assignments: {series_name: panel_id}
         self.panels = {}         # Panel information: {panel_id: {'series': [series_names], 'chart': chart_object}}
         self.title = ""          # Chart title
+        self.pan_bars = 20       # Number of bars to pan left/right
+        self.current_start = 0   # Current starting position
+        self.visible_bars = 100  # Default number of visible bars
+        self.main_chart = None   # Reference to main chart for pan operations
 
     def Clear(self):
         self.ClearData()
 
     def ClearData(self):
-        self.trader_data = None
+        self.trader = None
         self.full_df = None
         self.chart_df = None
         self.custom_series = {}
         self.panel_series = {}
         self.panels = {}
         self.title = ""
+        self.current_start = 0
+        self.main_chart = None
 
     def _set_full_data(self, trader):
         """
@@ -101,7 +107,7 @@ class DataPlotter2:
         """
         Set trader data for the main OHLC chart.
         """
-        self.trader_data = trader
+        self.trader = trader
         try:
             self._set_full_data(trader)
             self._set_chart_data(trader.DateTime, trader.Open, trader.High, trader.Low, trader.Close, trader.Volume)
@@ -171,6 +177,133 @@ class DataPlotter2:
 
         # print(f"DEBUG: Registered series '{series_name}' to panel {panel_id}")
 
+    def ShowTradingSignals(self, tradingSignals):
+        """
+        Create trading signals visualization from trader's YönList and SeviyeList
+        Displays buy/sell signal segments on the main chart
+        """
+
+        # Add Trading Signals to chart
+        self.AddYData(series_id=1000, data_list=tradingSignals, series_name="Trading Signals")
+        self.RegisterDataSeriesToPanel("Trading Signals", panel_id=0)
+
+        print("DEBUG: Trading signals added successfully")
+
+    def get_signal_segments(self):
+        """
+        Create signal segments from YonList and SeviyeList
+        Returns list of segments with start, end, level, and direction
+        """
+        segments = []
+        current_direction = None
+        current_level = None
+        segment_start = None
+        
+        for i, (yon, seviye) in enumerate(zip(self.YonList, self.SeviyeList)):
+            # String değerleri doğru şekilde çevir: 'A' = Buy, 'S' = Sell
+            if yon == 'A':
+                yon_val = 1  # Buy signal
+            elif yon == 'S':
+                yon_val = -1  # Sell signal  
+            else:
+                yon_val = 0  # No signal
+                
+            try:
+                seviye_val = float(seviye) if seviye != 0 else 0
+            except (ValueError, TypeError):
+                seviye_val = 0
+                
+            if yon_val != 0:  # Signal var
+                direction = "BUY" if yon_val == 1 else "SELL"
+                level = seviye_val if seviye_val != 0 else self.chart_df['close'].iloc[i]
+                
+                if current_direction != direction or current_level != level:
+                    # Önceki segmenti bitir
+                    if current_direction is not None and segment_start is not None:
+                        segments.append({
+                            "start": segment_start,
+                            "end": i - 1,
+                            "level": current_level,
+                            "direction": current_direction
+                        })
+                    
+                    # Yeni segment başlat
+                    current_direction = direction
+                    current_level = level
+                    segment_start = i
+            else:  # Signal yok
+                if current_direction is not None and segment_start is not None:
+                    # Mevcut segmenti bitir
+                    segments.append({
+                        "start": segment_start,
+                        "end": i - 1,
+                        "level": current_level,
+                        "direction": current_direction
+                    })
+                    current_direction = None
+                    current_level = None
+                    segment_start = None
+        
+        # Son segmenti bitir
+        if current_direction is not None and segment_start is not None:
+            segments.append({
+                "start": segment_start,
+                "end": len(self.YonList) - 1,
+                "level": current_level,
+                "direction": current_direction
+            })
+        
+        return segments
+
+    def leftPan(self, chart):
+        """
+        Pan chart to the left by pan_bars amount
+        """
+        try:
+            if self.chart_df is None or len(self.chart_df) == 0:
+                print("ERROR: No chart data available for panning")
+                return
+            
+            total_bars = len(self.chart_df)
+            self.current_start = max(0, self.current_start - self.pan_bars)
+            
+            end_index = min(self.current_start + self.visible_bars, total_bars)
+            
+            if self.current_start < total_bars:
+                chart.time_scale().set_visible_range({
+                    'from': self.chart_df['time'].iloc[self.current_start],
+                    'to': self.chart_df['time'].iloc[end_index - 1]
+                })
+                print(f"DEBUG: Panned left - showing bars {self.current_start} to {end_index - 1}")
+            
+        except Exception as e:
+            print(f"ERROR: Left pan failed: {e}")
+
+    def rightPan(self, chart):
+        """
+        Pan chart to the right by pan_bars amount
+        """
+        try:
+            if self.chart_df is None or len(self.chart_df) == 0:
+                print("ERROR: No chart data available for panning")
+                return
+            
+            total_bars = len(self.chart_df)
+            max_start = max(0, total_bars - self.visible_bars)
+            self.current_start = min(max_start, self.current_start + self.pan_bars)
+            
+            end_index = min(self.current_start + self.visible_bars, total_bars)
+            
+            if self.current_start < total_bars:
+                chart.time_scale().set_visible_range({
+                    'from': self.chart_df['time'].iloc[self.current_start],
+                    'to': self.chart_df['time'].iloc[end_index - 1]
+                })
+                print(f"DEBUG: Panned right - showing bars {self.current_start} to {end_index - 1}")
+            
+        except Exception as e:
+            print(f"ERROR: Right pan failed: {e}")
+
     def Show(self):
         """
         Display the chart using lightweight-charts with panel-based rendering.
@@ -204,55 +337,105 @@ class DataPlotter2:
             # Add spacer to push buttons to the right side
             chart.topbar.textbox('spacer', '                    ')  # Long space
 
-            # Add buttons to topbar (will appear on the right)
-            chart.topbar.button('reset_zoom', 'Reset Zoom')
-            chart.topbar.button('show_all', 'Show All Data')
-            chart.topbar.button('show_recent', 'Show Recent')
-
-            # Add panel-specific buttons for each subchart
-            for panel_id in sorted([p for p in unique_panels if p > 0]):
-                chart.topbar.button(f'panel_{panel_id}_toggle', f'Panel {panel_id}')
+            # Store main chart reference for pan operations
+            self.main_chart = chart
 
             # Implement button handlers
-            def handle_reset_zoom(chart):
+            def handle_reset_zoom(chart_ref):
                 try:
                     chart.time_scale().fit_content()
                     print("DEBUG: Zoom reset")
                 except Exception as e:
                     print(f"ERROR: Reset zoom failed: {e}")
 
-            def handle_show_all(chart):
+            def handle_show_all(chart_ref):
                 try:
                     # Show all data points
-                    chart.time_scale().set_visible_range({
-                        'from': self.chart_df['time'].min(),
-                        'to': self.chart_df['time'].max()
+                    self.current_start = 0
+                    chart.time_scale().set_visible_logical_range({
+                        'from': 0,
+                        'to': len(self.chart_df) - 1
                     })
                     print("DEBUG: Showing all data")
                 except Exception as e:
                     print(f"ERROR: Show all failed: {e}")
 
-            def handle_show_recent(chart):
+            def handle_show_recent(chart_ref):
                 try:
                     # Show last N bars (e.g., last 100 bars)
-                    recent_count = min(100, len(self.chart_df))
+                    recent_count = min(self.visible_bars, len(self.chart_df))
                     if recent_count > 0:
-                        chart.time_scale().set_visible_range({
-                            'from': self.chart_df['time'].iloc[-recent_count],
-                            'to': self.chart_df['time'].iloc[-1]
+                        self.current_start = max(0, len(self.chart_df) - recent_count)
+                        chart.time_scale().set_visible_logical_range({
+                            'from': len(self.chart_df) - recent_count,
+                            'to': len(self.chart_df) - 1
                         })
                     print(f"DEBUG: Showing recent {recent_count} bars")
                 except Exception as e:
                     print(f"ERROR: Show recent failed: {e}")
+
+            def handle_left_pan(chart_ref):
+                try:
+                    if self.chart_df is None or len(self.chart_df) == 0:
+                        print("ERROR: No chart data available for panning")
+                        return
+                    
+                    total_bars = len(self.chart_df)
+                    self.current_start = max(0, self.current_start - self.pan_bars)
+                    
+                    end_index = min(self.current_start + self.visible_bars, total_bars)
+                    
+                    if self.current_start < total_bars:
+                        chart.time_scale().set_visible_logical_range({
+                            'from': self.current_start,
+                            'to': end_index - 1
+                        })
+                        print(f"DEBUG: Panned left - showing bars {self.current_start} to {end_index - 1}")
+                    
+                except Exception as e:
+                    print(f"ERROR: Left pan failed: {e}")
+
+            def handle_right_pan(chart_ref):
+                try:
+                    if self.chart_df is None or len(self.chart_df) == 0:
+                        print("ERROR: No chart data available for panning")
+                        return
+                    
+                    total_bars = len(self.chart_df)
+                    max_start = max(0, total_bars - self.visible_bars)
+                    self.current_start = min(max_start, self.current_start + self.pan_bars)
+                    
+                    end_index = min(self.current_start + self.visible_bars, total_bars)
+                    
+                    if self.current_start < total_bars:
+                        chart.time_scale().set_visible_logical_range({
+                            'from': self.current_start,
+                            'to': end_index - 1
+                        })
+                        print(f"DEBUG: Panned right - showing bars {self.current_start} to {end_index - 1}")
+                    
+                except Exception as e:
+                    print(f"ERROR: Right pan failed: {e}")
 
             # Button handlers - lightweight-charts Python wrapper may not support click events
             # For now, these are visual buttons only
             # To implement functionality, you would need to use keyboard shortcuts or other methods
             print("INFO: Buttons are visual only. Click events may not be supported in this version.")
 
+            # Add buttons to topbar (will appear on the right)
+            chart.topbar.button('left_pan', 'Left Pan', func=handle_left_pan)
+            chart.topbar.button('right_pan', 'Right Pan', func=handle_right_pan)
+            chart.topbar.button('reset_zoom', 'Reset Zoom', func=handle_reset_zoom)
+            chart.topbar.button('show_all', 'Show All Data', func=handle_show_all)
+            chart.topbar.button('show_recent', 'Show Recent', func=handle_show_recent)
+            chart.topbar.menu("menu", ('1min', '5min', '30min'), func=None)
+
+            # Add panel-specific buttons for each subchart
+            for panel_id in sorted([p for p in unique_panels if p > 0]):
+                chart.topbar.button(f'panel_{panel_id}_toggle', f'Panel {panel_id}')
+
             # chart.grid(False, False)
             chart.set(self.chart_df)
-
 
             self.panels[0] = {'series': [], 'chart': chart}
 

@@ -1224,24 +1224,10 @@ class AlgoTrader:
                         normalized_volume.append(normalized_vol)
                     # panel0.AddYData(normalized_volume, 'volume (normalized)')
 
-
-                # Dinamik yatay çizgiler için seviye listesi oluştur
-                # Önce trader'dan güncel verileri al
-                self.YonList = trader.Lists.YonList
-                self.SeviyeList = trader.Lists.SeviyeList
-
-                import numpy as np
-                segments = self.get_signal_segments()
-
-                # Tüm segmentleri tek bir combined data olarak birleştir
-                combined_data = [np.nan] * len(time_array)
-                
-                for seg in segments:
-                    for j in range(seg["start"], seg["end"] + 1):
-                        if j < len(combined_data):
-                            combined_data[j] = seg["level"]
-                    
-                    print(f"DEBUG: Added {seg['direction']} segment {seg['start']}→{seg['end']} at level {seg['level']:.2f}")
+                # Create signal segments and plot
+                combined_data, segments = self.create_signal_segments(trader)
+                # if combined_data:
+                #     self.plot_combined_signals(combined_data)
 
                 # Tek bir legend entry ile tüm segmentleri çiz
                 if segments:  # En az bir segment varsa
@@ -2080,7 +2066,7 @@ class AlgoTrader:
         self.indicatorManager = self.mySystem.myIndicators
 
         # self.Most, self.ExMov = self.calculate_most(period=21, percent=1.0)
-        self.Most, self.ExMov = self.indicatorManager.calculate_most(period=21, percent=0.05)
+        self.Most, self.ExMov = self.indicatorManager.calculate_most(period=21, percent=0.1)
 
         self.Ma5 = self.indicatorManager.calculate_ema(self.Close, 5)
         self.Ma8 = self.indicatorManager.calculate_ema(self.Close, 8)
@@ -2213,8 +2199,18 @@ class AlgoTrader:
             pass
 
         # --------------------------------------------------------------
-        print("Plotting market data...")
         self.active_trader = self.mySystem.get_trader(0)
+
+        # --------------------------------------------------------------
+        combined_data = []
+        combined_data, segments = self.create_signal_segments(self.active_trader)
+        if segments:  # En az bir segment varsa
+            self.active_trader.combined_data = combined_data
+            if self.active_trader.combined_data:
+                self.plot_combined_signals(self.active_trader.combined_data, 1000)
+
+        # --------------------------------------------------------------
+        print("Plotting market data...")
         # self.plotData()
         # self.plotData2(self.active_trader)
         # self.plotData3(self.active_trader)  # matplotlib version - DISABLED
@@ -2849,10 +2845,115 @@ class AlgoTrader:
         self.dataPlotter2.RegisterDataSeriesToPanel("karZararFiyatList", 1)
         self.dataPlotter2.RegisterDataSeriesToPanel("getiriFiyatList", 2)
 
+        self.dataPlotter2.ShowTradingSignals(trader.combined_data)  # Al/sat sinyallerini ekle
         self.dataPlotter2.Show()
         print("=== plotData bitti ===")
 
+    def create_signal_segments(self, trader):
+        """
+        Create signal segments from trader's YönList and SeviyeList
+        Returns combined_data array for plotting
+        """
+        try:
+            # Dinamik yatay çizgiler için seviye listesi oluştur
+            # Önce trader'dan güncel verileri al
+            self.YonList = trader.Lists.YonList
+            self.SeviyeList = trader.Lists.SeviyeList
 
+            import numpy as np
+            segments = self.get_signal_segments()
+
+            # Tüm segmentleri tek bir combined data olarak birleştir
+            combined_data = [np.nan] * len(self.Close)
+            
+            for seg in segments:
+                for j in range(seg["start"], seg["end"] + 1):
+                    if j < len(combined_data):
+                        combined_data[j] = seg["level"]
+                
+                print(f"DEBUG: Added {seg['direction']} segment {seg['start']}→{seg['end']} at level {seg['level']:.2f}")
+
+            return combined_data, segments
+            
+        except Exception as e:
+            print(f"ERROR in create_signal_segments: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
+
+    def plot_combined_signals(self, combined_data, bar_count=-1):
+        """
+        Plot combined signal data using matplotlib
+        Args:
+            combined_data: Signal data array
+            bar_count: Number of bars to plot (-1 for all bars, positive number for last N bars)
+        """
+        try:
+            # Plot combined_data using matplotlib
+            import matplotlib.pyplot as plt
+            import numpy as np
+            
+            # Determine data range based on bar_count
+            if bar_count > 0 and bar_count < len(combined_data):
+                # Plot last N bars
+                start_idx = len(combined_data) - bar_count
+                end_idx = len(combined_data)
+                plot_range = range(start_idx, end_idx)
+                combined_data_slice = combined_data[start_idx:end_idx]
+                title_suffix = f" (Last {bar_count} bars)"
+            else:
+                # Plot all bars
+                start_idx = 0
+                end_idx = len(combined_data)
+                plot_range = range(len(combined_data))
+                combined_data_slice = combined_data
+                title_suffix = " (All data)"
+            
+            # Create figure and axis
+            plt.figure(figsize=(12, 8))
+            
+            # Plot main price data (assuming Close prices exist)
+            if hasattr(self, 'Close') and len(self.Close) > 0:
+                if bar_count > 0 and bar_count < len(self.Close):
+                    close_slice = self.Close[start_idx:end_idx]
+                    plt.plot(plot_range, close_slice, 
+                            label='Price', color='blue', linewidth=1)
+                else:
+                    plt.plot(range(len(self.Close)), self.Close, 
+                            label='Price', color='blue', linewidth=1)
+            
+            # Plot combined signal data
+            valid_indices = []
+            valid_values = []
+            
+            for i, value in enumerate(combined_data_slice):
+                actual_index = start_idx + i
+                if not (np.isnan(value) if isinstance(value, (int, float)) else value is None):
+                    valid_indices.append(actual_index)
+                    valid_values.append(value)
+            
+            if valid_indices:
+                plt.plot(valid_indices, valid_values, 
+                        label='Trading Signals', color='red', 
+                        linewidth=2, marker='o', markersize=3)
+            
+            # Set labels and title
+            plt.xlabel('Bar Index')
+            plt.ylabel('Price')
+            plt.title(f'Price Chart with Trading Signals{title_suffix}')
+            plt.legend()
+            plt.grid(True, alpha=0.3)
+            
+            # Show plot
+            plt.tight_layout()
+            plt.show()
+            
+            print(f"DEBUG: Plotted {len(valid_indices)} signal points{title_suffix}")
+            
+        except Exception as e:
+            print(f"ERROR: Failed to plot combined_data: {e}")
+            import traceback
+            traceback.print_exc()
 
 
 if __name__ == "__main__":
