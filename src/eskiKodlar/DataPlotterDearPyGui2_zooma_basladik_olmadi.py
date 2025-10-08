@@ -392,11 +392,11 @@ class PanelWrapper:
         self._create_plots()
 
     def _create_plots(self) -> None:
-        """Create actual plots from the collected data."""
+        """Create actual plots from the collected data with control buttons."""
         try:
             # Prepare combined data for single plot
             combined_data = {}
-
+            
             # Add OHLC data if trader data is available
             if self.trader_data and hasattr(self.trader_data, 'Open'):
                 # Safe timestamp handling for numpy arrays
@@ -404,7 +404,7 @@ class PanelWrapper:
                     combined_data["timestamps"] = self.x_data
                 else:
                     combined_data["timestamps"] = list(range(len(self.trader_data.Close)))
-
+                    
                 combined_data["open"] = list(self.trader_data.Open) if hasattr(self.trader_data.Open, '__iter__') else [self.trader_data.Open] * len(self.trader_data.Close)
                 combined_data["high"] = list(self.trader_data.High) if hasattr(self.trader_data.High, '__iter__') else [self.trader_data.High] * len(self.trader_data.Close)
                 combined_data["low"] = list(self.trader_data.Low) if hasattr(self.trader_data.Low, '__iter__') else [self.trader_data.Low] * len(self.trader_data.Close)
@@ -416,20 +416,104 @@ class PanelWrapper:
                     if data is not None and hasattr(data, '__len__') and len(data) > 0:
                         combined_data[label] = list(data)
 
-            # Create single plot with both OHLC and line data
-            if combined_data:
-                self.AddPlot(
-                    plot_type="combined",  # New plot type for mixed data
-                    series_data=combined_data,
-                    options={"title": f"{self.title} - Trading Chart", "height": 400}
-                )
+            # Create layout with buttons and plot side by side
+            if combined_data and dpg.does_item_exist(self.panel_tag):
+                # Create horizontal group for buttons + plot
+                horizontal_group = dpg.add_group(horizontal=True, parent=self.panel_tag)
+                
+                # Left side: Control buttons
+                self._create_control_buttons(horizontal_group)
+                
+                # Right side: Plot
+                self._create_plot_with_data(combined_data, horizontal_group)
 
             print(f"DEBUG: _create_plots completed for panel: {self.title}")
-
+            
         except Exception as e:
             print(f"DEBUG: Error in _create_plots: {e}")
             import traceback
             traceback.print_exc()
+    
+    def _create_control_buttons(self, parent_group) -> None:
+        """Create control buttons for zoom and pan operations."""
+        button_width = 80
+        
+        with dpg.group(parent=parent_group):
+            # Sync buttons
+            dpg.add_text("Sync Controls:")
+            dpg.add_button(label="ButtonZoom", width=button_width,
+                          callback=self._on_button_sync_zoom,
+                          user_data={"panel_id": id(self)})
+            dpg.add_button(label="ButtonPan", width=button_width,
+                          callback=self._on_button_sync_pan,
+                          user_data={"panel_id": id(self)})
+            
+            dpg.add_separator()
+            
+            # X-axis controls
+            dpg.add_text("X-Axis Controls:")
+            dpg.add_button(label="X Zoom+", width=button_width,
+                          callback=self._on_x_zoom_plus,
+                          user_data={"panel_id": id(self)})
+            dpg.add_button(label="X Zoom-", width=button_width,
+                          callback=self._on_x_zoom_minus,
+                          user_data={"panel_id": id(self)})
+            
+            dpg.add_separator()
+            
+            # Y-axis controls
+            dpg.add_text("Y-Axis Controls:")
+            dpg.add_button(label="Y Zoom+", width=button_width,
+                          callback=self._on_y_zoom_plus,
+                          user_data={"panel_id": id(self)})
+            dpg.add_button(label="Y Zoom-", width=button_width,
+                          callback=self._on_y_zoom_minus,
+                          user_data={"panel_id": id(self)})
+
+    def _create_plot_with_data(self, combined_data: Dict[str, Any], horizontal_group) -> None:
+        """Create the actual plot with the provided data."""
+        plot_tag = f"{self.panel_tag}_plot_{len(self.content_items)}"
+        options = {"title": f"{self.title} - Trading Chart", "height": 400}
+        
+        if dpg.does_item_exist(self.panel_tag):
+            # Get panel dimensions for dynamic sizing
+            panel_width = dpg.get_item_width(self.panel_tag)
+            panel_height = dpg.get_item_height(self.panel_tag)
+            
+            # Adjust width to account for buttons (reduce by button area)
+            if panel_width > 0:
+                width = max(panel_width - 120, 400)  # Leave space for buttons
+            else:
+                width = options.get("width", 600)
+                
+            if panel_height > 0:
+                height = panel_height - 40  # Leave margin for title and padding
+            else:
+                height = options.get("height", 300)
+
+            dpg.add_plot(tag=plot_tag, parent=horizontal_group, height=height, width=width,
+                        label=options.get("title", "Plot"), no_title=True,
+                        callback=self._on_plot_interaction)
+            
+            # Add plot legend to enable click interaction
+            dpg.add_plot_legend(parent=plot_tag)
+
+            x_axis_tag = f"{plot_tag}_x_axis"
+            y_axis_tag = f"{plot_tag}_y_axis"
+
+            dpg.add_plot_axis(dpg.mvXAxis, tag=x_axis_tag, parent=plot_tag, label="Time")
+            dpg.add_plot_axis(dpg.mvYAxis, tag=y_axis_tag, parent=plot_tag, label="Value")
+
+            # Store axis info in plot for callback access
+            self._store_plot_axis_info(plot_tag, x_axis_tag, y_axis_tag)
+
+            # Register axes with MainPanel for synchronization
+            self._register_axes_with_main_panel(x_axis_tag, y_axis_tag)
+
+            self._add_series_to_plot("combined", combined_data, x_axis_tag, y_axis_tag, options)
+
+        self.content_items.append({"type": "plot", "tag": plot_tag, "plot_type": "combined",
+                                 "series_data": combined_data, "options": options})
 
     def _register_axes_with_main_panel(self, x_axis_tag: str, y_axis_tag: str) -> None:
         """Register plot axes with the MainPanel for synchronization."""
@@ -437,23 +521,23 @@ class PanelWrapper:
             # Find the MainPanel by looking at parent hierarchy
             # This is a bit of a hack, but necessary to link PanelWrapper to MainPanel
             main_panel_tag = self.parent_tag  # This should be the main_panel_tag from MainPanel
-
+            
             # We need access to the main DataPlotterDearPyGui2 instance
-            # For now, we'll use a simple approach - store axes info locally and
+            # For now, we'll use a simple approach - store axes info locally and 
             # let MainPanel discover them when needed
             if not hasattr(self, '_plot_axes'):
                 self._plot_axes = {"x_axes": [], "y_axes": []}
-
+                
             if x_axis_tag not in self._plot_axes["x_axes"]:
                 self._plot_axes["x_axes"].append(x_axis_tag)
             if y_axis_tag not in self._plot_axes["y_axes"]:
                 self._plot_axes["y_axes"].append(y_axis_tag)
-
+                
             print(f"DEBUG: PanelWrapper registered axes - X: {x_axis_tag}, Y: {y_axis_tag}")
-
+            
             # Try to find and register with MainPanel if possible
             # This is a temporary solution - in real usage, you would pass the MainPanel reference
-
+            
         except Exception as e:
             print(f"DEBUG: Error registering axes: {e}")
 
@@ -475,14 +559,14 @@ class PanelWrapper:
                 axis_info = self._plot_axis_info[plot_tag]
                 x_axis_tag = axis_info['x_axis']
                 y_axis_tag = axis_info['y_axis']
-
+                
                 print(f"DEBUG: Plot interaction detected on {plot_tag}")
                 print(f"DEBUG: Axes - X: {x_axis_tag}, Y: {y_axis_tag}")
-
+                
                 # Try to find and trigger MainPanel synchronization
                 # This is a simplified approach - in real usage you'd need better coupling
                 self._trigger_sync_from_main_panel(x_axis_tag, y_axis_tag)
-
+                
         except Exception as e:
             print(f"DEBUG: Error in plot interaction callback: {e}")
 
@@ -505,6 +589,149 @@ class PanelWrapper:
         """Set reference to MainPanel for synchronization."""
         self._main_panel_ref = main_panel
         print("DEBUG: MainPanel reference set for synchronization")
+
+    # Button callback functions
+    def _on_button_sync_zoom(self, sender, app_data, user_data) -> None:
+        """ButtonZoom: Apply this panel's zoom level to all other charts."""
+        try:
+            print("ButtonZoom pressed - syncing zoom to other charts")
+            
+            # Get current panel's plot axis info
+            current_plot_axis = self._get_current_plot_axis()
+            if current_plot_axis and self._main_panel_ref:
+                x_axis_tag = current_plot_axis['x_axis']
+                y_axis_tag = current_plot_axis['y_axis']
+                
+                # Get current zoom limits
+                if dpg.does_item_exist(x_axis_tag):
+                    x_min, x_max = dpg.get_axis_limits(x_axis_tag)
+                    
+                    # Apply to all other charts via MainPanel
+                    main_panel = self._main_panel_ref
+                    main_panel.CollectAllPlotAxes()
+                    
+                    # Apply current zoom to all other axes
+                    for other_x_axis in main_panel.plot_axes["x_axes"]:
+                        if other_x_axis != x_axis_tag and dpg.does_item_exist(other_x_axis):
+                            dpg.set_axis_limits(other_x_axis, x_min, x_max)
+                    
+                    print(f"Applied zoom level ({x_min:.2f}, {x_max:.2f}) to all charts")
+                    
+        except Exception as e:
+            print(f"Error in ButtonZoom: {e}")
+
+    def _on_button_sync_pan(self, sender, app_data, user_data) -> None:
+        """ButtonPan: Apply this panel's pan level to all other charts."""
+        try:
+            print("ButtonPan pressed - syncing pan to other charts")
+            
+            # Get current panel's plot axis info
+            current_plot_axis = self._get_current_plot_axis()
+            if current_plot_axis and self._main_panel_ref:
+                x_axis_tag = current_plot_axis['x_axis']
+                y_axis_tag = current_plot_axis['y_axis']
+                
+                # Get current pan limits
+                if dpg.does_item_exist(x_axis_tag):
+                    x_min, x_max = dpg.get_axis_limits(x_axis_tag)
+                    
+                    # Apply to all other charts via MainPanel
+                    main_panel = self._main_panel_ref
+                    main_panel.CollectAllPlotAxes()
+                    
+                    # Apply current pan to all other axes
+                    for other_x_axis in main_panel.plot_axes["x_axes"]:
+                        if other_x_axis != x_axis_tag and dpg.does_item_exist(other_x_axis):
+                            dpg.set_axis_limits(other_x_axis, x_min, x_max)
+                    
+                    print(f"Applied pan level ({x_min:.2f}, {x_max:.2f}) to all charts")
+                    
+        except Exception as e:
+            print(f"Error in ButtonPan: {e}")
+
+    def _on_x_zoom_plus(self, sender, app_data, user_data) -> None:
+        """X Zoom+: Zoom in on X-axis of this chart."""
+        try:
+            print("X Zoom+ pressed")
+            current_plot_axis = self._get_current_plot_axis()
+            if current_plot_axis:
+                x_axis_tag = current_plot_axis['x_axis']
+                if dpg.does_item_exist(x_axis_tag):
+                    x_min, x_max = dpg.get_axis_limits(x_axis_tag)
+                    x_range = x_max - x_min
+                    new_range = x_range / 1.5  # Zoom in
+                    center = (x_min + x_max) / 2
+                    new_x_min = center - new_range / 2
+                    new_x_max = center + new_range / 2
+                    dpg.set_axis_limits(x_axis_tag, new_x_min, new_x_max)
+                    print(f"X-axis zoomed in: ({new_x_min:.2f}, {new_x_max:.2f})")
+        except Exception as e:
+            print(f"Error in X Zoom+: {e}")
+
+    def _on_x_zoom_minus(self, sender, app_data, user_data) -> None:
+        """X Zoom-: Zoom out on X-axis of this chart."""
+        try:
+            print("X Zoom- pressed")
+            current_plot_axis = self._get_current_plot_axis()
+            if current_plot_axis:
+                x_axis_tag = current_plot_axis['x_axis']
+                if dpg.does_item_exist(x_axis_tag):
+                    x_min, x_max = dpg.get_axis_limits(x_axis_tag)
+                    x_range = x_max - x_min
+                    new_range = x_range * 1.5  # Zoom out
+                    center = (x_min + x_max) / 2
+                    new_x_min = center - new_range / 2
+                    new_x_max = center + new_range / 2
+                    dpg.set_axis_limits(x_axis_tag, new_x_min, new_x_max)
+                    print(f"X-axis zoomed out: ({new_x_min:.2f}, {new_x_max:.2f})")
+        except Exception as e:
+            print(f"Error in X Zoom-: {e}")
+
+    def _on_y_zoom_plus(self, sender, app_data, user_data) -> None:
+        """Y Zoom+: Zoom in on Y-axis of this chart."""
+        try:
+            print("Y Zoom+ pressed")
+            current_plot_axis = self._get_current_plot_axis()
+            if current_plot_axis:
+                y_axis_tag = current_plot_axis['y_axis']
+                if dpg.does_item_exist(y_axis_tag):
+                    y_min, y_max = dpg.get_axis_limits(y_axis_tag)
+                    y_range = y_max - y_min
+                    new_range = y_range / 1.5  # Zoom in
+                    center = (y_min + y_max) / 2
+                    new_y_min = center - new_range / 2
+                    new_y_max = center + new_range / 2
+                    dpg.set_axis_limits(y_axis_tag, new_y_min, new_y_max)
+                    print(f"Y-axis zoomed in: ({new_y_min:.2f}, {new_y_max:.2f})")
+        except Exception as e:
+            print(f"Error in Y Zoom+: {e}")
+
+    def _on_y_zoom_minus(self, sender, app_data, user_data) -> None:
+        """Y Zoom-: Zoom out on Y-axis of this chart."""
+        try:
+            print("Y Zoom- pressed")
+            current_plot_axis = self._get_current_plot_axis()
+            if current_plot_axis:
+                y_axis_tag = current_plot_axis['y_axis']
+                if dpg.does_item_exist(y_axis_tag):
+                    y_min, y_max = dpg.get_axis_limits(y_axis_tag)
+                    y_range = y_max - y_min
+                    new_range = y_range * 1.5  # Zoom out
+                    center = (y_min + y_max) / 2
+                    new_y_min = center - new_range / 2
+                    new_y_max = center + new_range / 2
+                    dpg.set_axis_limits(y_axis_tag, new_y_min, new_y_max)
+                    print(f"Y-axis zoomed out: ({new_y_min:.2f}, {new_y_max:.2f})")
+        except Exception as e:
+            print(f"Error in Y Zoom-: {e}")
+
+    def _get_current_plot_axis(self):
+        """Get the current plot's axis information."""
+        if hasattr(self, '_plot_axis_info') and self._plot_axis_info:
+            # Return the first (and likely only) plot's axis info
+            for plot_tag, axis_info in self._plot_axis_info.items():
+                return axis_info
+        return None
 
 
 class StatusBarWrapper:
@@ -551,7 +778,7 @@ class MainPanel:
         self.panels = {}
         self.panel_order = []
         self.visible = True
-
+        
         # Synchronized zoom and pan system
         self.sync_enabled = True
         self.plot_axes = {"x_axes": [], "y_axes": []}
@@ -561,12 +788,12 @@ class MainPanel:
         """Add sub-panel to main panel."""
         panel_tag = f"{self.main_panel_tag}_panel_{index}"
 
-        # First add panel to data structure
+        # First add panel to data structure  
         panel_wrapper = PanelWrapper(panel_tag, self.main_panel_tag)
-
+        
         # Set MainPanel reference in wrapper for synchronization
         panel_wrapper.SetMainPanelRef(self)
-
+        
         self.panels[index] = {
             "wrapper": panel_wrapper,
             "title": title,
@@ -583,20 +810,20 @@ class MainPanel:
             self._resize_all_panels_equal()
 
         return panel_wrapper
-
+    
     def _resize_all_panels_equal(self) -> None:
         """Resize all panels to equal heights while preserving content."""
         if not dpg.does_item_exist(self.main_panel_tag):
             return
-
+            
         if len(self.panels) == 0:
             return
-
+            
         # Calculate equal height for all panels
         available_height = 2000  # Increased height for bigger panels
         equal_height = int(available_height / len(self.panels))
         equal_height = max(equal_height, 200)  # Increased minimum height
-
+        
         # Store content for each panel before deletion
         stored_contents = {}
         for index in self.panel_order:
@@ -605,35 +832,35 @@ class MainPanel:
                 wrapper = panel_info["wrapper"]
                 if wrapper and hasattr(wrapper, 'content_items'):
                     stored_contents[index] = wrapper.content_items.copy()
-
+        
         # Delete and recreate all panels with equal sizes
         for index in self.panel_order:
             if index in self.panels:
                 panel_info = self.panels[index]
                 panel_tag = panel_info["tag"]
                 title = panel_info["title"]
-
+                
                 # Delete existing panel if it exists
                 if dpg.does_item_exist(panel_tag):
                     dpg.delete_item(panel_tag)
-
+                
                 # Recreate with equal height
                 dpg.add_child_window(tag=panel_tag, parent=self.main_panel_tag,
                                    height=equal_height, border=True, label=title)
-
+                
                 # Restore content items
                 wrapper = panel_info["wrapper"]
                 if index in stored_contents and wrapper:
                     wrapper.content_items = stored_contents[index]
                     self._recreate_panel_content(wrapper)
-
+                
         print(f"DEBUG: Created {len(self.panels)} panels with equal height: {equal_height}px")
 
     def _recreate_panel_content(self, wrapper: 'PanelWrapper') -> None:
         """Recreate content items in a panel wrapper after resize."""
         if not wrapper or not hasattr(wrapper, 'content_items'):
             return
-
+            
         for item in wrapper.content_items:
             try:
                 item_type = item.get("type")
