@@ -146,6 +146,7 @@ class DataManager:
 
     # --------------------------------------------------------
     # CSV oku
+    # D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\data\01 altındaki csv dosyalarından okur
     def load_prices_from_csv(self, data_dir: str, subdir: str, file_name: str, auto_time=False):
         def _impl():
             self.clear_dataframe()
@@ -173,6 +174,185 @@ class DataManager:
 
         return self._timeit("load_prices_from_csv", _impl)
 
+    # --------------------------------------------------------
+    # CSV oku
+    # D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\data\csvFiles altındaki csv dosyalarından okur
+    def load_prices_from_csv_2(self, data_dir: str, subdir: str, file_name: str, auto_time=False):
+        def _impl():
+            self.clear_dataframe()
+
+            file_path = os.path.join(data_dir, subdir, file_name)
+
+            # Read CSV file, skipping header lines (first 7 lines are metadata)
+            df_full = pd.read_csv(file_path, skiprows=7, sep=';')
+
+            # Rename columns to match internal column names
+            df_full.rename(columns={
+                'Open': self._open_col,
+                'High': self._high_col,
+                'Low': self._low_col,
+                'Close': self._close_col,
+                'Volume': self._volume_col,
+                'Lot': self._lot_col
+            }, inplace=True)
+
+            # Combine Date and Time columns to create timestamp
+            df_full['datetime_str'] = df_full['Date'] + ' ' + df_full['Time']
+            df_full[self._timestamp_col] = pd.to_datetime(df_full['datetime_str'], format='%Y.%m.%d %H:%M:%S').astype('int64') // 1_000_000_000
+
+            # Drop the temporary columns
+            df_full.drop(columns=['Date', 'Time', 'datetime_str'], inplace=True)
+
+            # Reorder columns to match expected order
+            expected_cols = [self._timestamp_col, self._open_col, self._high_col,
+                           self._low_col, self._close_col, self._volume_col, self._lot_col]
+            df_full = df_full[expected_cols]
+
+            # Apply read mode to filter data
+            df = self._apply_read_mode(df_full)
+
+            self._df = df
+            self._last_filename = file_name
+            self._last_filesize = os.path.getsize(file_path)
+            self._bar_count = len(df)
+
+            print(f"Read mode: {self._read_mode}")
+            if self._read_params:
+                print(f"Read params: {self._read_params}")
+            print(f"Total rows in file: {len(df_full)}")
+            print(f"Loaded rows: {len(df)}")
+
+            if auto_time:
+                self.add_time_columns()
+
+        return self._timeit("load_prices_from_csv_2", _impl)
+
+    # --------------------------------------------------------
+    # CSV oku
+    # D:\iDeal\ChartData\_Exports altındaki csv dosyalarından okur
+    def load_prices_from_csv_3(self, data_dir: str, subdir: str, file_name: str, auto_time=False):
+        def _impl():
+            self.clear_dataframe()
+
+            file_path = os.path.join(data_dir, subdir, file_name)
+
+            # Read CSV file, skipping metadata and "# Data" line (first 8 lines)
+            df_full = pd.read_csv(file_path, skiprows=8, sep=';', decimal=',')
+
+            # Remove leading/trailing whitespace from column names
+            df_full.columns = df_full.columns.str.strip()
+
+            # Remove trailing empty columns if any
+            df_full = df_full.loc[:, ~df_full.columns.str.contains('^Unnamed')]
+
+            # Parse the datetime column (format: "YYYY.MM.DD HH:MM:SS")
+            df_full['datetime_parsed'] = pd.to_datetime(df_full['Date Time'].str.strip(), format='%Y.%m.%d %H:%M:%S')
+            df_full[self._timestamp_col] = df_full['datetime_parsed'].astype('int64') // 1_000_000_000
+
+            # Rename columns to match internal column names
+            df_full.rename(columns={
+                'Open': self._open_col,
+                'High': self._high_col,
+                'Low': self._low_col,
+                'Close': self._close_col,
+                'Volume': self._volume_col,
+                'Lot': self._lot_col
+            }, inplace=True)
+
+            # Drop unnecessary columns
+            df_full.drop(columns=['Id', 'Date Time', 'datetime_parsed'], inplace=True)
+
+            # Reorder columns to match expected order
+            expected_cols = [self._timestamp_col, self._open_col, self._high_col,
+                           self._low_col, self._close_col, self._volume_col, self._lot_col]
+            df_full = df_full[expected_cols]
+
+            # Apply read mode to filter data
+            df = self._apply_read_mode(df_full)
+
+            self._df = df
+            self._last_filename = file_name
+            self._last_filesize = os.path.getsize(file_path)
+            self._bar_count = len(df)
+
+            print(f"Read mode: {self._read_mode}")
+            if self._read_params:
+                print(f"Read params: {self._read_params}")
+            print(f"Total rows in file: {len(df_full)}")
+            print(f"Loaded rows: {len(df)}")
+
+            if auto_time:
+                self.add_time_columns()
+
+        return self._timeit("load_prices_from_csv_3", _impl)
+
+    # --------------------------------------------------------
+    # TXT oku
+    # D:\iDeal\ChartData\_Exports altındaki txt dosyalarından okur
+    def load_prices_from_txt_3(self, data_dir: str, subdir: str, file_name: str, auto_time=False):
+        def _impl():
+            self.clear_dataframe()
+
+            file_path = os.path.join(data_dir, subdir, file_name)
+
+            # Read TXT file, skipping metadata and "Data" line (first 8 lines)
+            df_full = pd.read_csv(file_path, skiprows=8, sep='\t', decimal=',', engine='python')
+
+            # Remove leading/trailing whitespace from all string columns
+            df_full = df_full.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
+
+            # Remove any completely empty columns
+            df_full = df_full.dropna(axis=1, how='all')
+
+            # Assign column names manually (since TXT has no header row after line 8)
+            expected_txt_cols = ['Id', 'Date', 'Time', 'Open', 'High', 'Low', 'Close', 'Volume', 'Lot']
+            if len(df_full.columns) >= 9:
+                df_full.columns = expected_txt_cols[:len(df_full.columns)]
+            else:
+                # If fewer columns, assign what we have
+                df_full.columns = expected_txt_cols[:len(df_full.columns)]
+
+            # Combine Date and Time columns to create timestamp
+            df_full['datetime_parsed'] = pd.to_datetime(df_full['Date'] + ' ' + df_full['Time'], format='%Y.%m.%d %H:%M:%S')
+            df_full[self._timestamp_col] = df_full['datetime_parsed'].astype('int64') // 1_000_000_000
+
+            # Rename columns to match internal column names
+            df_full.rename(columns={
+                'Open': self._open_col,
+                'High': self._high_col,
+                'Low': self._low_col,
+                'Close': self._close_col,
+                'Volume': self._volume_col,
+                'Lot': self._lot_col
+            }, inplace=True)
+
+            # Drop unnecessary columns
+            columns_to_drop = ['Id', 'Date', 'Time', 'datetime_parsed']
+            df_full.drop(columns=[col for col in columns_to_drop if col in df_full.columns], inplace=True)
+
+            # Reorder columns to match expected order
+            expected_cols = [self._timestamp_col, self._open_col, self._high_col,
+                           self._low_col, self._close_col, self._volume_col, self._lot_col]
+            df_full = df_full[expected_cols]
+
+            # Apply read mode to filter data
+            df = self._apply_read_mode(df_full)
+
+            self._df = df
+            self._last_filename = file_name
+            self._last_filesize = os.path.getsize(file_path)
+            self._bar_count = len(df)
+
+            print(f"Read mode: {self._read_mode}")
+            if self._read_params:
+                print(f"Read params: {self._read_params}")
+            print(f"Total rows in file: {len(df_full)}")
+            print(f"Loaded rows: {len(df)}")
+
+            if auto_time:
+                self.add_time_columns()
+
+        return self._timeit("load_prices_from_txt_3", _impl)
     # --------------------------------------------------------
     # zaman kolonlarını ekle
     def add_time_columns(self):

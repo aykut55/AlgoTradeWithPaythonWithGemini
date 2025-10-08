@@ -483,9 +483,26 @@ class AlgoTrader:
 
     def loadMarketData(self):
         # self.dataManager.create_data(600)
-        self.dataManager.set_read_mode_last_n(20000)  # Son 20000 satırı okumaya ayarla
-        self.dataManager.load_prices_from_csv(r"data", "01", "BTCUSD.csv")
+
+        # self.dataManager.set_read_mode_last_n(20000)  # Son 20000 satırı okumaya ayarla
+        # self.dataManager.load_prices_from_csv(r"data", "01", "BTCUSD.csv")
+
+        dirName = "D:\\Aykut\\Projects\\AlgoTradeWithPaythonWithGemini\\data\\csvFiles"
+        subDirName = "IMKBX\\05"
+        fileName = "XU100.csv"
+
+        subDirName = "VIP\\05"
+        fileName = "VIP-X030-T.csv"
+
+        subDirName = "IMKBH\\60"
+        fileName = "THYAO.csv"
+
+        subDirName = "CRP\\05"
+        fileName = "BTCUSDT_BNC.csv"
+        self.dataManager.load_prices_from_csv_2(dirName, subDirName, fileName)
+
         self.dataManager.add_time_columns()
+
         self.V          = self.dataManager
         self.Df         = self.dataManager.get_dataframe()
         self.EpochTime  = self.dataManager.get_epoch_time_array()
@@ -502,6 +519,9 @@ class AlgoTrader:
         self.ItemsCount = self.dataManager.get_items_count()
 
         print("========================")
+        print("FilePath    :", os.path.join(dirName, subDirName, fileName))
+        print("FileName    :", os.path.join(fileName))
+
         print("BarCount    :", self.BarCount)
         print("ItemsCount  :", self.ItemsCount)
 
