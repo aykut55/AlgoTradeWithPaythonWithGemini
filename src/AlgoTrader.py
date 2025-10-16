@@ -12,6 +12,9 @@ from src.SystemWrapper import SystemWrapper
 from src.Utils import CUtils
 from src.IndicatorManager import CIndicatorManager
 import matplotlib.pyplot as plt
+import lightningchart as lc
+from lightningchart_trader import TAChart
+import random
 
 class AlgoTrader:
     def __init__(self):
@@ -484,7 +487,7 @@ class AlgoTrader:
     def loadMarketData(self):
         # self.dataManager.create_data(600)
 
-        # self.dataManager.set_read_mode_last_n(20000)  # Son 20000 satırı okumaya ayarla
+        self.dataManager.set_read_mode_last_n(20000)  # Son 20000 satırı okumaya ayarla
         # self.dataManager.load_prices_from_csv(r"data", "01", "BTCUSD.csv")
 
         dirName = "D:\\Aykut\\Projects\\AlgoTradeWithPaythonWithGemini\\data\\csvFiles"
@@ -2234,14 +2237,15 @@ class AlgoTrader:
 
         # --------------------------------------------------------------
         print("Plotting market data...")
-        # self.plotData()
-        # self.plotData2(self.active_trader)
-        # self.plotData3(self.active_trader)  # matplotlib version - DISABLED
-        
-        # Use Dear PyGui version instead
-        # self.plotData3_DearPyGui(self.active_trader)
-        # self.plotData4_DearPyGui(self.active_trader)
+        # # self.plotData()
+        # # self.plotData2(self.active_trader)
+        # # self.plotData3(self.active_trader)  # matplotlib version - DISABLED
+        #
+        # # Use Dear PyGui version instead
+        # # self.plotData3_DearPyGui(self.active_trader)
+        # # self.plotData4_DearPyGui(self.active_trader)
         self.plotDataFinal(self.active_trader)
+        # self.plotDataLightningChart(self.active_trader)
 
         # --------------------------------------------------------------
         # Show timing reports
@@ -2897,6 +2901,54 @@ class AlgoTrader:
 
         self.dataPlotter2.Show()
         print("=== plotData bitti ===")
+
+    def plotDataLightningChart(self, trader):
+        # Valid until 24/10/2025
+        # lc.set_license(
+        #     license_key="0002-n2gsgjA3DFwG6JDuQ314OhA/o8xDLgBsLLswNw5IH+KI+lp3YDFFMJ4eUHeEm5UnO5tsUMx0tVdr4TCZl05m+MajLKAe-MEQCIEW8i0YSNbGU2hHsWF4KL18tM1jC+58Xp5Z6uuJcthAxAiBArtShQ52lTtDXvK4MDmpeP36b91TWwdpGHosAjJZ5nw==",
+        #     license_information={
+        #         "appTitle": "LightningChart Python Trial",
+        #         "company": "LightningChart Ltd.",
+        #     }
+        # )
+
+        # Your license key
+        license_key = '0002-n2gsgjA3DFwG6JDuQ314OhA/o8xDLgBsLLswNw5IH+KI+lp3YDFFMJ4eUHeEm5UnO5tsUMx0tVdr4TCZl05m+MajLKAe-MEQCIEW8i0YSNbGU2hHsWF4KL18tM1jC+58Xp5Z6uuJcthAxAiBArtShQ52lTtDXvK4MDmpeP36b91TWwdpGHosAjJZ5nw=='
+
+        # Initialize TAChart
+        trader = TAChart(
+            license_key,
+            html_text_rendering=True,
+            load_from_storage=False,
+            theme='turquoiseHexagon',
+            axis_on_right=True
+        )
+
+        # Configure the chart
+        trader.set_price_chart_type('CandleStick')  # Set the chart type
+        trader.set_chart_title('Trading Chart with Sample Data')  # Set the chart title
+
+        # Adding sample OHLC (Open, High, Low, Close) data programmatically
+        ohlc_data = [
+            {'open': 1.1, 'high': 1.2, 'low': 1.0, 'close': 1.15, 'dateTime': 'Jan 1, 1970'},
+            {'open': 1.1, 'high': 1.2, 'low': 1.0, 'close': 1.15, 'dateTime': 'Thu, 01 Jan 1970 00:00:00 GMT+0000', },
+            {'open': 2, 'high': 2, 'low': 1.8, 'close': 1.95, 'dateTime': '04 Dec 1995'},
+            {'open': 2.1, 'high': 2.1, 'low': 1.9, 'close': 2.05, 'dateTime': '04 December 1995', },
+            {'open': 1.3, 'high': 1.4, 'low': 1.2, 'close': 1.35, 'dateTime': '2019-01-01'},
+            {'open': 1.4, 'high': 1.5, 'low': 1.3, 'close': 1.45, 'dateTime': '2019-01-01T00:00:00', },
+            {'open': 1.8, 'high': 1.8, 'low': 1.6, 'close': 1.75, 'dateTime': '2019-01-01T00:00:00.000+00:00', },
+            {'open': 1.5, 'high': 1.6, 'low': 1.4, 'close': 1.55, 'dateTime': 'March 15, 2020'},
+            {'open': 1.2, 'high': 1.3, 'low': 1.1, 'close': 1.25, 'dateTime': '01/02/2022'},
+            {'open': 1.6, 'high': 1.7, 'low': 1.5, 'close': 1.65, 'dateTime': '2022/12/31'},
+        ]
+
+        # Sending the data to the chart
+        trader.set_data(ohlc_data)
+
+        # Open the chart
+        trader.open()
+
+        pass
 
     def create_signal_segments(self, trader):
         """
