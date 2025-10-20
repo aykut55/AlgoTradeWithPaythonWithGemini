@@ -488,21 +488,28 @@ class AlgoTrader:
         # self.dataManager.create_data(600)
 
         self.dataManager.set_read_mode_last_n(20000)  # Son 20000 satırı okumaya ayarla
-        # self.dataManager.load_prices_from_csv(r"data", "01", "BTCUSD.csv")
+        self.dataManager.set_read_mode_last_n(200000)  # Son 20000 satırı okumaya ayarla
+        # self.dataManager.set_read_mode_last_n(500000)  # Son 20000 satırı okumaya ayarla
+        # self.dataManager.set_read_mode_last_n(600000)  # Son 20000 satırı okumaya ayarla
 
-        dirName = "D:\\Aykut\\Projects\\AlgoTradeWithPaythonWithGemini\\data\\csvFiles"
-        subDirName = "IMKBX\\05"
-        fileName = "XU100.csv"
+        dirName = "data"
+        subDirName = "01"
+        fileName = "BTCUSD.csv"
+        self.dataManager.load_prices_from_csv(dirName, subDirName, fileName)
 
-        subDirName = "VIP\\05"
-        fileName = "VIP-X030-T.csv"
-
-        subDirName = "IMKBH\\60"
-        fileName = "THYAO.csv"
-
-        subDirName = "CRP\\05"
-        fileName = "BTCUSDT_BNC.csv"
-        self.dataManager.load_prices_from_csv_2(dirName, subDirName, fileName)
+        # dirName = "D:\\Aykut\\Projects\\AlgoTradeWithPaythonWithGemini\\data\\csvFiles"
+        # subDirName = "IMKBX\\05"
+        # fileName = "XU100.csv"
+        #
+        # subDirName = "VIP\\05"
+        # fileName = "VIP-X030-T.csv"
+        #
+        # subDirName = "IMKBH\\60"
+        # fileName = "THYAO.csv"
+        #
+        # subDirName = "CRP\\05"
+        # fileName = "BTCUSDT_BNC.csv"
+        # self.dataManager.load_prices_from_csv_2(dirName, subDirName, fileName)
 
         self.dataManager.add_time_columns()
 
@@ -521,13 +528,16 @@ class AlgoTrader:
         self.BarCount   = self.dataManager.get_bar_count()
         self.ItemsCount = self.dataManager.get_items_count()
 
-        print("========================")
+        print("\n=====================================================================")
         print("FilePath    :", os.path.join(dirName, subDirName, fileName))
         print("FileName    :", os.path.join(fileName))
 
         print("BarCount    :", self.BarCount)
         print("ItemsCount  :", self.ItemsCount)
 
+        print("\n=====================================================================")
+        print("Last Elements:")
+        print("\n=====================================================================")
         print("InputTime   :", self.dataManager.get_timestamp_array()[-5:])
         print("EpochTime   :", self.dataManager.get_epoch_time_array()[-5:])
 
@@ -541,7 +551,23 @@ class AlgoTrader:
         print("Close       :", self.dataManager.get_close_array()[-5:])
         print("Volume      :", self.dataManager.get_volume_array()[-5:])
         print("Lot         :", self.dataManager.get_lot_array()[-5:])
-        print("========================")
+        print("\n=====================================================================")
+        print("First Elements:")
+        print("\n=====================================================================")
+        print("InputTime   :", self.dataManager.get_timestamp_array()[5:])
+        print("EpochTime   :", self.dataManager.get_epoch_time_array()[5:])
+
+        print("DateTime    :", self.dataManager.get_date_time_array_as_str()[5:])
+        print("Date        :", self.dataManager.get_date_array_as_str()[5:])
+        print("Time        :", self.dataManager.get_time_array_as_str()[5:])
+
+        print("Open        :", self.dataManager.get_open_array()[5:])
+        print("High        :", self.dataManager.get_high_array()[5:])
+        print("Low         :", self.dataManager.get_low_array()[5:])
+        print("Close       :", self.dataManager.get_close_array()[5:])
+        print("Volume      :", self.dataManager.get_volume_array()[5:])
+        print("Lot         :", self.dataManager.get_lot_array()[5:])
+        print("\n=====================================================================")
 
     def loadMarketDataFromSqliteDB(self):
         # SQLite veritabanından veri yükle
@@ -2205,8 +2231,8 @@ class AlgoTrader:
             trader.update_data_frame()
             print(trader._df)
             print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
-            trader.write_data_frame_to_file_as_tabular("trading_data_tabular.txt")
-            trader.write_statistics_to_file_as_tabular("trading_statistics_tabular.txt")
+            # trader.write_data_frame_to_file_as_tabular("trading_data_tabular.txt")
+            # trader.write_statistics_to_file_as_tabular("trading_statistics_tabular.txt")
 
             # # CSV formatında kaydet
             # trader.write_data_frame_to_file("trading_0_data.csv")
@@ -2244,8 +2270,8 @@ class AlgoTrader:
         # # Use Dear PyGui version instead
         # # self.plotData3_DearPyGui(self.active_trader)
         # # self.plotData4_DearPyGui(self.active_trader)
-        self.plotDataFinal(self.active_trader)
-        # self.plotDataLightningChart(self.active_trader)
+        # self.plotDataFinal(self.active_trader)
+        self.plotDataLightningChart(self.active_trader)
 
         # --------------------------------------------------------------
         # Show timing reports
@@ -2913,42 +2939,200 @@ class AlgoTrader:
         # )
 
         # Your license key
-        license_key = '0002-n2gsgjA3DFwG6JDuQ314OhA/o8xDLgBsLLswNw5IH+KI+lp3YDFFMJ4eUHeEm5UnO5tsUMx0tVdr4TCZl05m+MajLKAe-MEQCIEW8i0YSNbGU2hHsWF4KL18tM1jC+58Xp5Z6uuJcthAxAiBArtShQ52lTtDXvK4MDmpeP36b91TWwdpGHosAjJZ5nw=='
+        # license_key = '0002-n2gsgjA3DFwG6JDuQ314OhA/o8xDLgBsLLswNw5IH+KI+lp3YDFFMJ4eUHeEm5UnO5tsUMx0tVdr4TCZl05m+MajLKAe-MEQCIEW8i0YSNbGU2hHsWF4KL18tM1jC+58Xp5Z6uuJcthAxAiBArtShQ52lTtDXvK4MDmpeP36b91TWwdpGHosAjJZ5nw=='
 
-        # Initialize TAChart
-        trader = TAChart(
+        # Valid until 24/10/2025
+        license_key = 'T001-igghKW24Hy+bNW3D75Vsrt4Dehy+LQAJIcR5oRU3vzU9upv9A8CKcRN90iUTGV+NMh6rGFz0u6VblO4xQC+LJhUQW+I=-MEUCIQDN6JiBmSjXsJsnLeHSPI7xG/RXPCoRNlueCvJQrR1V8AIgb/If/lPsciYTm3x0ELZA3nqyv7unFgd1wyxsPNpH1PA='
+
+        # Initialize TAChart turquoiseHexagon
+        lightningChartTrader = TAChart(
             license_key,
-            html_text_rendering=True,
+            html_text_rendering=False,
             load_from_storage=False,
-            theme='turquoiseHexagon',
+            theme='darkGold',
             axis_on_right=True
         )
 
         # Configure the chart
-        trader.set_price_chart_type('CandleStick')  # Set the chart type
-        trader.set_chart_title('Trading Chart with Sample Data')  # Set the chart title
+        lightningChartTrader.set_price_chart_type('CandleStick')  # Set the chart type
+        lightningChartTrader.set_chart_title('Trading Chart with Sample Data')  # Set the chart title
+        # lightningChartTrader.show_zoom_band_chart(True)  # Enable the zoom band chart
+        lightningChartTrader.set_vertical_zooming(True)
+        lightningChartTrader.set_rectangle_zooming_button(1)
+        lightningChartTrader.set_panning_button(0)
+        # set_wheel_zooming(zooming_mode)[source]
+
+        # lightningChartTrader.show_file_selection(False)  # Hide the file selection button
+        # lightningChartTrader.set_chart_title('myChart v1')  # Set the chart title
+        # lightningChartTrader.set_percent_scale(True)  # Enable percentage scale
+        # lightningChartTrader.set_ohlc_cursor_tracking('Close')  # Set OHLC cursor tracking type to 'Close'
 
         # Adding sample OHLC (Open, High, Low, Close) data programmatically
-        ohlc_data = [
-            {'open': 1.1, 'high': 1.2, 'low': 1.0, 'close': 1.15, 'dateTime': 'Jan 1, 1970'},
-            {'open': 1.1, 'high': 1.2, 'low': 1.0, 'close': 1.15, 'dateTime': 'Thu, 01 Jan 1970 00:00:00 GMT+0000', },
-            {'open': 2, 'high': 2, 'low': 1.8, 'close': 1.95, 'dateTime': '04 Dec 1995'},
-            {'open': 2.1, 'high': 2.1, 'low': 1.9, 'close': 2.05, 'dateTime': '04 December 1995', },
-            {'open': 1.3, 'high': 1.4, 'low': 1.2, 'close': 1.35, 'dateTime': '2019-01-01'},
-            {'open': 1.4, 'high': 1.5, 'low': 1.3, 'close': 1.45, 'dateTime': '2019-01-01T00:00:00', },
-            {'open': 1.8, 'high': 1.8, 'low': 1.6, 'close': 1.75, 'dateTime': '2019-01-01T00:00:00.000+00:00', },
-            {'open': 1.5, 'high': 1.6, 'low': 1.4, 'close': 1.55, 'dateTime': 'March 15, 2020'},
-            {'open': 1.2, 'high': 1.3, 'low': 1.1, 'close': 1.25, 'dateTime': '01/02/2022'},
-            {'open': 1.6, 'high': 1.7, 'low': 1.5, 'close': 1.65, 'dateTime': '2022/12/31'},
-        ]
+        # ohlc_data = [
+        #     {'open': 1.1, 'high': 1.2, 'low': 1.0, 'close': 1.15, 'dateTime': 'Jan 1, 1970'},
+        #     {'open': 1.1, 'high': 1.2, 'low': 1.0, 'close': 1.15, 'dateTime': 'Thu, 01 Jan 1970 00:00:00 GMT+0000', },
+        #     {'open': 2, 'high': 2, 'low': 1.8, 'close': 1.95, 'dateTime': '04 Dec 1995'},
+        #     {'open': 2.1, 'high': 2.1, 'low': 1.9, 'close': 2.05, 'dateTime': '04 December 1995', },
+        #     {'open': 1.3, 'high': 1.4, 'low': 1.2, 'close': 1.35, 'dateTime': '2019-01-01'},
+        #     {'open': 1.4, 'high': 1.5, 'low': 1.3, 'close': 1.45, 'dateTime': '2019-01-01T00:00:00', },
+        #     {'open': 1.8, 'high': 1.8, 'low': 1.6, 'close': 1.75, 'dateTime': '2019-01-01T00:00:00.000+00:00', },
+        #     {'open': 1.5, 'high': 1.6, 'low': 1.4, 'close': 1.55, 'dateTime': 'March 15, 2020'},
+        #     {'open': 1.2, 'high': 1.3, 'low': 1.1, 'close': 1.25, 'dateTime': '01/02/2022'},
+        #     {'open': 1.6, 'high': 1.7, 'low': 1.5, 'close': 1.65, 'dateTime': '2022/12/31'},
+        # ]
+
+        # Create OHLC data from trader's data using a loop
+        ohlc_data = []
+        for i in range(len(trader.Close)):
+            ohlc_data.append(
+                {
+                'open': trader.Open[i],
+                'high': trader.High[i],
+                'low': trader.Low[i],
+                'close': trader.Close[i],
+                'dateTime': str(trader.DateTime[i])
+                }
+            )
+
+        print("DateTime    :", ohlc_data[-5:])
+
+        # Clearing all data from the chart
+        lightningChartTrader.clear_data()
 
         # Sending the data to the chart
-        trader.set_data(ohlc_data)
+        lightningChartTrader.set_data(ohlc_data)
+
+        # Setting the chart type in code.
+        lightningChartTrader.set_price_chart_type('CandleStick')
 
         # Open the chart
-        trader.open()
+        lightningChartTrader.open()
 
-        pass
+        # ==============================================================================================================
+
+        # Time array boşsa, basit index array oluştur
+        if len(self.Time) == 0:
+            print("=== WARNING: Time array boş! Index array oluşturuluyor ===")
+            time_array = list(range(len(self.Close)))
+        else:
+            time_array = self.Time
+
+        LevelZero1 = self.create_level_series(self.BarCount, 0)
+        LevelZero2 = self.create_level_series(self.BarCount, 0)
+
+        balance = trader.Lists.BakiyeFiyatList
+        bakiye = trader.Lists.BakiyeFiyatList
+
+        getiriFiyatList = trader.Lists.GetiriFiyatList
+        getiriFiyatNetList = trader.Lists.GetiriFiyatNetList
+
+        getiriKz = trader.Lists.GetiriKz
+        getiriKzNet = trader.Lists.GetiriKzNet
+
+        karZararPuanList = trader.Lists.KarZararPuanList
+        karZararFiyatList = trader.Lists.KarZararFiyatList
+
+        # Calculate additional data
+        farkList = [0.0] * len(trader.Lists.BakiyeFiyatList)
+        for i in range(len(trader.Lists.BakiyeFiyatList)):
+            farkList[i] = trader.Lists.BakiyeFiyatList[i] - trader.Lists.GetiriFiyatList[i]
+
+        farkList2 = [0.0] * len(trader.Lists.GetiriKz)
+        for i in range(len(trader.Lists.GetiriKz)):
+            farkList2[i] = trader.Lists.GetiriKz[i] - trader.Lists.GetiriKzNet[i]
+
+        # ==============================================================================================================
+
+        # _TradingSignals
+
+        # Add custom overlay
+        overlay = lightningChartTrader.add_custom_overlay()
+        overlay.set_line_color('#30EE50')
+        overlay.set_name('Most')
+        overlay.set_offset(13-1)
+
+        # Set data to overlay
+        overlay.set_data(self.Most.tolist())
+
+        # Add custom overlay
+        overlay1 = lightningChartTrader.add_custom_overlay()
+        overlay1.set_line_color('#50EE50')
+        overlay1.set_name('ExMov')
+        overlay1.set_offset(14)
+
+        # Set data to overlay
+        overlay1.set_data(self.ExMov.tolist())
+
+
+        # Add custom study
+        study = lightningChartTrader.add_custom_study()
+        study.set_line_color('#EE3050')
+        study.set_name('combined_data_normalized')
+        study.set_offset(13)
+
+        # Set data to study
+        study.set_data(trader.combined_data_normalized)
+
+        # # Add custom study
+        # study1 = study.add_custom_study()
+        # study1.set_line_color('#EE3050')
+        # study1.set_name('LevelZero1')
+        # study1.set_offset(13)
+        #
+        # # Set data to study
+        # study1.set_data(LevelZero1.tolist())
+
+        # Add custom study
+        study = lightningChartTrader.add_custom_study()
+        study.set_line_color('#EE3050')
+        study.set_name('karZararFiyatList')
+        study.set_offset(13)
+
+        # Set data to study
+        study.set_data(karZararFiyatList)
+
+        # Add custom study
+        study = lightningChartTrader.add_custom_study()
+        study.set_line_color('#EE3050')
+        study.set_name('getiriFiyatNetList')
+        study.set_offset(13)
+
+        # Set data to study
+        study.set_data(getiriFiyatNetList)
+
+        #
+        # LevelZero1
+        # # Al/sat sinyallerini ekle
+        # trader.combined_data, trader.segments
+        #
+        # self.Most
+        # self.ExMov
+        #
+        # LevelZero2
+
+
+        # ==============================================================================================================
+
+
+
+
+
+        self.dataPlotter2.RegisterDataSeriesToPanel("_TradingSignals", 1)
+        self.dataPlotter2.RegisterDataSeriesToPanel("LevelZero1", 1)
+        self.dataPlotter2.SetLineProperties("_TradingSignals", color='cyan', lineWidth=1)
+        self.dataPlotter2.SetLineProperties("LevelZero1", color='red', lineWidth=1)
+        # self.dataPlotter2.ShowTradingSignals(trader.combined_data, trader.segments)  # Al/sat sinyallerini ekle
+
+        self.dataPlotter2.RegisterDataSeriesToPanel("ExMov", 0)
+        self.dataPlotter2.RegisterDataSeriesToPanel("Most", 0)
+
+        self.dataPlotter2.RegisterDataSeriesToPanel("LevelZero2", 2)
+        self.dataPlotter2.RegisterDataSeriesToPanel("karZararFiyatList", 2)
+        self.dataPlotter2.RegisterDataSeriesToPanel("getiriFiyatNetList", 3)
+
+
+
+
 
     def create_signal_segments(self, trader):
         """
