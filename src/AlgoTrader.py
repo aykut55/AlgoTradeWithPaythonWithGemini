@@ -487,21 +487,25 @@ class AlgoTrader:
     def loadMarketData(self):
         # self.dataManager.create_data(600)
 
-        self.dataManager.set_read_mode_last_n(20000)  # Son 20000 satırı okumaya ayarla
+        # self.dataManager.set_read_mode_last_n(20000)  # Son 20000 satırı okumaya ayarla
         # self.dataManager.load_prices_from_csv(r"data", "01", "BTCUSD.csv")
 
         dirName = "D:\\Aykut\\Projects\\AlgoTradeWithPaythonWithGemini\\data\\csvFiles"
         subDirName = "IMKBX\\05"
         fileName = "XU100.csv"
 
-        subDirName = "VIP\\05"
-        fileName = "VIP-X030-T.csv"
-
         subDirName = "IMKBH\\60"
         fileName = "THYAO.csv"
 
         subDirName = "CRP\\05"
         fileName = "BTCUSDT_BNC.csv"
+
+        subDirName = "VIP\\05"
+        fileName = "VIP-X030-T.csv"
+
+        subDirName = "VIP\\01"
+        fileName = "VIP-X030-T.csv"
+
         self.dataManager.load_prices_from_csv_2(dirName, subDirName, fileName)
 
         self.dataManager.add_time_columns()
@@ -2234,6 +2238,39 @@ class AlgoTrader:
             self.active_trader.combined_data_normalized = combined_data_normalized
             # if self.active_trader.combined_data:
             #     self.plot_combined_signals(self.active_trader.combined_data, 1000)
+
+        # --------------------------------------------------------------
+        print("Saving data to files...")
+        # self.V          = self.dataManager
+        # self.Df         = self.dataManager.get_dataframe()
+        # self.EpochTime  = self.dataManager.get_epoch_time_array()
+        # self.DateTime   = self.dataManager.get_date_time_array()
+        # self.Date       = self.dataManager.get_date_array()
+        # self.Time       = self.dataManager.get_time_array()
+        # self.Open       = self.dataManager.get_open_array()
+        # self.High       = self.dataManager.get_high_array()
+        # self.Low        = self.dataManager.get_low_array()
+        # self.Close      = self.dataManager.get_close_array()
+        # self.Volume     = self.dataManager.get_volume_array()
+        # self.Lot        = self.dataManager.get_lot_array()
+        # self.BarCount   = self.dataManager.get_bar_count()
+        # self.ItemsCount = self.dataManager.get_items_count()
+
+        # self.mySystem.create_modules().initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open,
+                                                  # self.High, self.Low, self.Close, self.Volume, self.Lot)
+
+        # trader.combined_data_normalized, "_TradingSignals")
+        # LevelZero1 = self.create_level_series(self.BarCount, 0)
+        # self.Most, "Most")
+        # self.ExMov, "ExMov")
+        # self.Ma5, "Ma5")
+        # karZararPuanList = trader.Lists.KarZararPuanList
+        # karZararFiyatList = trader.Lists.KarZararFiyatList
+        # getiriFiyatList = trader.Lists.GetiriFiyatList
+        # getiriFiyatNetList = trader.Lists.GetiriFiyatNetList
+        #
+        # balance = trader.Lists.BakiyeFiyatList
+        # bakiye = trader.Lists.BakiyeFiyatList
 
         # --------------------------------------------------------------
         print("Plotting market data...")
