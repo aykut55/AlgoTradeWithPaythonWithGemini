@@ -1,4 +1,10 @@
+import os
+import plotly.io as pio
 from src.AlgoTrader import AlgoTrader
+
+# Configure plotly to avoid PyCharm internal server issues
+os.environ["PLOTLY_RENDERER"] = "browser"
+pio.renderers.default = "browser"
 
 if __name__ == "__main__":
     print("Hello, Gemini!")

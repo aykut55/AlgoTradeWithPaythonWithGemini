@@ -2312,6 +2312,7 @@ class AlgoTrader:
         # # self.plotData4_DearPyGui(self.active_trader)
         self.plotDataFinal(self.active_trader)
         # self.plotDataLightningChart(self.active_trader)
+        # self.plotDataPlotly(self.active_trader)
 
         # --------------------------------------------------------------
         # Show timing reports
@@ -3170,9 +3171,27 @@ class AlgoTrader:
         self.dataPlotter2.RegisterDataSeriesToPanel("karZararFiyatList", 2)
         self.dataPlotter2.RegisterDataSeriesToPanel("getiriFiyatNetList", 3)
 
-
-
-
+    def plotDataPlotly(self, trader):
+        # DataPlotter3 kullanarak plotly ile grafik çizimi
+        from src.DataPlotter3 import DataPlotter3
+        
+        # DataPlotter3 instance oluştur
+        dataPlotter3 = DataPlotter3()
+        
+        # plotDataFinal'daki kodu kopyala ve adapt et
+        dataPlotter3.Clear()
+        dataPlotter3.SetData(trader)
+        
+        symbol = "BTCUSD"
+        timeframe = "1min"
+        dataPlotter3.SetTitle(f"{symbol} {timeframe}")
+        
+        # plotDataFinal'daki verileri plotDataPlotly'ye aktar
+        # Performance: 200K veri için 10K'ya düşür (20x hızlanma)
+        max_points = 10000 if len(self.Close) > 10000 else len(self.Close)
+        print(f"Using max_points: {max_points} for {len(self.Close)} data points")
+        dataPlotter3.plotDataPlotly(trader, max_points=max_points)
+        dataPlotter3.Show()
 
     def create_signal_segments(self, trader):
         """
