@@ -16,8 +16,8 @@ target_base_dir = r"D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\data\csvFil
 config_dir = r"D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\config"
 
 # Flagler - varsayılan olarak True
-include_ids = False      # ID sütununu ekle/çıkar
-include_header = True   # Header bilgilerini ekle/çıkar
+include_ids = True       # ID sütununu ekle/çıkar
+include_header = True    # Header bilgilerini ekle/çıkar
 
 # Veri ayraç tipi - 'auto' (otomatik tespit), 'tab', 'space', ',' vb.
 '''
@@ -395,21 +395,17 @@ def convert_files():
 
             # CSV dosyasını oluştur
             with open(target_csv_path, 'w', newline='', encoding='utf-8') as csvfile:
-                
+
                 # Header bilgilerini yaz (flag'e göre)
                 if include_header:
                     # csvfile.write('# Header Information\n')
                     for key, value in header_info.items():
                         csvfile.write(f'# {key}: {value}\n')
-                    csvfile.write('\n')  # Boş satır
-                
-                # Sütun başlıklarını yaz (ID flag'ine göre)
-                if include_ids:
-                    csvfile.write(f'id{csv_separator}Date{csv_separator}Time{csv_separator}Open{csv_separator}High{csv_separator}Low{csv_separator}Close{csv_separator}Volume{csv_separator}Lot\n')
-                else:
-                    csvfile.write(f'Date{csv_separator}Time{csv_separator}Open{csv_separator}High{csv_separator}Low{csv_separator}Close{csv_separator}Volume{csv_separator}Lot\n')
-                
-                # Veri satırlarını yaz
+                    # Format ve Data satırlarını ekle
+                    csvfile.write('# Format : Id Date Time Open High Low Close Volume Lot\n')
+                    csvfile.write('# Data\n')
+
+                # Veri satırlarını yaz (ID dahil)
                 for data_line in data_lines:
                     parsed_data = parse_data_line(data_line, include_ids, data_separator)
                     if parsed_data:
