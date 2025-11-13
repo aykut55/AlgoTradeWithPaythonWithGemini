@@ -287,6 +287,79 @@ class DataManager:
         return self._timeit("load_prices_from_csv_3", _impl)
 
     # --------------------------------------------------------
+    # CSV oku
+    # Yeni format için: header metadata + # Data satırı
+    def load_prices_from_csv_4(self, data_dir: str, subdir: str, file_name: str, auto_time=False):
+        def _impl():
+            self.clear_dataframe()
+
+            file_path = os.path.join(data_dir, subdir, file_name)
+
+            # First, read the header to get column names from "# Format :" line
+            with open(file_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                
+            # Find the Format line and extract column names
+            format_line = None
+            data_line_index = None
+            for i, line in enumerate(lines):
+                if line.startswith('# Format :'):
+                    format_line = line
+                elif line.strip() == '# Data':
+                    data_line_index = i
+                    break
+            
+            if format_line is None or data_line_index is None:
+                raise ValueError("Could not find '# Format :' or '# Data' line in file")
+            
+            # Parse column names from format line: "# Format : Id Date Time Open High Low Close Volume Lot"
+            column_names = format_line.split(':')[1].strip().split()
+            
+            # Read CSV file, skipping lines up to and including "# Data"
+            df_full = pd.read_csv(file_path, skiprows=data_line_index + 1, sep=';', names=column_names)
+
+            # Rename columns to match internal column names
+            df_full.rename(columns={
+                'Open': self._open_col,
+                'High': self._high_col,
+                'Low': self._low_col,
+                'Close': self._close_col,
+                'Volume': self._volume_col,
+                'Lot': self._lot_col
+            }, inplace=True)
+
+            # Combine Date and Time columns to create timestamp
+            df_full['datetime_str'] = df_full['Date'] + ' ' + df_full['Time']
+            df_full[self._timestamp_col] = pd.to_datetime(df_full['datetime_str'], format='%Y.%m.%d %H:%M:%S').astype('int64') // 1_000_000_000
+
+            # Drop the temporary columns including Id
+            df_full.drop(columns=['Id', 'Date', 'Time', 'datetime_str'], inplace=True)
+
+            # Reorder columns to match expected order
+            expected_cols = [self._timestamp_col, self._open_col, self._high_col,
+                           self._low_col, self._close_col, self._volume_col, self._lot_col]
+            df_full = df_full[expected_cols]
+
+            # Apply read mode to filter data
+            df = self._apply_read_mode(df_full)
+
+            self._df = df
+            self._last_filename = file_name
+            self._last_filesize = os.path.getsize(file_path)
+            self._bar_count = len(df)
+
+            print(f"Read mode: {self._read_mode}")
+            if self._read_params:
+                print(f"Read params: {self._read_params}")
+            print(f"Total rows in file: {len(df_full)}")
+            print(f"Loaded rows: {len(df)}")
+
+            if auto_time:
+                self.add_time_columns()
+
+        return self._timeit("load_prices_from_csv_4", _impl)
+
+    # --------------------------------------------------------
     # TXT oku
     # D:\iDeal\ChartData\_Exports altındaki txt dosyalarından okur
     def load_prices_from_txt_3(self, data_dir: str, subdir: str, file_name: str, auto_time=False):
