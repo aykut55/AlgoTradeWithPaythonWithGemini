@@ -2275,262 +2275,8 @@ class AlgoTrader:
 
         # --------------------------------------------------------------
         print("Saving data to files...")
-        
-        # OHLC verilerini CSV dosyasına kaydet
         dstDir = "."
-        dstFileName = "_ohlc.csv"
-        dstFilePath = dstDir + "/" + dstFileName
-
-        # Header bilgilerini hazırla
-        header_lines = [
-            f"# Kayit_Zamani     : {time.strftime('%Y.%m.%d %H:%M:%S')}",
-            f"# GrafikSembol     : .........",
-            f"# GrafikPeriyot    : ........",
-            f"# BarCount         : {self.dataManager.get_bar_count()}",
-            f"# Baslangic Tarihi : {pd.to_datetime(self.dataManager.get_timestamp_array()[0], unit='s').strftime('%Y.%m.%d %H:%M:%S')}" if self.dataManager.get_bar_count() > 0 else "# Baslangic_Tarihi: ",
-            f"# Bitis Tarihi     : {pd.to_datetime(self.dataManager.get_timestamp_array()[-1], unit='s').strftime('%Y.%m.%d %H:%M:%S')}" if self.dataManager.get_bar_count() > 0 else "# Bitis_Tarihi: ",
-            f"# Format           : Id Date Time Open High Low Close Volume Lot",
-            f"# Data"
-        ]
-
-        # CSV dosyasını yaz
-        with open(dstFilePath, 'w', newline='', encoding='utf-8') as f:
-            # Header'ı yaz
-            for line in header_lines:
-                f.write(line + '\n')
-
-            # Data satırlarını yaz
-            timestamps = self.dataManager.get_timestamp_array()
-            opens = self.dataManager.get_open_array()
-            highs = self.dataManager.get_high_array()
-            lows = self.dataManager.get_low_array()
-            closes = self.dataManager.get_close_array()
-            volumes = self.dataManager.get_volume_array()
-            lots = self.dataManager.get_lot_array()
-
-            total_bars = self.dataManager.get_bar_count()
-            progress_step = max(1, total_bars // 100)  # Her %1'de progress göster
-
-            for i in range(total_bars):
-                # Progress göster
-                if i % progress_step == 0 or i == total_bars - 1:
-                    progress_percent = (i + 1) * 100 // total_bars
-                    print(f"Writing OHLC data... {progress_percent}% ({i+1}/{total_bars})")
-
-                # Timestamp'i date ve time'a çevir
-                dt = pd.to_datetime(timestamps[i], unit='s')
-                date_str = dt.strftime('%Y.%m.%d')
-                time_str = dt.strftime('%H:%M:%S')
-
-                # Satırı formatla
-                line = f"{i};{date_str};{time_str};{opens[i]:.2f};{highs[i]:.2f};{lows[i]:.2f};{closes[i]:.2f};{int(volumes[i])};{int(lots[i])}"
-                f.write(line + '\n')
-
-        print(f"OHLC data saved to: {dstFilePath}")
-        
-        # combined_data_normalized verilerini CSV dosyasına kaydet
-        dstFileName2 = "_combined_data_normalized.csv"
-        dstFilePath2 = dstDir + "/" + dstFileName2
-
-        # Header bilgilerini hazırla
-        header_lines2 = [
-            f"# Kayit_Zamani     : {time.strftime('%Y.%m.%d %H:%M:%S')}",
-            f"# GrafikSembol     : .........",
-            f"# GrafikPeriyot    : ........",
-            f"# BarCount         : {len(self.active_trader.combined_data_normalized)}",
-            f"# Baslangic_Tarihi : {pd.to_datetime(self.dataManager.get_timestamp_array()[0], unit='s').strftime('%Y.%m.%d %H:%M:%S')}" if self.dataManager.get_bar_count() > 0 else "# Baslangic_Tarihi: ",
-            f"# Bitis_Tarihi     : {pd.to_datetime(self.dataManager.get_timestamp_array()[-1], unit='s').strftime('%Y.%m.%d %H:%M:%S')}" if self.dataManager.get_bar_count() > 0 else "# Bitis_Tarihi: ",
-            f"# Format           : Id Date Time combined_data_normalized",
-            "# Data"
-        ]
-        
-        # CSV dosyasını yaz
-        with open(dstFilePath2, 'w', newline='', encoding='utf-8') as f:
-            # Header'ı yaz
-            for line in header_lines2:
-                f.write(line + '\n')
-            
-            # Data satırlarını yaz
-            timestamps = self.dataManager.get_timestamp_array()
-            total_bars = len(self.active_trader.combined_data_normalized)
-            progress_step = max(1, total_bars // 100)  # Her %1'de progress göster
-            
-            for i in range(total_bars):
-                # Progress göster
-                if i % progress_step == 0 or i == total_bars - 1:
-                    progress_percent = (i + 1) * 100 // total_bars
-                    print(f"Writing combined_data_normalized... {progress_percent}% ({i+1}/{total_bars})")
-                
-                # Timestamp'i date ve time'a çevir
-                if i < len(timestamps):
-                    dt = pd.to_datetime(timestamps[i], unit='s')
-                    date_str = dt.strftime('%Y.%m.%d')
-                    time_str = dt.strftime('%H:%M:%S')
-                else:
-                    date_str = ""
-                    time_str = ""
-                
-                # List elemanını as-is kullan
-                value = self.active_trader.combined_data_normalized[i]
-                
-                # Satırı formatla
-                line = f"{i};{date_str};{time_str};{value:.6f}" if isinstance(value, (int, float)) else f"{i};{date_str};{time_str};{value}"
-                f.write(line + '\n')
-        
-        print(f"Combined data normalized saved to: {dstFilePath2}")
-        
-        # PnL verilerini CSV dosyasına kaydet
-        dstFileName3 = "_pnl.csv"
-        dstFilePath3 = dstDir + "/" + dstFileName3
-        
-        # Header bilgilerini hazırla
-        header_lines3 = [
-            f"# Kayit_Zamani     : {time.strftime('%Y.%m.%d %H:%M:%S')}",
-            f"# GrafikSembol     : .........",
-            f"# GrafikPeriyot    : ........",
-            f"# BarCount         : {len(self.active_trader.Lists.KarZararPuanList)}",
-            f"# Baslangic_Tarihi : {pd.to_datetime(self.dataManager.get_timestamp_array()[0], unit='s').strftime('%Y.%m.%d %H:%M:%S')}" if self.dataManager.get_bar_count() > 0 else "# Baslangic_Tarihi: ",
-            f"# Bitis_Tarihi     : {pd.to_datetime(self.dataManager.get_timestamp_array()[-1], unit='s').strftime('%Y.%m.%d %H:%M:%S')}" if self.dataManager.get_bar_count() > 0 else "# Bitis_Tarihi: ",
-            f"# Format           : Id Date Time KarZararPuanList KarZararFiyatList GetiriFiyatList GetiriFiyatNetList BakiyeFiyatList",
-            "# Data"
-        ]
-        
-        # CSV dosyasını yaz
-        with open(dstFilePath3, 'w', newline='', encoding='utf-8') as f:
-            # Header'ı yaz
-            for line in header_lines3:
-                f.write(line + '\n')
-            
-            # Data satırlarını yaz
-            timestamps = self.dataManager.get_timestamp_array()
-            total_bars = len(self.active_trader.Lists.KarZararPuanList)
-            progress_step = max(1, total_bars // 100)  # Her %1'de progress göster
-            
-            for i in range(total_bars):
-                # Progress göster
-                if i % progress_step == 0 or i == total_bars - 1:
-                    progress_percent = (i + 1) * 100 // total_bars
-                    print(f"Writing PnL data... {progress_percent}% ({i+1}/{total_bars})")
-                
-                # Timestamp'i date ve time'a çevir
-                if i < len(timestamps):
-                    dt = pd.to_datetime(timestamps[i], unit='s')
-                    date_str = dt.strftime('%Y.%m.%d')
-                    time_str = dt.strftime('%H:%M:%S')
-                else:
-                    date_str = ""
-                    time_str = ""
-                
-                # List elemanlarını al
-                kar_zarar_puan = self.active_trader.Lists.KarZararPuanList[i]
-                kar_zarar_fiyat = self.active_trader.Lists.KarZararFiyatList[i]
-                getiri_fiyat = self.active_trader.Lists.GetiriFiyatList[i]
-                getiri_fiyat_net = self.active_trader.Lists.GetiriFiyatNetList[i]
-                bakiye_fiyat = self.active_trader.Lists.BakiyeFiyatList[i]
-                
-                # Satırı formatla
-                line = f"{i};{date_str};{time_str};{kar_zarar_puan:.6f};{kar_zarar_fiyat:.6f};{getiri_fiyat:.6f};{getiri_fiyat_net:.6f};{bakiye_fiyat:.6f}"
-                f.write(line + '\n')
-        
-        print(f"PnL data saved to: {dstFilePath3}")
-        
-        # İndikatör verilerini CSV dosyasına kaydet
-        dstFileName4 = "_most.csv"
-        dstFilePath4 = dstDir + "/" + dstFileName4
-        
-        # Total data length
-        total_data_length = self.dataManager.get_bar_count()
-        
-        # İndikatör listelerini al ve gerekirse başına 0 ekle
-        most_values = list(self.Most) if hasattr(self, 'Most') and self.Most is not None else []
-        exmov_values = list(self.ExMov) if hasattr(self, 'ExMov') and self.ExMov is not None else []
-        
-        # Listelerin uzunluklarını total_data_length'e eşitle
-        if len(most_values) < total_data_length:
-            padding_count = total_data_length - len(most_values)
-            most_values = [0.0] * padding_count + most_values
-        
-        if len(exmov_values) < total_data_length:
-            padding_count = total_data_length - len(exmov_values)
-            exmov_values = [0.0] * padding_count + exmov_values
-        
-        # Header bilgilerini hazırla
-        header_lines4 = [
-            f"# Kayit_Zamani     : {time.strftime('%Y.%m.%d %H:%M:%S')}",
-            f"# GrafikSembol     : .........",
-            f"# GrafikPeriyot    : ........",
-            f"# BarCount         : {total_data_length}",
-            f"# Baslangic_Tarihi : {pd.to_datetime(self.dataManager.get_timestamp_array()[0], unit='s').strftime('%Y.%m.%d %H:%M:%S')}" if self.dataManager.get_bar_count() > 0 else "# Baslangic_Tarihi: ",
-            f"# Bitis_Tarihi     : {pd.to_datetime(self.dataManager.get_timestamp_array()[-1], unit='s').strftime('%Y.%m.%d %H:%M:%S')}" if self.dataManager.get_bar_count() > 0 else "# Bitis_Tarihi: ",
-            f"# Format           : Id Date Time Most ExMov",
-            "# Data"
-        ]
-        
-        # CSV dosyasını yaz
-        with open(dstFilePath4, 'w', newline='', encoding='utf-8') as f:
-            # Header'ı yaz
-            for line in header_lines4:
-                f.write(line + '\n')
-            
-            # Data satırlarını yaz
-            timestamps = self.dataManager.get_timestamp_array()
-            progress_step = max(1, total_data_length // 100)  # Her %1'de progress göster
-            
-            for i in range(total_data_length):
-                # Progress göster
-                if i % progress_step == 0 or i == total_data_length - 1:
-                    progress_percent = (i + 1) * 100 // total_data_length
-                    print(f"Writing indicator data... {progress_percent}% ({i+1}/{total_data_length})")
-                
-                # Timestamp'i date ve time'a çevir
-                if i < len(timestamps):
-                    dt = pd.to_datetime(timestamps[i], unit='s')
-                    date_str = dt.strftime('%Y.%m.%d')
-                    time_str = dt.strftime('%H:%M:%S')
-                else:
-                    date_str = ""
-                    time_str = ""
-                
-                # İndikatör değerlerini al
-                most_value = most_values[i] if i < len(most_values) else 0.0
-                exmov_value = exmov_values[i] if i < len(exmov_values) else 0.0
-                
-                # Satırı formatla
-                line = f"{i};{date_str};{time_str};{most_value:.6f};{exmov_value:.6f}"
-                f.write(line + '\n')
-        
-        print(f"Indicator data saved to: {dstFilePath4}")
-
-        # self.V          = self.dataManager
-        # self.Df         = self.dataManager.get_dataframe()
-        # self.EpochTime  = self.dataManager.get_epoch_time_array()
-        # self.DateTime   = self.dataManager.get_date_time_array()
-        # self.Date       = self.dataManager.get_date_array()
-        # self.Time       = self.dataManager.get_time_array()
-        # self.Open       = self.dataManager.get_open_array()
-        # self.High       = self.dataManager.get_high_array()
-        # self.Low        = self.dataManager.get_low_array()
-        # self.Close      = self.dataManager.get_close_array()
-        # self.Volume     = self.dataManager.get_volume_array()
-        # self.Lot        = self.dataManager.get_lot_array()
-        # self.BarCount   = self.dataManager.get_bar_count()
-        # self.ItemsCount = self.dataManager.get_items_count()
-
-        # self.mySystem.create_modules().initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open,
-                                                  # self.High, self.Low, self.Close, self.Volume, self.Lot)
-
-        # trader.combined_data_normalized, "_TradingSignals")
-        # LevelZero1 = self.create_level_series(self.BarCount, 0)
-        # self.Most, "Most")
-        # self.ExMov, "ExMov")
-        # self.Ma5, "Ma5")
-        # karZararPuanList = self.active_trader.Lists.KarZararPuanList
-        # karZararFiyatList = self.active_trader.Lists.KarZararFiyatList
-        # getiriFiyatList = self.active_trader.Lists.GetiriFiyatList
-        # getiriFiyatNetList = self.active_trader.Lists.GetiriFiyatNetList
-        #
-        # balance = self.active_trader.Lists.BakiyeFiyatList
-        # bakiye = trader.Lists.BakiyeFiyatList
+        self.SavePlotData(self.active_trader, dstDir)
 
         # --------------------------------------------------------------
         print("Plotting market data...")
@@ -3549,6 +3295,232 @@ class AlgoTrader:
             print(f"ERROR: Failed to plot combined_data: {e}")
             import traceback
             traceback.print_exc()
+    
+    def SavePlotData(self, active_trader, dstDir="."):
+        """CSV dosyalarına plot verileri kaydeden method"""
+        # OHLC verilerini CSV dosyasına kaydet
+        dstFileName = "_ohlc.csv"
+        dstFilePath = dstDir + "/" + dstFileName
+        
+        # Header bilgilerini hazırla
+        header_lines = [
+            f"# Kayit_Zamani     : {time.strftime('%Y.%m.%d %H:%M:%S')}",
+            f"# GrafikSembol     : .........",
+            f"# GrafikPeriyot    : ........",
+            f"# BarCount         : {self.dataManager.get_bar_count()}",
+            f"# Baslangic_Tarihi : {pd.to_datetime(self.dataManager.get_timestamp_array()[0], unit='s').strftime('%Y.%m.%d %H:%M:%S')}" if self.dataManager.get_bar_count() > 0 else "# Baslangic_Tarihi: ",
+            f"# Bitis_Tarihi     : {pd.to_datetime(self.dataManager.get_timestamp_array()[-1], unit='s').strftime('%Y.%m.%d %H:%M:%S')}" if self.dataManager.get_bar_count() > 0 else "# Bitis_Tarihi: ",
+            f"# Format           : Id Date Time Open High Low Close Volume Lot",
+            "# Data"
+        ]
+        
+        # CSV dosyasını yaz
+        with open(dstFilePath, 'w', newline='', encoding='utf-8') as f:
+            # Header'ı yaz
+            for line in header_lines:
+                f.write(line + '\n')
+            
+            # Data satırlarını yaz
+            timestamps = self.dataManager.get_timestamp_array()
+            opens = self.dataManager.get_open_array()
+            highs = self.dataManager.get_high_array()
+            lows = self.dataManager.get_low_array()
+            closes = self.dataManager.get_close_array()
+            volumes = self.dataManager.get_volume_array()
+            lots = self.dataManager.get_lot_array()
+            
+            total_bars = self.dataManager.get_bar_count()
+            progress_step = max(1, total_bars // 10)  # Her %10'da progress göster
+            
+            for i in range(total_bars):
+                # Progress göster
+                if i % progress_step == 0 or i == total_bars - 1:
+                    progress_percent = (i + 1) * 100 // total_bars
+                    print(f"Writing OHLC data... {progress_percent}% ({i+1}/{total_bars})")
+                
+                # Timestamp'i date ve time'a çevir
+                dt = pd.to_datetime(timestamps[i], unit='s')
+                date_str = dt.strftime('%Y.%m.%d')
+                time_str = dt.strftime('%H:%M:%S')
+                
+                # Satırı formatla
+                line = f"{i};{date_str};{time_str};{opens[i]:.2f};{highs[i]:.2f};{lows[i]:.2f};{closes[i]:.2f};{int(volumes[i])};{int(lots[i])}"
+                f.write(line + '\n')
+        
+        print(f"OHLC data saved to: {dstFilePath}")
+        
+        # Trading sinyallerini CSV dosyasına kaydet (Buy:1, Sell:-1, Flat:0)
+        dstFileName2 = "_signals.csv"
+        dstFilePath2 = dstDir + "/" + dstFileName2
+        
+        # Header bilgilerini hazırla
+        header_lines2 = [
+            f"# Kayit_Zamani     : {time.strftime('%Y.%m.%d %H:%M:%S')}",
+            f"# GrafikSembol     : .........",
+            f"# GrafikPeriyot    : ........",
+            f"# BarCount         : {len(active_trader.combined_data_normalized)}",
+            f"# Baslangic_Tarihi : {pd.to_datetime(self.dataManager.get_timestamp_array()[0], unit='s').strftime('%Y.%m.%d %H:%M:%S')}" if self.dataManager.get_bar_count() > 0 else "# Baslangic_Tarihi: ",
+            f"# Bitis_Tarihi     : {pd.to_datetime(self.dataManager.get_timestamp_array()[-1], unit='s').strftime('%Y.%m.%d %H:%M:%S')}" if self.dataManager.get_bar_count() > 0 else "# Bitis_Tarihi: ",
+            f"# Format           : Id Date Time Signal ( Buy:1, Sell:-1, Flat:0 )",
+            "# Data"
+        ]
+        
+        # CSV dosyasını yaz
+        with open(dstFilePath2, 'w', newline='', encoding='utf-8') as f:
+            # Header'ı yaz
+            for line in header_lines2:
+                f.write(line + '\n')
+            
+            # Data satırlarını yaz
+            timestamps = self.dataManager.get_timestamp_array()
+            total_bars = len(active_trader.combined_data_normalized)
+            progress_step = max(1, total_bars // 10)  # Her %10'da progress göster
+            
+            for i in range(total_bars):
+                # Progress göster
+                if i % progress_step == 0 or i == total_bars - 1:
+                    progress_percent = (i + 1) * 100 // total_bars
+                    print(f"Writing trading signals... {progress_percent}% ({i+1}/{total_bars})")
+                
+                # Timestamp'i date ve time'a çevir
+                if i < len(timestamps):
+                    dt = pd.to_datetime(timestamps[i], unit='s')
+                    date_str = dt.strftime('%Y.%m.%d')
+                    time_str = dt.strftime('%H:%M:%S')
+                else:
+                    date_str = ""
+                    time_str = ""
+                
+                # List elemanını as-is kullan
+                value = active_trader.combined_data_normalized[i]
+                
+                # Satırı formatla
+                line = f"{i};{date_str};{time_str};{value:.6f}" if isinstance(value, (int, float)) else f"{i};{date_str};{time_str};{value}"
+                f.write(line + '\n')
+        
+        print(f"Trading signals saved to: {dstFilePath2}")
+        
+        # PnL verilerini CSV dosyasına kaydet
+        dstFileName3 = "_pnl.csv"
+        dstFilePath3 = dstDir + "/" + dstFileName3
+        
+        # Header bilgilerini hazırla
+        header_lines3 = [
+            f"# Kayit_Zamani     : {time.strftime('%Y.%m.%d %H:%M:%S')}",
+            f"# GrafikSembol     : .........",
+            f"# GrafikPeriyot    : ........",
+            f"# BarCount         : {len(active_trader.Lists.KarZararPuanList)}",
+            f"# Baslangic_Tarihi : {pd.to_datetime(self.dataManager.get_timestamp_array()[0], unit='s').strftime('%Y.%m.%d %H:%M:%S')}" if self.dataManager.get_bar_count() > 0 else "# Baslangic_Tarihi: ",
+            f"# Bitis_Tarihi     : {pd.to_datetime(self.dataManager.get_timestamp_array()[-1], unit='s').strftime('%Y.%m.%d %H:%M:%S')}" if self.dataManager.get_bar_count() > 0 else "# Bitis_Tarihi: ",
+            f"# Format           : Id Date Time KarZararPuanList KarZararFiyatList GetiriFiyatList GetiriFiyatNetList BakiyeFiyatList",
+            "# Data"
+        ]
+        
+        # CSV dosyasını yaz
+        with open(dstFilePath3, 'w', newline='', encoding='utf-8') as f:
+            # Header'ı yaz
+            for line in header_lines3:
+                f.write(line + '\n')
+            
+            # Data satırlarını yaz
+            timestamps = self.dataManager.get_timestamp_array()
+            total_bars = len(active_trader.Lists.KarZararPuanList)
+            progress_step = max(1, total_bars // 10)  # Her %10'da progress göster
+            
+            for i in range(total_bars):
+                # Progress göster
+                if i % progress_step == 0 or i == total_bars - 1:
+                    progress_percent = (i + 1) * 100 // total_bars
+                    print(f"Writing PnL data... {progress_percent}% ({i+1}/{total_bars})")
+                
+                # Timestamp'i date ve time'a çevir
+                if i < len(timestamps):
+                    dt = pd.to_datetime(timestamps[i], unit='s')
+                    date_str = dt.strftime('%Y.%m.%d')
+                    time_str = dt.strftime('%H:%M:%S')
+                else:
+                    date_str = ""
+                    time_str = ""
+                
+                # List elemanlarını al
+                kar_zarar_puan = active_trader.Lists.KarZararPuanList[i]
+                kar_zarar_fiyat = active_trader.Lists.KarZararFiyatList[i]
+                getiri_fiyat = active_trader.Lists.GetiriFiyatList[i]
+                getiri_fiyat_net = active_trader.Lists.GetiriFiyatNetList[i]
+                bakiye_fiyat = active_trader.Lists.BakiyeFiyatList[i]
+                
+                # Satırı formatla
+                line = f"{i};{date_str};{time_str};{kar_zarar_puan:.6f};{kar_zarar_fiyat:.6f};{getiri_fiyat:.6f};{getiri_fiyat_net:.6f};{bakiye_fiyat:.6f}"
+                f.write(line + '\n')
+        
+        print(f"PnL data saved to: {dstFilePath3}")
+        
+        # İndikatör verilerini CSV dosyasına kaydet
+        dstFileName4 = "_most.csv"
+        dstFilePath4 = dstDir + "/" + dstFileName4
+        
+        # Total data length
+        total_data_length = self.dataManager.get_bar_count()
+        
+        # İndikatör listelerini al ve gerekirse başına 0 ekle
+        most_values = list(self.Most) if hasattr(self, 'Most') and self.Most is not None else []
+        exmov_values = list(self.ExMov) if hasattr(self, 'ExMov') and self.ExMov is not None else []
+        
+        # Listelerin uzunluklarını total_data_length'e eşitle
+        if len(most_values) < total_data_length:
+            padding_count = total_data_length - len(most_values)
+            most_values = [0.0] * padding_count + most_values
+        
+        if len(exmov_values) < total_data_length:
+            padding_count = total_data_length - len(exmov_values)
+            exmov_values = [0.0] * padding_count + exmov_values
+        
+        # Header bilgilerini hazırla
+        header_lines4 = [
+            f"# Kayit_Zamani     : {time.strftime('%Y.%m.%d %H:%M:%S')}",
+            f"# GrafikSembol     : .........",
+            f"# GrafikPeriyot    : ........",
+            f"# BarCount         : {total_data_length}",
+            f"# Baslangic_Tarihi : {pd.to_datetime(self.dataManager.get_timestamp_array()[0], unit='s').strftime('%Y.%m.%d %H:%M:%S')}" if self.dataManager.get_bar_count() > 0 else "# Baslangic_Tarihi: ",
+            f"# Bitis_Tarihi     : {pd.to_datetime(self.dataManager.get_timestamp_array()[-1], unit='s').strftime('%Y.%m.%d %H:%M:%S')}" if self.dataManager.get_bar_count() > 0 else "# Bitis_Tarihi: ",
+            f"# Format           : Id Date Time Most ExMov",
+            "# Data"
+        ]
+        
+        # CSV dosyasını yaz
+        with open(dstFilePath4, 'w', newline='', encoding='utf-8') as f:
+            # Header'ı yaz
+            for line in header_lines4:
+                f.write(line + '\n')
+            
+            # Data satırlarını yaz
+            timestamps = self.dataManager.get_timestamp_array()
+            progress_step = max(1, total_data_length // 10)  # Her %10'da progress göster
+            
+            for i in range(total_data_length):
+                # Progress göster
+                if i % progress_step == 0 or i == total_data_length - 1:
+                    progress_percent = (i + 1) * 100 // total_data_length
+                    print(f"Writing indicator data... {progress_percent}% ({i+1}/{total_data_length})")
+                
+                # Timestamp'i date ve time'a çevir
+                if i < len(timestamps):
+                    dt = pd.to_datetime(timestamps[i], unit='s')
+                    date_str = dt.strftime('%Y.%m.%d')
+                    time_str = dt.strftime('%H:%M:%S')
+                else:
+                    date_str = ""
+                    time_str = ""
+                
+                # İndikatör değerlerini al
+                most_value = most_values[i] if i < len(most_values) else 0.0
+                exmov_value = exmov_values[i] if i < len(exmov_values) else 0.0
+                
+                # Satırı formatla
+                line = f"{i};{date_str};{time_str};{most_value:.6f};{exmov_value:.6f}"
+                f.write(line + '\n')
+        
+        print(f"Indicator data saved to: {dstFilePath4}")
 
 
 if __name__ == "__main__":
