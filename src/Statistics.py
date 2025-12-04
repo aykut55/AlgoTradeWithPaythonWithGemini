@@ -257,7 +257,12 @@ class CStatistics:
         self.SonBarDusukFiyati = self.Trader.Low[LastBar]
         self.SonBarKapanisFiyati = self.Trader.Close[LastBar]
         self.SonBarIndex = len(self.Trader.Close) - 1
-        first_date = self.Trader.Date[0].astype('datetime64[D]').astype('object')
+        # DateObj varsa onu kullan, yoksa Date string'ini parse et
+        if hasattr(self.Trader, 'DateObj') and self.Trader.DateObj is not None and len(self.Trader.DateObj) > 0:
+            first_date = self.Trader.DateObj[0]
+        else:
+            # Date string formatı: "YYYY.MM.DD"
+            first_date = datetime.datetime.strptime(self.Trader.Date[0], "%Y.%m.%d").date()
         sure_dakika = (datetime.datetime.now() - datetime.datetime.combine(first_date, datetime.time.min)).total_seconds() / 60
         sure_saat = (datetime.datetime.now() - datetime.datetime.combine(first_date, datetime.time.min)).total_seconds() / 3600
         sure_gun = (datetime.datetime.now() - datetime.datetime.combine(first_date, datetime.time.min)).days
@@ -450,12 +455,17 @@ class CStatistics:
         self.IstatistiklerNew["ToplamGecenSureDakika"] = str(self.ToplamGecenSureDakika)
         self.IstatistiklerNew["ToplamBarSayisi"] = str(self.ToplamBarSayisi)
         self.IstatistiklerNew["SecilenBarNumarasi"] = str(self.SecilenBarNumarasi)
-        self.IstatistiklerNew["SecilenBarTarihi"] = self.SecilenBarTarihi.astype('datetime64[D]').astype('object').strftime("%d.%m.%Y")
-        self.IstatistiklerNew["SecilenBarSaati"] = str(self.SecilenBarTarihi.astype('datetime64[s]').astype('object').time())
-        self.IstatistiklerNew["IlkBarTarihi"] = self.IlkBarTarihi.astype('datetime64[D]').astype('object').strftime("%d.%m.%Y")
-        self.IstatistiklerNew["IlkBarSaati"] = str(self.IlkBarTarihi.astype('datetime64[s]').astype('object').time())
-        self.IstatistiklerNew["SonBarTarihi"] = self.SonBarTarihi.astype('datetime64[D]').astype('object').strftime("%d.%m.%Y")
-        self.IstatistiklerNew["SonBarSaati"] = str(self.SonBarTarihi.astype('datetime64[s]').astype('object').time())
+        # String tarihleri parse et ("YYYY.MM.DD" formatında)
+        secilen_dt = datetime.datetime.strptime(self.SecilenBarTarihi, "%Y.%m.%d") if isinstance(self.SecilenBarTarihi, str) else self.SecilenBarTarihi
+        ilk_dt = datetime.datetime.strptime(self.IlkBarTarihi, "%Y.%m.%d") if isinstance(self.IlkBarTarihi, str) else self.IlkBarTarihi
+        son_dt = datetime.datetime.strptime(self.SonBarTarihi, "%Y.%m.%d") if isinstance(self.SonBarTarihi, str) else self.SonBarTarihi
+
+        self.IstatistiklerNew["SecilenBarTarihi"] = secilen_dt.strftime("%d.%m.%Y") if hasattr(secilen_dt, 'strftime') else str(secilen_dt)
+        self.IstatistiklerNew["SecilenBarSaati"] = str(secilen_dt.time()) if hasattr(secilen_dt, 'time') else "00:00:00"
+        self.IstatistiklerNew["IlkBarTarihi"] = ilk_dt.strftime("%d.%m.%Y") if hasattr(ilk_dt, 'strftime') else str(ilk_dt)
+        self.IstatistiklerNew["IlkBarSaati"] = str(ilk_dt.time()) if hasattr(ilk_dt, 'time') else "00:00:00"
+        self.IstatistiklerNew["SonBarTarihi"] = son_dt.strftime("%d.%m.%Y") if hasattr(son_dt, 'strftime') else str(son_dt)
+        self.IstatistiklerNew["SonBarSaati"] = str(son_dt.time()) if hasattr(son_dt, 'time') else "00:00:00"
         self.IstatistiklerNew["IlkBarIndex"] = str(self.IlkBarIndex)
         self.IstatistiklerNew["SonBarIndex"] = str(self.SonBarIndex)
         self.IstatistiklerNew["SonBarAcilisFiyati"] = str(self.SonBarAcilisFiyati)
@@ -786,8 +796,17 @@ class CStatistics:
         DateSaatBarNoList = []
         timeUtils = CTimeUtils()
         for i in range(1, len(self.Trader.Close)):
-            prev_date = self.Trader.Date[i - 1].astype('datetime64[s]').astype('object')
-            curr_date = self.Trader.Date[i].astype('datetime64[s]').astype('object')
+            # DateObj varsa onu kullan, yoksa Date string'ini parse et
+            if hasattr(self.Trader, 'DateTimeObj') and self.Trader.DateTimeObj is not None and len(self.Trader.DateTimeObj) > 0:
+                prev_date = self.Trader.DateTimeObj[i - 1]
+                curr_date = self.Trader.DateTimeObj[i]
+            else:
+                # Date + Time string'lerini birleştir ve parse et
+                prev_datetime_str = f"{self.Trader.Date[i - 1]} {self.Trader.Time[i - 1]}"
+                curr_datetime_str = f"{self.Trader.Date[i]} {self.Trader.Time[i]}"
+                prev_date = datetime.datetime.strptime(prev_datetime_str, "%Y.%m.%d %H:%M:%S")
+                curr_date = datetime.datetime.strptime(curr_datetime_str, "%Y.%m.%d %H:%M:%S")
+
             yeni_saat = prev_date.hour != curr_date.hour
             if yeni_saat:
                 DateSaatBarNoList.append(i)
