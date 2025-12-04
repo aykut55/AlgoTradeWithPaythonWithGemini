@@ -1,8 +1,12 @@
 import pandas as pd
 import numpy as np
 import os
+import sys
 import time
+import json
 from datetime import datetime
+from typing import List, Dict, Any, TypeAlias
+from numpy.typing import NDArray
 from src.DataManager import DataManager
 from src.DataPlotter import DataPlotter
 from src.DataPlotter2 import DataPlotter2
@@ -17,6 +21,30 @@ import lightningchart as lc
 from lightningchart_trader import TAChart
 import random
 
+pd.set_option("display.max_columns", None)
+pd.set_option("display.max_rows", None)
+pd.set_option("display.width", None)
+pd.set_option("display.max_colwidth", None)
+pd.set_option("display.float_format", lambda x: f"{x:.0f}")   # bilimsel gösterim kapalı
+
+# imgui_bundle imports for plotting
+try:
+    from imgui_bundle import imgui, immapp, implot, imgui_ctx, ImVec4, ImVec2, IM_COL32
+    IMGUI_AVAILABLE = True
+except ImportError:
+    IMGUI_AVAILABLE = False
+    print("Warning: imgui_bundle not installed. Install with: pip install imgui-bundle")
+
+# Import DataPlotter (new multi-panel system)
+try:
+    from src.DataPlotterImgBundle import DataPlotterImgBundle, DataType, Panel
+    DATAPLOTTER_AVAILABLE = True
+except ImportError:
+    DATAPLOTTER_AVAILABLE = False
+    print("Warning: DataPlotter not available")
+
+FloatArray1D: TypeAlias = NDArray[np.floating[Any]]
+
 class AlgoTrader:
     def __init__(self):
         self.sqliteDataManager = SqliteDataManager()
@@ -25,6 +53,7 @@ class AlgoTrader:
         self.dataPlotterDearPyGui = DataPlotterDearPyGui()
         self.dataPlotterDearPyGui2 = DataPlotterDearPyGui2()
         self.dataPlotter2 = DataPlotter2()
+        self.dataPlotterImgBundle = DataPlotterImgBundle()
         self.mySystem = SystemWrapper()
         self.myUtils = CUtils()
         self.indicatorManager = None
@@ -486,59 +515,65 @@ class AlgoTrader:
             print(f"    Other metrics: {other_metrics}")
 
     def loadMarketData(self):
-        # self.dataManager.create_data(600)
 
-        # self.dataManager.set_read_mode_last_n(20000)  # Son 20000 satırı okumaya ayarla
-        # self.dataManager.load_prices_from_csv(r"data", "01", "BTCUSD.csv")
-
-        # self.dataManager.set_read_mode_last_n(20000)  # Son 20000 satırı okumaya ayarla
-        self.dataManager.set_read_mode_last_n(200000)  # Son 20000 satırı okumaya ayarla
-        # self.dataManager.set_read_mode_last_n(500000)  # Son 20000 satırı okumaya ayarla
-        # self.dataManager.set_read_mode_last_n(600000)  # Son 20000 satırı okumaya ayarla
-
-        dirName = "data"
-        subDirName = "01"
-        fileName = "BTCUSD.csv"
-        # self.dataManager.load_prices_from_csv(dirName, subDirName, fileName)
-
-        dirName = "D:\\Aykut\\Projects\\AlgoTradeWithPaythonWithGemini\\data\\csvFiles"
-        subDirName = "IMKBX\\05"
-        fileName = "XU100.csv"
-
-        subDirName = "IMKBH\\60"
-        fileName = "THYAO.csv"
-
-        subDirName = "CRP\\05"
-        fileName = "BTCUSDT_BNC.csv"
-
-        subDirName = "VIP\\05"
-        fileName = "VIP-X030-T.csv"
-
-        subDirName = "VIP\\01"
-        fileName = "VIP-X030-T.csv"
+        dataCount = 100_000        
+        # self.dataManager.set_read_mode_all_data()
+        self.dataManager.set_read_mode_last_n(dataCount)
+        # self.dataManager.set_read_mode_first_n(dataCount)
+        # self.dataManager.set_read_mode_range(10000, 20000)
+        # self.dataManager.set_read_mode_after_date("2024.01.01")
+        # self.dataManager.set_read_mode_after_date("2024.11.01 09:30:00")
+        # self.dataManager.set_read_mode_before_date("2024.12.01")
+        # self.dataManager.set_read_mode_between_dates("2024.11.01", "2024.11.30")
 
         dirName = "C:\\data"
         subDirName = "VIP-X030-T"
         fileName = "VIP'VIP-X030-T_1.csv"
 
-        self.dataManager.load_prices_from_csv_4(dirName, subDirName, fileName)
+        start_time = time.time()
+        self.dataManager.load_prices_from_csv_with_bar_data_reader(dirName, subDirName, fileName)
+        end_time = time.time()
+        elapsed_ms = (end_time - start_time) * 1000  # Saniyeyi 1000 ile çarpıp ms'ye çeviriyoruz
+        print(f"Geçen süre: {elapsed_ms:.2f} ms")
 
-        self.dataManager.add_time_columns()
+        self.dataManager.print_sample_bars(5)
 
-        self.V          = self.dataManager
-        self.Df         = self.dataManager.get_dataframe()
-        self.EpochTime  = self.dataManager.get_epoch_time_array()
-        self.DateTime   = self.dataManager.get_date_time_array()
-        self.Date       = self.dataManager.get_date_array()
-        self.Time       = self.dataManager.get_time_array()
-        self.Open       = self.dataManager.get_open_array()
-        self.High       = self.dataManager.get_high_array()
-        self.Low        = self.dataManager.get_low_array()
-        self.Close      = self.dataManager.get_close_array()
-        self.Volume     = self.dataManager.get_volume_array()
-        self.Lot        = self.dataManager.get_lot_array()
-        self.BarCount   = self.dataManager.get_bar_count()
-        self.ItemsCount = self.dataManager.get_items_count()
+        start_time = time.time()
+        self.dataManager.build_data_frame()
+        end_time = time.time()
+        elapsed_ms = (end_time - start_time) * 1000  # Saniyeyi 1000 ile çarpıp ms'ye çeviriyoruz
+        print(f"Geçen süre: {elapsed_ms:.2f} ms")
+
+        start_time = time.time()
+        # self.dataManager.add_time_columns()
+        end_time = time.time()
+        elapsed_ms = (end_time - start_time) * 1000  # Saniyeyi 1000 ile çarpıp ms'ye çeviriyoruz
+        print(f"Geçen süre: {elapsed_ms:.2f} ms")
+
+        self.V           = self.dataManager
+        self.Df          = self.dataManager.get_dataframe()
+        self.EpochTime   = self.dataManager.get_epoch_time_array()
+        self.DateTime    = self.dataManager.get_date_time_string_array_new()
+        self.Date        = self.dataManager.get_date_string_array_new()
+        self.Time        = self.dataManager.get_time_string_array_new()
+        self.DateTimeObj = self.dataManager.get_date_time_array_new()
+        self.DateObj     = self.dataManager.get_date_array_new()
+        self.TimeObj     = self.dataManager.get_time_array_new()
+        self.Open        = self.dataManager.get_open_array()
+        self.High        = self.dataManager.get_high_array()
+        self.Low         = self.dataManager.get_low_array()
+        self.Close       = self.dataManager.get_close_array()
+        self.Volume      = self.dataManager.get_volume_array()
+        self.Lot         = self.dataManager.get_lot_array()
+        self.BarCount    = self.dataManager.get_bar_count()
+        self.ItemsCount  = self.dataManager.get_items_count()
+
+        print(self.EpochTime[-2])
+        print(self.EpochTime[-1])
+        print("\n self.Df.tail() cagrilacak")
+        print("")
+        print(self.Df.tail())
+        name = input("Devam etmek icin tusa basiniz... ")
 
         print("\n=====================================================================")
         print("FilePath    :", os.path.join(dirName, subDirName, fileName))
@@ -557,12 +592,19 @@ class AlgoTrader:
         print("Date        :", self.dataManager.get_date_array_as_str()[-5:])
         print("Time        :", self.dataManager.get_time_array_as_str()[-5:])
 
+        print("DateTimeObj :", self.dataManager.get_date_time_array_new()[-5:])
+        print("DateObj     :", self.dataManager.get_date_array_new()[-5:])
+        print("TimeObj     :", self.dataManager.get_time_array_new()[-5:])
+
         print("Open        :", self.dataManager.get_open_array()[-5:])
         print("High        :", self.dataManager.get_high_array()[-5:])
         print("Low         :", self.dataManager.get_low_array()[-5:])
         print("Close       :", self.dataManager.get_close_array()[-5:])
         print("Volume      :", self.dataManager.get_volume_array()[-5:])
         print("Lot         :", self.dataManager.get_lot_array()[-5:])
+        print("Delta       :", self.dataManager.get_delta_array()[-5:])
+        print("Delta (%)   :", self.dataManager.get_delta_pct_array()[-5:])
+
         print("\n=====================================================================")
         print("First Elements:")
         print("\n=====================================================================")
@@ -573,13 +615,22 @@ class AlgoTrader:
         print("Date        :", self.dataManager.get_date_array_as_str()[5:])
         print("Time        :", self.dataManager.get_time_array_as_str()[5:])
 
+        print("DateTimeObj :", self.dataManager.get_date_time_array_new()[5:])
+        print("DateObj     :", self.dataManager.get_date_array_new()[5:])
+        print("TimeObj     :", self.dataManager.get_time_array_new()[5:])
+
         print("Open        :", self.dataManager.get_open_array()[5:])
         print("High        :", self.dataManager.get_high_array()[5:])
         print("Low         :", self.dataManager.get_low_array()[5:])
         print("Close       :", self.dataManager.get_close_array()[5:])
         print("Volume      :", self.dataManager.get_volume_array()[5:])
         print("Lot         :", self.dataManager.get_lot_array()[5:])
+        print("Delta       :", self.dataManager.get_delta_array()[5:])
+        print("Delta (%)   :", self.dataManager.get_delta_pct_array()[5:])
         print("\n=====================================================================")
+
+        name = input("Devam etmek icin tusa basiniz 3 ")
+        print("")
 
     def loadMarketDataFromSqliteDB(self):
         # SQLite veritabanından veri yükle
@@ -2290,6 +2341,7 @@ class AlgoTrader:
         # self.plotDataFinal(self.active_trader)
         # self.plotDataLightningChart(self.active_trader)
         # self.plotDataPlotly(self.active_trader)
+        self.plotDataImgBundle(self.active_trader)
 
         # --------------------------------------------------------------
         # Show timing reports
@@ -3522,6 +3574,228 @@ class AlgoTrader:
         
         print(f"Indicator data saved to: {dstFilePath4}")
 
+    def createPanelsByHandCoded(plotter: 'DataPlotterImgBundle'):
+        plotter.setWindowTitle(f"{reader.get_metadata('GrafikSembol')} - Multi Panel Chart")
+
+        plotter.setTimeData(reader.time_data)
+        plotter.setOHLCData(reader.ohlc)
+        plotter.setVolumeData(reader.volume_data)
+        plotter.setLotData(reader.lot_data)
+        plotter.setDeltaData(reader.delta)
+        plotter.setDeltaPctData(reader.delta_pct)
+        dt_labels = [f"{bar.date} {bar.time}" for bar in reader.bars]
+        plotter.setDateTimeLabels(dt_labels)
+        plotter.setTradeSignals(tradeSignals)
+
+        plotter.grafik_sembol = reader.get_metadata('GrafikSembol')
+        plotter.grafik_periyot = reader.get_metadata('GrafikPeriyot')
+        plotter.grafik_periyot_extension = reader.get_metadata('dk')
+
+        # Panel 0: OHLC + Moving Averages
+        panel0 = plotter.AddPanel(0)
+        panel0.setTitle("Price Chart")
+        panel0.setYAxisLabel("Price")
+        panel0.setHeightRatio(2.0)  # Ana panel daha büyük
+        panel0.setOHLCData(plotter.getOHLCData())
+        # Info panel positioning for Panel 0 (adjust as desired)
+        panel0.setInfoPanelPosition(100, 2)
+        panel0.setInfoPanelOffsets(label_dx=5, value_dx=80)
+
+        # Moving averages ekle
+        panel0.setData(0, DataType.Line, sma_5, "SMA(5)", (1.0, 0.5, 0.0, 1.0))  # Turuncu
+        panel0.setData(1, DataType.Line, sma_20, "SMA(20)", (0.0, 0.5, 1.0, 1.0))  # Mavi
+        panel0.setData(2, DataType.Line, ema_20, "EMA(20)", (1.0, 0.0, 1.0, 1.0))  # Mor
+
+        # MOST ekle
+        panel0.setData(3, DataType.Line, most, "MOST", (0.6, 0.6, 0.0, 1.0))
+        panel0.setData(4, DataType.Line, exmov, "EMA", (0.5, 0.2, 0.8, 1.0))
+
+        # Panel 1: TradeSignals
+        panel1 = plotter.AddPanel(1)
+        panel1.setTitle("TradeSignals")
+        panel1.setYAxisLabel("TradeSignals")
+        panel1.setHeightRatio(1.0)
+        # Info panel positioning for Panel 1
+        panel1.setInfoPanelPosition(100, 2)
+        panel1.setInfoPanelOffsets(label_dx=5, value_dx=80)
+
+        panel1.setData(0, DataType.Stairs, tradeSignals, "TradeSignals", (0.2, 0.8, 1.0, 1.0))
+        # ------------------------------------------
+        # Gizli Y-axis padding çizgileri (autoscale hack)
+        # ------------------------------------------
+        padding_min = np.full(len(tradeSignals), -2.0, dtype=np.float64)  # alt sınır
+        padding_max = np.full(len(tradeSignals), +2.0, dtype=np.float64)  # üst sınır
+        # görünmez çizgiler (alpha=0)
+        panel1.setData(
+            998,
+            DataType.Line,
+            padding_min,
+            "##pad_min",
+            (1, 1, 1, 0)
+        )
+
+        panel1.setData(
+            999,
+            DataType.Line,
+            padding_max,
+            "##pad_max",
+            (1, 1, 1, 0)
+        )
+
+        # Panel 2: Bollinger Bands
+        panel2 = plotter.AddPanel(2)
+        panel2.setTitle("BB(20,2)")
+        panel2.setYAxisLabel("Bollinger")
+        panel2.setHeightRatio(1.0)
+        # Info panel positioning for Panel 2
+        panel2.setInfoPanelPosition(100, 2)
+        panel2.setInfoPanelOffsets(label_dx=5, value_dx=80)
+        panel2.setData(0, DataType.Line, bb_upper, "BollingerUpper", (0.0, 1.0, 1.0, 1.0))  # Cyan
+        panel2.setData(1, DataType.Line, bb_middle, "BollingerMiddile", (1.0, 0.5, 0.0, 1.0))  # Turuncu
+        panel2.setData(2, DataType.Line, bb_lower, "BollingerLower", (1.0, 0.0, 1.0, 1.0))  # Mor
+
+        # Panel 3: SuperTrend
+        panel3 = plotter.AddPanel(3)
+        panel3.setTitle("SuperTrend (10,3.0)")
+        panel3.setYAxisLabel("SuperTrend")
+        panel3.setHeightRatio(1.0)
+        # Info panel positioning for Panel 3
+        panel3.setInfoPanelPosition(100, 2)
+        panel3.setInfoPanelOffsets(label_dx=5, value_dx=80)
+        panel3.setData(0, DataType.Line, supertrend, "SuperTrend", (0.2, 0.8, 1.0, 1.0))
+
+        # Panel 4: MOST
+        panel4 = plotter.AddPanel(4)
+        panel4.setTitle("MOST (21,1.0)")
+        panel4.setYAxisLabel("MOST")
+        panel4.setHeightRatio(1.0)
+        # Info panel positioning for Panel 3
+        panel4.setInfoPanelPosition(100, 2)
+        panel4.setInfoPanelOffsets(label_dx=5, value_dx=80)
+        panel4.setData(0, DataType.Line, most, "MOST", (0.6, 0.6, 0.0, 1.0))
+        panel4.setData(1, DataType.Line, exmov, "EMA", (0.5, 0.2, 0.8, 1.0))
+
+        # Panel 5: Volume
+        panel5 = plotter.AddPanel(5)
+        panel5.setTitle("Volume")
+        panel5.setYAxisLabel("Volume")
+        panel5.setHeightRatio(1.0)
+        # Info panel positioning for Panel 4
+        panel5.setInfoPanelPosition(100, 2)
+        panel5.setInfoPanelOffsets(label_dx=5, value_dx=80)
+        panel5.setData(0, DataType.Volume, volumes, "Volume", (0.3, 0.7, 1.0, 0.6))
+        sma_100 = indicator.sma(volumes, 100)
+        panel5.setData(1, DataType.Line, sma_100, "SMA(100)", (1.0, 0.5, 0.0, 1.0))  # Turuncu
+
+        # Panel 6: RSI
+        panel6 = plotter.AddPanel(6)
+        panel6.setTitle("RSI (14)")
+        panel6.setYAxisLabel("RSI")
+        panel6.setHeightRatio(1.0)
+        # Info panel positioning for Panel 5
+        panel6.setInfoPanelPosition(100, 2)
+        panel6.setInfoPanelOffsets(label_dx=5, value_dx=80)
+        panel6.setData(0, DataType.Line, rsi_14, "RSI(14)", (1.0, 1.0, 0.0, 1.0))  # Sarı
+        panel6.setData(1, DataType.Levels, [30.0, 70.0], "Levels", (1.0, 0.0, 0.0, 0.5))  # Kırmızı çizgiler
+
+        # Panel 7: MACD
+        panel7 = plotter.AddPanel(7)
+        panel7.setTitle("MACD (12,26,9)")
+        panel7.setYAxisLabel("MACD")
+        panel7.setHeightRatio(1.0)
+        # Info panel positioning for Panel 6
+        panel7.setInfoPanelPosition(140, 2)
+        panel7.setInfoPanelOffsets(label_dx=5, value_dx=80)
+        panel7.setData(0, DataType.Line, macd_line, "MACD", (0.0, 1.0, 1.0, 1.0))  # Cyan
+        panel7.setData(1, DataType.Line, signal_line, "Signal", (1.0, 0.5, 0.0, 1.0))  # Turuncu
+        panel7.setData(2, DataType.Histogram, histogram, "Histogram")
+
+        # Panel 8: Momentum
+        panel8 = plotter.AddPanel(8)
+        panel8.setTitle("Momentum (10)")
+        panel8.setYAxisLabel("Momentum")
+        panel8.setHeightRatio(1.0)
+        # Info panel positioning for Panel 7
+        panel8.setInfoPanelPosition(100, 2)
+        panel8.setInfoPanelOffsets(label_dx=5, value_dx=80)
+        panel8.setData(0, DataType.Line, momentum_10, "Momentum(10)", (1.0, 0.5, 0.0, 1.0))
+
+        # Panel 9: Stochastic
+        panel9 = plotter.AddPanel(9)
+        panel9.setTitle("Stochastic (14,3)")
+        panel9.setYAxisLabel("%K / %D")
+        panel9.setHeightRatio(1.0)
+        # Info panel positioning for Panel 8
+        panel9.setInfoPanelPosition(100, 2)
+        panel9.setInfoPanelOffsets(label_dx=5, value_dx=80)
+        panel9.setData(0, DataType.Line, stoch_k, "%K", (0.0, 0.8, 0.0, 1.0))
+        panel9.setData(1, DataType.Line, stoch_d, "%D", (0.8, 0.0, 0.0, 1.0))
+
+        # Panel 10: ADX ve DI+/DI-
+        panel10 = plotter.AddPanel(10)
+        panel10.setTitle("ADX (14) & DI")
+        panel10.setYAxisLabel("ADX / DI")
+        panel10.setHeightRatio(1.0)
+        # Info panel positioning for Panel 9
+        panel10.setInfoPanelPosition(100, 2)
+        panel10.setInfoPanelOffsets(label_dx=5, value_dx=80)
+        panel10.setData(0, DataType.Line, adx, "ADX", (1.0, 1.0, 0.0, 1.0))  # Sarı
+        panel10.setData(1, DataType.Line, di_plus, "+DI", (0.0, 1.0, 0.0, 1.0))  # Yeşil
+        panel10.setData(2, DataType.Line, di_minus, "-DI", (1.0, 0.0, 0.0, 1.0))  # Kırmızı
+
+        groupId = 0  # Group 0: Panel 0,1,2
+        plotter.RegisterYSyncGroup(groupId, panel0)
+        plotter.RegisterYSyncGroup(groupId, panel2)
+        plotter.RegisterYSyncGroup(groupId, panel3)
+        plotter.RegisterYSyncGroup(groupId, panel4)
+
+        try:
+            plotter.setEnableVerticalScrollBar(True)
+            plotter.setEnableSharedCrossHair(True)
+            plotter.setEnableSharedXAxis(True)
+            plotter.setShowInfoOnAllPanels(True)
+            plotter.setShowTradeSignals(True)
+        except Exception:
+            pass
+
+    def plotDataImgBundle(self, trader):
+        # ==============================================================================
+        plotter = self.dataPlotterImgBundle
+
+        return
+
+        # ==============================================================================
+        plotter.setTimeData(reader.time_data)
+        plotter.setOHLCData(reader.ohlc)
+        plotter.setVolumeData(reader.volume_data)
+        plotter.setLotData(reader.lot_data)
+        plotter.setDeltaData(reader.delta)
+        plotter.setDeltaPctData(reader.delta_pct)
+        dt_labels = [f"{bar.date} {bar.time}" for bar in reader.bars]
+        plotter.setDateTimeLabels(dt_labels)
+        plotter.setTradeSignals(tradeSignals)
+
+        # ==============================================================================
+        plotter.setWindowTitle(f"{reader.get_metadata('GrafikSembol')} - Multi Panel Chart")
+        # ==============================================================================
+        plotter.grafik_sembol = reader.get_metadata('GrafikSembol')
+        plotter.grafik_periyot = reader.get_metadata('GrafikPeriyot')
+        plotter.grafik_periyot_extension = reader.get_metadata('dk')
+        # ==============================================================================
+        self.createPanelsByHandCoded(plotter)
+
+        # ==============================================================================
+        # Grafiği göster
+        print(f"\nToplam {len(plotter.panels)} panel oluşturuldu:")
+        for idx in sorted(plotter.panels.keys()):
+            panel = plotter.panels[idx]
+            print(f"  - Panel {idx}: {panel.title} ({len(panel.data_items)} data series)")
+        print("\nMulti-panel grafik açılıyor...")
+
+        # ==============================================================================
+        immapp.run(plotter.Plot, with_implot=True, window_size=(1600, 1200))
+
+        pass
 
 if __name__ == "__main__":
     print("Hello, Gemini!")
