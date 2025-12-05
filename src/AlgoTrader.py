@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import lightningchart as lc
 from lightningchart_trader import TAChart
 import random
+from src.DataPlotterImgBundle import DataPlotterImgBundle
 
 pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)
