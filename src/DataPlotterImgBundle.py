@@ -2232,6 +2232,9 @@ class DataPlotterImgBundle:
         imgui.same_line()
         update_y_clicked = imgui.button("UpdateOtherPlotsY")
 
+        imgui.same_line()
+        update_xy_clicked = imgui.button("UpdateOtherPlotsXY")
+
         # ReadSrcPlotParams logic - Save current limits of src panel
         if read_src_clicked:
             if static.src_panel_id is not None and static.src_panel_id in static.panel_limits:
@@ -2281,6 +2284,37 @@ class DataPlotterImgBundle:
                     print(f"[UpdateOtherPlotsY] Panel{static.src_panel_id} has no Y-sync group")
             else:
                 print(f"[UpdateOtherPlotsY] Please click ReadSrcPlotParams first")
+
+        # UpdateOtherPlotsXY logic (both X and Y axes) - Use saved src_panel_limits
+        if update_xy_clicked:
+            if static.src_panel_limits is not None and static.src_panel_id is not None:
+                src_x_min, src_x_max, src_y_min, src_y_max = static.src_panel_limits
+                new_offset = int(src_x_min)
+                new_visible = int(src_x_max - src_x_min)
+
+                # Apply X override to ALL panels (including src with its own limits)
+                for idx in self.panels.keys():
+                    static.panel_x_overrides[idx] = (new_offset, new_visible)
+
+                # Apply Y override to src + same Y-sync group panels
+                src_panel = self.panels.get(static.src_panel_id)
+                applied_y_count = 0
+                if src_panel and src_panel.y_sync_group is not None:
+                    src_y_group = src_panel.y_sync_group
+                    # Apply to all panels in same Y-sync group (including src)
+                    for idx, panel in self.panels.items():
+                        if panel.y_sync_group == src_y_group:
+                            static.panel_y_overrides[idx] = (src_y_min, src_y_max)
+                            applied_y_count += 1
+
+                static.needs_update = True
+                print(f"[UpdateOtherPlotsXY] Panel{static.src_panel_id} X limits: [{src_x_min:.1f}, {src_x_max:.1f}] -> applied to {len(static.panel_x_overrides)} panels")
+                if applied_y_count > 0:
+                    print(f"[UpdateOtherPlotsXY] Panel{static.src_panel_id} Y limits: [{src_y_min:.2f}, {src_y_max:.2f}] -> applied to {applied_y_count} panels in Y-sync group")
+                else:
+                    print(f"[UpdateOtherPlotsXY] Panel{static.src_panel_id} has no Y-sync group, Y sync skipped")
+            else:
+                print(f"[UpdateOtherPlotsXY] Please click ReadSrcPlotParams first")
 
         # Pan logic
         if pan_home_clicked or pan_left_clicked or pan_right_clicked or pan_end_clicked:
