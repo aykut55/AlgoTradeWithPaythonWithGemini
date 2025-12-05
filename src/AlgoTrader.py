@@ -3861,11 +3861,14 @@ class AlgoTrader:
         plotter.grafik_periyot_extension = reader.get_metadata('dk')
 
         # ==============================================================================
+        HeightRatioList= [1.8, 1.2, 1.2, 1.2, 1.0]
+
+        # ==============================================================================
         # Panel 0: OHLC + Moving Averages
         panel0 = plotter.AddPanel(0)
         panel0.setTitle("Price Chart")
         panel0.setYAxisLabel("Price")
-        panel0.setHeightRatio(1.2)  # Ana panel daha büyük
+        panel0.setHeightRatio(HeightRatioList[0])  # Ana panel daha büyük
         panel0.setOHLCData(plotter.getOHLCData())
         # Info panel positioning for Panel 0 (adjust as desired)
         panel0.setInfoPanelPosition(100, 2)
@@ -3885,7 +3888,7 @@ class AlgoTrader:
         panel1 = plotter.AddPanel(1)
         panel1.setTitle("TradeSignals")
         panel1.setYAxisLabel("TradeSignals")
-        panel1.setHeightRatio(0.8)
+        panel1.setHeightRatio(HeightRatioList[1])
         # Info panel positioning for Panel 1
         panel1.setInfoPanelPosition(120, 2)
         panel1.setInfoPanelOffsets(label_dx=5, value_dx=80)
@@ -3919,7 +3922,7 @@ class AlgoTrader:
         panel2 = plotter.AddPanel(2)
         panel2.setTitle("PnL")
         panel2.setYAxisLabel("karZararFiyatList")
-        panel2.setHeightRatio(0.8)
+        panel2.setHeightRatio(HeightRatioList[2])
         # Info panel positioning for Panel 2
         panel2.setInfoPanelPosition(100, 2)
         panel2.setInfoPanelOffsets(label_dx=5, value_dx=80)
@@ -3930,7 +3933,7 @@ class AlgoTrader:
         panel3 = plotter.AddPanel(3)
         panel3.setTitle("Balance")
         panel3.setYAxisLabel("getiriFiyat")
-        panel3.setHeightRatio(0.8)
+        panel3.setHeightRatio(HeightRatioList[3])
         # Info panel positioning for Panel 3
         panel3.setInfoPanelPosition(100, 2)
         panel3.setInfoPanelOffsets(label_dx=5, value_dx=80)
@@ -3944,7 +3947,7 @@ class AlgoTrader:
         panel4 = plotter.AddPanel(4)
         panel4.setTitle("MOST (21,1.0)")
         panel4.setYAxisLabel("MOST")
-        panel4.setHeightRatio(0.8)
+        panel4.setHeightRatio(HeightRatioList[4])
         # Info panel positioning for Panel 3
         panel4.setInfoPanelPosition(100, 2)
         panel4.setInfoPanelOffsets(label_dx=5, value_dx=80)
