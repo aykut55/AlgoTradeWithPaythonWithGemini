@@ -3861,7 +3861,7 @@ class AlgoTrader:
         plotter.grafik_periyot_extension = reader.get_metadata('dk')
 
         # ==============================================================================
-        HeightRatioList= [1.8, 1.2, 1.2, 1.2, 1.0]
+        HeightRatioList= [1.5, 0.8, 0.8, 0.8, 1.4]
 
         # ==============================================================================
         # Panel 0: OHLC + Moving Averages
