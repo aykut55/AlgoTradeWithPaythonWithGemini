@@ -3934,9 +3934,19 @@ class AlgoTrader:
         # Info panel positioning for Panel 3
         panel3.setInfoPanelPosition(100, 2)
         panel3.setInfoPanelOffsets(label_dx=5, value_dx=80)
-        # panel3.setData(0, DataType.Line, getiriFiyatNetList, "getiriFiyatNetList", (0.0, 1.0, 1.0, 1.0))  # Cyan
+        panel3.setData(0, DataType.Line, getiriFiyatNetList, "getiriFiyatNetList", (0.0, 1.0, 1.0, 1.0))  # Cyan
 
-
+        # ==============================================================================
+        # Panel 4: MOST
+        panel4 = plotter.AddPanel(4)
+        panel4.setTitle("MOST (21,1.0)")
+        panel4.setYAxisLabel("MOST")
+        panel4.setHeightRatio(1.0)
+        # Info panel positioning for Panel 3
+        panel4.setInfoPanelPosition(100, 2)
+        panel4.setInfoPanelOffsets(label_dx=5, value_dx=80)
+        panel4.setData(0, DataType.Line, self.Most, "MOST", (0.6, 0.6, 0.0, 1.0))
+        panel4.setData(1, DataType.Line, self.ExMov, "EMA", (0.5, 0.2, 0.8, 1.0))
 
         # ==============================================================================
         groupId = 0  # Group 0: Panel 0,1,2
