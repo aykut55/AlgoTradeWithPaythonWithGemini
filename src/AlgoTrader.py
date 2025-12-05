@@ -517,7 +517,7 @@ class AlgoTrader:
 
     def loadMarketData(self):
 
-        dataCount = 100_000        
+        dataCount = 100_000
         # self.dataManager.set_read_mode_all_data()
         self.dataManager.set_read_mode_last_n(dataCount)
         # self.dataManager.set_read_mode_first_n(dataCount)
@@ -575,6 +575,7 @@ class AlgoTrader:
 
         print("BarCount    :", self.BarCount)
         print("ItemsCount  :", self.ItemsCount)
+        print("=====================================================================\n")
 
         print_last_elements_enabled = False
         print_first_elements_enabled = False
@@ -3845,6 +3846,7 @@ class AlgoTrader:
         # ==============================================================================
         tradeSignals = self.active_trader.combined_data_normalized
         karZararFiyatList = self.active_trader.Lists.KarZararFiyatList #self.karZararFiyatList
+        getiriFiyatList = self.active_trader.Lists.GetiriFiyatList #self.GetiriFiyatList
         getiriFiyatNetList = self.active_trader.Lists.GetiriFiyatNetList #self.getiriFiyatNetList
         
         # ==============================================================================
@@ -3888,7 +3890,7 @@ class AlgoTrader:
         panel1.setInfoPanelPosition(120, 2)
         panel1.setInfoPanelOffsets(label_dx=5, value_dx=80)
 
-        panel1.setData(0, DataType.Stairs, tradeSignals, "TradeSignals", (0.2, 0.8, 1.0, 1.0))
+        panel1.setData(0, DataType.Stairs, tradeSignals, "Signals", (0.2, 0.8, 1.0, 1.0))
         # ------------------------------------------
         # Gizli Y-axis padding çizgileri (autoscale hack)
         # ------------------------------------------
@@ -3919,20 +3921,23 @@ class AlgoTrader:
         panel2.setYAxisLabel("karZararFiyatList")
         panel2.setHeightRatio(0.8)
         # Info panel positioning for Panel 2
-        panel2.setInfoPanelPosition(110, 2)
+        panel2.setInfoPanelPosition(100, 2)
         panel2.setInfoPanelOffsets(label_dx=5, value_dx=80)
-        panel2.setData(0, DataType.Line, karZararFiyatList, "karZararFiyatList", (0.0, 1.0, 1.0, 1.0))  # Cyan
+        panel2.setData(0, DataType.Line, karZararFiyatList, "PnL", (1.0, 1.0, 0.0, 1.0))  # Sarı
 
         # ==============================================================================
         # Panel 3: getiriFiyatNetList
         panel3 = plotter.AddPanel(3)
         panel3.setTitle("Balance")
-        panel3.setYAxisLabel("getiriFiyatNetList")
+        panel3.setYAxisLabel("getiriFiyat")
         panel3.setHeightRatio(0.8)
         # Info panel positioning for Panel 3
-        panel3.setInfoPanelPosition(110, 2)
+        panel3.setInfoPanelPosition(100, 2)
         panel3.setInfoPanelOffsets(label_dx=5, value_dx=80)
-        panel3.setData(0, DataType.Line, getiriFiyatNetList, "getiriFiyatNetList", (0.0, 1.0, 1.0, 1.0))  # Cyan
+        panel3.setData(0, DataType.Line, getiriFiyatList, "Balance",  (0.0, 0.5, 1.0, 1.0))       # Mavi
+        panel3.setData(1, DataType.Line, getiriFiyatNetList, "Net Balance", (1.0, 1.0, 0.0, 1.0))  # Sarı
+        
+        # Purple (0.5, 0.0, 0.5, 1.0)
 
         # ==============================================================================
         # Panel 4: MOST
@@ -3941,7 +3946,7 @@ class AlgoTrader:
         panel4.setYAxisLabel("MOST")
         panel4.setHeightRatio(0.8)
         # Info panel positioning for Panel 3
-        panel4.setInfoPanelPosition(110, 2)
+        panel4.setInfoPanelPosition(100, 2)
         panel4.setInfoPanelOffsets(label_dx=5, value_dx=80)
         panel4.setData(0, DataType.Line, self.Most, "MOST", (0.6, 0.6, 0.0, 1.0))
         panel4.setData(1, DataType.Line, self.ExMov, "EMA", (0.5, 0.2, 0.8, 1.0))
