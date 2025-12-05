@@ -1848,7 +1848,6 @@ class DataPlotterImgBundle:
             # wheel event: always log (no src_panel tracking)
             if etype == "wheel":
                 print(f"[EVENT] panel={pid} {etype} evt={ {k:v for k,v in event.items() if k!='ppx'} }")
-                return
 
             # hover event: always log (no src_panel tracking, can be spammy)
             if etype == "hover" and 1 == 0:
@@ -1880,6 +1879,41 @@ class DataPlotterImgBundle:
                 print(f"[EVENT] src={self._src_panel} {etype} evt={ {k:v for k,v in event.items() if k!='ppx'} }")
         except Exception:
             pass
+
+        # aykut kod buraya eklendi: event sonunda otomatik UpdateOtherPlotsXY
+        self._event_end_update_other_plots_xy(event)
+
+    def _event_end_update_other_plots_xy(self, event: Dict[str, Any]) -> None:
+        """If shared X is enabled, simulate UpdateOtherPlotsXY after an event.
+
+        - Reads src limits from static.panel_limits using last interacted or current event panel
+        - Applies X window to all panels via one-shot overrides
+        - Applies Y limits to same Y-sync group
+        """
+        try:
+            if not getattr(self, "enable_shared_xaxis", False):
+                return
+
+            static = DataPlotterImgBundle.Plot
+
+            # Determine source panel id
+            src_id = getattr(self, "_src_panel", None)
+            if src_id is None:
+                try:
+                    src_id = int(event.get("panel_id", -1)) if event is not None else None
+                except Exception:
+                    src_id = None
+            if src_id is None:
+                src_id = getattr(static, "src_panel_id", None)
+            if src_id is None:
+                return
+            if not (hasattr(static, "panel_limits") and src_id in static.panel_limits):
+                return
+
+            # static.needs_update = True
+
+        except Exception:
+            pass  # aykut kod buraya eklendi
 
     def setTimeData(self, time_data: np.ndarray):
         """
@@ -2244,8 +2278,17 @@ class DataPlotterImgBundle:
             else:
                 print(f"[ReadSrcPlotParams] No source panel selected or limits not available")
 
-        # UpdateOtherPlotsX logic (X-axis only) - Use saved src_panel_limits
+        # UpdateOtherPlotsX logic (X-axis only) - Auto-run ReadSrcPlotParams, then apply
         if update_x_clicked:
+            # Auto: ReadSrcPlotParams
+            if static.src_panel_id is not None and static.src_panel_id in static.panel_limits:
+                static.src_panel_limits = static.panel_limits[static.src_panel_id]
+                x_min, x_max, y_min, y_max = static.src_panel_limits
+                print(f"[Auto-ReadSrcPlotParams] Saved Panel{static.src_panel_id} limits: X=[{x_min:.1f}, {x_max:.1f}], Y=[{y_min:.2f}, {y_max:.2f}]")
+            else:
+                print(f"[Auto-ReadSrcPlotParams] No source panel selected or limits not available")
+
+            # Apply X update if we now have src limits
             if static.src_panel_limits is not None and static.src_panel_id is not None:
                 src_x_min, src_x_max, src_y_min, src_y_max = static.src_panel_limits
                 new_offset = int(src_x_min)
@@ -2259,10 +2302,18 @@ class DataPlotterImgBundle:
                 static.needs_update = True
                 print(f"[UpdateOtherPlotsX] Panel{static.src_panel_id} X limits: [{src_x_min:.1f}, {src_x_max:.1f}] -> applied to {len(static.panel_x_overrides)} panels (src included with own limits)")
             else:
-                print(f"[UpdateOtherPlotsX] Please click ReadSrcPlotParams first")
+                print(f"[UpdateOtherPlotsX] Auto ReadSrcPlotParams failed (no source)")
 
-        # UpdateOtherPlotsY logic (Y-axis only, same Y-sync group) - Use saved src_panel_limits
+        # UpdateOtherPlotsY logic (Y-axis only, same Y-sync group) - Auto-run ReadSrcPlotParams, then apply
         if update_y_clicked:
+            # Auto: ReadSrcPlotParams
+            if static.src_panel_id is not None and static.src_panel_id in static.panel_limits:
+                static.src_panel_limits = static.panel_limits[static.src_panel_id]
+                x_min, x_max, y_min, y_max = static.src_panel_limits
+                print(f"[Auto-ReadSrcPlotParams] Saved Panel{static.src_panel_id} limits: X=[{x_min:.1f}, {x_max:.1f}], Y=[{y_min:.2f}, {y_max:.2f}]")
+            else:
+                print(f"[Auto-ReadSrcPlotParams] No source panel selected or limits not available")
+
             if static.src_panel_limits is not None and static.src_panel_id is not None:
                 src_x_min, src_x_max, src_y_min, src_y_max = static.src_panel_limits
                 src_panel = self.panels.get(static.src_panel_id)
@@ -2283,10 +2334,18 @@ class DataPlotterImgBundle:
                 else:
                     print(f"[UpdateOtherPlotsY] Panel{static.src_panel_id} has no Y-sync group")
             else:
-                print(f"[UpdateOtherPlotsY] Please click ReadSrcPlotParams first")
+                print(f"[UpdateOtherPlotsY] Auto ReadSrcPlotParams failed (no source)")
 
-        # UpdateOtherPlotsXY logic (both X and Y axes) - Use saved src_panel_limits
+        # UpdateOtherPlotsXY logic (both X and Y axes) - Auto-run ReadSrcPlotParams, then apply
         if update_xy_clicked:
+            # Auto: ReadSrcPlotParams
+            if static.src_panel_id is not None and static.src_panel_id in static.panel_limits:
+                static.src_panel_limits = static.panel_limits[static.src_panel_id]
+                x_min, x_max, y_min, y_max = static.src_panel_limits
+                print(f"[Auto-ReadSrcPlotParams] Saved Panel{static.src_panel_id} limits: X=[{x_min:.1f}, {x_max:.1f}], Y=[{y_min:.2f}, {y_max:.2f}]")
+            else:
+                print(f"[Auto-ReadSrcPlotParams] No source panel selected or limits not available")
+
             if static.src_panel_limits is not None and static.src_panel_id is not None:
                 src_x_min, src_x_max, src_y_min, src_y_max = static.src_panel_limits
                 new_offset = int(src_x_min)
@@ -2314,7 +2373,7 @@ class DataPlotterImgBundle:
                 else:
                     print(f"[UpdateOtherPlotsXY] Panel{static.src_panel_id} has no Y-sync group, Y sync skipped")
             else:
-                print(f"[UpdateOtherPlotsXY] Please click ReadSrcPlotParams first")
+                print(f"[UpdateOtherPlotsXY] Auto ReadSrcPlotParams failed (no source)")
 
         # Pan logic
         if pan_home_clicked or pan_left_clicked or pan_right_clicked or pan_end_clicked:
