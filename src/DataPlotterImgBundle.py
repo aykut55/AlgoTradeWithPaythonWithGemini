@@ -601,6 +601,16 @@ class Panel:
         Returns:
             Tuple of (lod_x, lod_y)
         """
+        # Ensure numpy arrays (handle callers passing Python lists)
+        try:
+            x_data = np.asarray(x_data, dtype=np.float64)
+        except Exception:
+            x_data = np.array([], dtype=np.float64)
+        try:
+            y_data = np.asarray(y_data, dtype=np.float64)
+        except Exception:
+            y_data = np.array([], dtype=np.float64)
+
         x_min, x_max = visible_range
 
         # Filter visible range and NaN values
@@ -654,6 +664,16 @@ class Panel:
         Returns:
             Tuple of (lod_x, lod_y)
         """
+        # Ensure numpy arrays (handle callers passing Python lists)
+        try:
+            x_data = np.asarray(x_data, dtype=np.float64)
+        except Exception:
+            x_data = np.array([], dtype=np.float64)
+        try:
+            y_data = np.asarray(y_data, dtype=np.float64)
+        except Exception:
+            y_data = np.array([], dtype=np.float64)
+
         x_min, x_max = visible_range
 
         # Filter visible range
@@ -702,6 +722,16 @@ class Panel:
         Returns:
             Tuple of (lod_x, lod_y)
         """
+        # Ensure numpy arrays (handle callers passing Python lists)
+        try:
+            x_data = np.asarray(x_data, dtype=np.float64)
+        except Exception:
+            x_data = np.array([], dtype=np.float64)
+        try:
+            y_data = np.asarray(y_data, dtype=np.float64)
+        except Exception:
+            y_data = np.array([], dtype=np.float64)
+
         x_min, x_max = visible_range
 
         # Filter visible range

@@ -536,20 +536,20 @@ class AlgoTrader:
         self.dataManager.print_sample_bars(5)
         end_time = time.time()
         elapsed_ms = (end_time - start_time) * 1000  # Saniyeyi 1000 ile çarpıp ms'ye çeviriyoruz
-        print(f"Geçen süre: {elapsed_ms:.2f} ms")
+        # print(f"Geçen süre: {elapsed_ms:.2f} ms")
 
         start_time = time.time()
         self.dataManager.build_data_frame()
         # print(self.dataManager.get_dataframe().tail())
         end_time = time.time()
         elapsed_ms = (end_time - start_time) * 1000  # Saniyeyi 1000 ile çarpıp ms'ye çeviriyoruz
-        print(f"Geçen süre: {elapsed_ms:.2f} ms")
+        # print(f"Geçen süre: {elapsed_ms:.2f} ms")
 
         start_time = time.time()
         # self.dataManager.add_time_columns()
         end_time = time.time()
         elapsed_ms = (end_time - start_time) * 1000  # Saniyeyi 1000 ile çarpıp ms'ye çeviriyoruz
-        print(f"Geçen süre: {elapsed_ms:.2f} ms")
+        # print(f"Geçen süre: {elapsed_ms:.2f} ms")
 
         self.V           = self.dataManager
         self.Df          = self.dataManager.get_dataframe()
@@ -569,13 +569,6 @@ class AlgoTrader:
         self.BarCount    = self.dataManager.get_bar_count()
         self.ItemsCount  = self.dataManager.get_items_count()
 
-        # print(self.EpochTime[-2])
-        # print(self.EpochTime[-1])
-        # print("\n self.Df.tail() cagrilacak")
-        # print("")
-        # print(self.Df.tail())
-        # name = input("Devam etmek icin tusa basiniz... ")
-
         print("\n=====================================================================")
         print("FilePath    :", os.path.join(dirName, subDirName, fileName))
         print("FileName    :", os.path.join(fileName))
@@ -583,52 +576,57 @@ class AlgoTrader:
         print("BarCount    :", self.BarCount)
         print("ItemsCount  :", self.ItemsCount)
 
-        print("\n=====================================================================")
-        print("Last Elements:")
-        print("\n=====================================================================")
-        print("InputTime   :", self.dataManager.get_timestamp_array()[-5:])
-        print("EpochTime   :", self.dataManager.get_epoch_time_array()[-5:])
+        print_last_elements_enabled = False
+        print_first_elements_enabled = False
 
-        print("DateTime    :", self.dataManager.get_date_time_array_as_str()[-5:])
-        print("Date        :", self.dataManager.get_date_array_as_str()[-5:])
-        print("Time        :", self.dataManager.get_time_array_as_str()[-5:])
+        if print_last_elements_enabled:
+            print("\n=====================================================================")
+            print("Last Elements:")
+            print("\n=====================================================================")
+            print("InputTime   :", self.dataManager.get_timestamp_array()[-5:])
+            print("EpochTime   :", self.dataManager.get_epoch_time_array()[-5:])
 
-        print("DateTimeObj :", self.dataManager.get_date_time_array_new()[-5:])
-        print("DateObj     :", self.dataManager.get_date_array_new()[-5:])
-        print("TimeObj     :", self.dataManager.get_time_array_new()[-5:])
+            print("DateTime    :", self.dataManager.get_date_time_array_as_str()[-5:])
+            print("Date        :", self.dataManager.get_date_array_as_str()[-5:])
+            print("Time        :", self.dataManager.get_time_array_as_str()[-5:])
 
-        print("Open        :", self.dataManager.get_open_array()[-5:])
-        print("High        :", self.dataManager.get_high_array()[-5:])
-        print("Low         :", self.dataManager.get_low_array()[-5:])
-        print("Close       :", self.dataManager.get_close_array()[-5:])
-        print("Volume      :", self.dataManager.get_volume_array()[-5:])
-        print("Lot         :", self.dataManager.get_lot_array()[-5:])
-        print("Delta       :", self.dataManager.get_delta_array()[-5:])
-        print("Delta (%)   :", self.dataManager.get_delta_pct_array()[-5:])
+            print("DateTimeObj :", self.dataManager.get_date_time_array_new()[-5:])
+            print("DateObj     :", self.dataManager.get_date_array_new()[-5:])
+            print("TimeObj     :", self.dataManager.get_time_array_new()[-5:])
 
-        print("\n=====================================================================")
-        print("First Elements:")
-        print("\n=====================================================================")
-        print("InputTime   :", self.dataManager.get_timestamp_array()[5:])
-        print("EpochTime   :", self.dataManager.get_epoch_time_array()[5:])
+            print("Open        :", self.dataManager.get_open_array()[-5:])
+            print("High        :", self.dataManager.get_high_array()[-5:])
+            print("Low         :", self.dataManager.get_low_array()[-5:])
+            print("Close       :", self.dataManager.get_close_array()[-5:])
+            print("Volume      :", self.dataManager.get_volume_array()[-5:])
+            print("Lot         :", self.dataManager.get_lot_array()[-5:])
+            print("Delta       :", self.dataManager.get_delta_array()[-5:])
+            print("Delta (%)   :", self.dataManager.get_delta_pct_array()[-5:])
 
-        print("DateTime    :", self.dataManager.get_date_time_array_as_str()[5:])
-        print("Date        :", self.dataManager.get_date_array_as_str()[5:])
-        print("Time        :", self.dataManager.get_time_array_as_str()[5:])
-
-        print("DateTimeObj :", self.dataManager.get_date_time_array_new()[5:])
-        print("DateObj     :", self.dataManager.get_date_array_new()[5:])
-        print("TimeObj     :", self.dataManager.get_time_array_new()[5:])
-
-        print("Open        :", self.dataManager.get_open_array()[5:])
-        print("High        :", self.dataManager.get_high_array()[5:])
-        print("Low         :", self.dataManager.get_low_array()[5:])
-        print("Close       :", self.dataManager.get_close_array()[5:])
-        print("Volume      :", self.dataManager.get_volume_array()[5:])
-        print("Lot         :", self.dataManager.get_lot_array()[5:])
-        print("Delta       :", self.dataManager.get_delta_array()[5:])
-        print("Delta (%)   :", self.dataManager.get_delta_pct_array()[5:])
-        print("\n=====================================================================")
+        if print_first_elements_enabled:
+            print("\n=====================================================================")
+            print("First Elements:")
+            print("\n=====================================================================")
+            print("InputTime   :", self.dataManager.get_timestamp_array()[5:])
+            print("EpochTime   :", self.dataManager.get_epoch_time_array()[5:])
+    
+            print("DateTime    :", self.dataManager.get_date_time_array_as_str()[5:])
+            print("Date        :", self.dataManager.get_date_array_as_str()[5:])
+            print("Time        :", self.dataManager.get_time_array_as_str()[5:])
+    
+            print("DateTimeObj :", self.dataManager.get_date_time_array_new()[5:])
+            print("DateObj     :", self.dataManager.get_date_array_new()[5:])
+            print("TimeObj     :", self.dataManager.get_time_array_new()[5:])
+    
+            print("Open        :", self.dataManager.get_open_array()[5:])
+            print("High        :", self.dataManager.get_high_array()[5:])
+            print("Low         :", self.dataManager.get_low_array()[5:])
+            print("Close       :", self.dataManager.get_close_array()[5:])
+            print("Volume      :", self.dataManager.get_volume_array()[5:])
+            print("Lot         :", self.dataManager.get_lot_array()[5:])
+            print("Delta       :", self.dataManager.get_delta_array()[5:])
+            print("Delta (%)   :", self.dataManager.get_delta_pct_array()[5:])
+            print("\n=====================================================================")
 
         # name = input("Devam etmek icin tusa basiniz 3 ")
         # print("")
@@ -3865,7 +3863,7 @@ class AlgoTrader:
         panel0 = plotter.AddPanel(0)
         panel0.setTitle("Price Chart")
         panel0.setYAxisLabel("Price")
-        panel0.setHeightRatio(2.0)  # Ana panel daha büyük
+        panel0.setHeightRatio(1.2)  # Ana panel daha büyük
         panel0.setOHLCData(plotter.getOHLCData())
         # Info panel positioning for Panel 0 (adjust as desired)
         panel0.setInfoPanelPosition(100, 2)
@@ -3885,9 +3883,9 @@ class AlgoTrader:
         panel1 = plotter.AddPanel(1)
         panel1.setTitle("TradeSignals")
         panel1.setYAxisLabel("TradeSignals")
-        panel1.setHeightRatio(1.0)
+        panel1.setHeightRatio(0.8)
         # Info panel positioning for Panel 1
-        panel1.setInfoPanelPosition(100, 2)
+        panel1.setInfoPanelPosition(120, 2)
         panel1.setInfoPanelOffsets(label_dx=5, value_dx=80)
 
         panel1.setData(0, DataType.Stairs, tradeSignals, "TradeSignals", (0.2, 0.8, 1.0, 1.0))
@@ -3919,20 +3917,20 @@ class AlgoTrader:
         panel2 = plotter.AddPanel(2)
         panel2.setTitle("PnL")
         panel2.setYAxisLabel("karZararFiyatList")
-        panel2.setHeightRatio(1.0)
+        panel2.setHeightRatio(0.8)
         # Info panel positioning for Panel 2
-        panel2.setInfoPanelPosition(100, 2)
+        panel2.setInfoPanelPosition(110, 2)
         panel2.setInfoPanelOffsets(label_dx=5, value_dx=80)
-        # panel2.setData(0, DataType.Line, karZararFiyatList, "karZararFiyatList", (0.0, 1.0, 1.0, 1.0))  # Cyan
+        panel2.setData(0, DataType.Line, karZararFiyatList, "karZararFiyatList", (0.0, 1.0, 1.0, 1.0))  # Cyan
 
         # ==============================================================================
         # Panel 3: getiriFiyatNetList
         panel3 = plotter.AddPanel(3)
         panel3.setTitle("Balance")
         panel3.setYAxisLabel("getiriFiyatNetList")
-        panel3.setHeightRatio(1.0)
+        panel3.setHeightRatio(0.8)
         # Info panel positioning for Panel 3
-        panel3.setInfoPanelPosition(100, 2)
+        panel3.setInfoPanelPosition(110, 2)
         panel3.setInfoPanelOffsets(label_dx=5, value_dx=80)
         panel3.setData(0, DataType.Line, getiriFiyatNetList, "getiriFiyatNetList", (0.0, 1.0, 1.0, 1.0))  # Cyan
 
@@ -3941,9 +3939,9 @@ class AlgoTrader:
         panel4 = plotter.AddPanel(4)
         panel4.setTitle("MOST (21,1.0)")
         panel4.setYAxisLabel("MOST")
-        panel4.setHeightRatio(1.0)
+        panel4.setHeightRatio(0.8)
         # Info panel positioning for Panel 3
-        panel4.setInfoPanelPosition(100, 2)
+        panel4.setInfoPanelPosition(110, 2)
         panel4.setInfoPanelOffsets(label_dx=5, value_dx=80)
         panel4.setData(0, DataType.Line, self.Most, "MOST", (0.6, 0.6, 0.0, 1.0))
         panel4.setData(1, DataType.Line, self.ExMov, "EMA", (0.5, 0.2, 0.8, 1.0))
