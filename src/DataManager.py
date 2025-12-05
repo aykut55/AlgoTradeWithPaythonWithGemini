@@ -1628,3 +1628,6 @@ class DataManager:
             self.reader.print_last_bars(count)
         else:
             print("No reader available.")
+
+    def get_reader(self):
+        return self.reader

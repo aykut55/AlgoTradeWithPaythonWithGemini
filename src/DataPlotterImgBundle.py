@@ -2076,7 +2076,7 @@ class DataPlotterImgBundle:
             imgui.text("No data to plot")
             return
 
-        static = DataPlotter.Plot
+        static = DataPlotterImgBundle.Plot
 
         # Initialize static variables (like Legacy system)
         if not hasattr(static, "initialized"):

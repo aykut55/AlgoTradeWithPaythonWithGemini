@@ -533,14 +533,14 @@ class AlgoTrader:
 
         start_time = time.time()
         self.dataManager.load_prices_from_csv_with_bar_data_reader(dirName, subDirName, fileName)
+        self.dataManager.print_sample_bars(5)
         end_time = time.time()
         elapsed_ms = (end_time - start_time) * 1000  # Saniyeyi 1000 ile çarpıp ms'ye çeviriyoruz
         print(f"Geçen süre: {elapsed_ms:.2f} ms")
 
-        self.dataManager.print_sample_bars(5)
-
         start_time = time.time()
         self.dataManager.build_data_frame()
+        # print(self.dataManager.get_dataframe().tail())
         end_time = time.time()
         elapsed_ms = (end_time - start_time) * 1000  # Saniyeyi 1000 ile çarpıp ms'ye çeviriyoruz
         print(f"Geçen süre: {elapsed_ms:.2f} ms")
@@ -569,12 +569,12 @@ class AlgoTrader:
         self.BarCount    = self.dataManager.get_bar_count()
         self.ItemsCount  = self.dataManager.get_items_count()
 
-        print(self.EpochTime[-2])
-        print(self.EpochTime[-1])
-        print("\n self.Df.tail() cagrilacak")
-        print("")
-        print(self.Df.tail())
-        name = input("Devam etmek icin tusa basiniz... ")
+        # print(self.EpochTime[-2])
+        # print(self.EpochTime[-1])
+        # print("\n self.Df.tail() cagrilacak")
+        # print("")
+        # print(self.Df.tail())
+        # name = input("Devam etmek icin tusa basiniz... ")
 
         print("\n=====================================================================")
         print("FilePath    :", os.path.join(dirName, subDirName, fileName))
@@ -630,8 +630,8 @@ class AlgoTrader:
         print("Delta (%)   :", self.dataManager.get_delta_pct_array()[5:])
         print("\n=====================================================================")
 
-        name = input("Devam etmek icin tusa basiniz 3 ")
-        print("")
+        # name = input("Devam etmek icin tusa basiniz 3 ")
+        # print("")
 
     def loadMarketDataFromSqliteDB(self):
         # SQLite veritabanından veri yükle
@@ -2148,7 +2148,7 @@ class AlgoTrader:
     def run_with_single_trader(self):
         # --------------------------------------------------------------
         # Read market data (equivalent to .GrafikVerileri operations)
-        print("Loading market data...")
+        print("\nLoading market data...")
         self.loadMarketData()
         # self.loadMarketDataFromSqliteDB()
 
@@ -2206,7 +2206,10 @@ class AlgoTrader:
             trader.Signals.GunSonuPozKapatEnabled = False
             trader.Signals.TimeFilteringEnabled = True
 
+        # --------------------------------------------------------------
         self.mySystem.start()
+
+        # --------------------------------------------------------------
         for i in range(self.BarCount):
             for j in range(self.mySystem.get_trader_count()):
                 trader = self.mySystem.get_trader(j)
@@ -2251,15 +2254,15 @@ class AlgoTrader:
 
                 trader.emirleri_setle(i, Al, Sat, FlatOl, PasGec, KarAl, ZararKes)
 
-                # YAPILACAK
+                # TODO : YAPILACAK
                 trader.islem_zaman_filtresi_uygula(i)
 
                 trader.emir_sonrasi_dongu_foksiyonlarini_calistir(i)
 
-                if Al:
-                    print(f"bar {i} : trader {trader.Id} : Signal : Buy, Close {self.Close[i]}")
-                if Sat:
-                    print(f"bar {i} : trader {trader.Id} : Signal : Sell, Close {self.Close[i]}")
+                # if Al:
+                #     print(f"bar {i} : trader {trader.Id} : Signal : Buy, Close {self.Close[i]}")
+                # if Sat:
+                #     print(f"bar {i} : trader {trader.Id} : Signal : Sell, Close {self.Close[i]}")
 
                 self.KarZararPuanList = trader.Lists.KarZararPuanList
                 self.KarZararFiyatList = trader.Lists.KarZararFiyatList
@@ -2267,8 +2270,10 @@ class AlgoTrader:
                 self.YonList = trader.Lists.YonList
                 self.SeviyeList = trader.Lists.SeviyeList
 
+        # --------------------------------------------------------------
         self.mySystem.stop()
 
+        # --------------------------------------------------------------
         for i in range(self.mySystem.get_trader_count()):
             trader = self.mySystem.get_trader(i)
             trader_id = trader.Id
@@ -2292,9 +2297,13 @@ class AlgoTrader:
                 trader.istatistikleri_dosyaya_yaz(self.mySystem.IstatistiklerOutputFileName)
                 pass
 
-            trader.update_data_frame()
-            print(trader._df)
-            print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
+            # --------------------------------------------------------------
+            # TODO : update_data_frame() içi güncell attribute'lere göre update edilecek
+            # trader.update_data_frame()
+            # print(trader._df)
+            # print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
+
+            # TODO : pass'e kadar ola kısım kontrol edilecek
             # trader.write_data_frame_to_file_as_tabular("trading_data_tabular.txt")
             # trader.write_statistics_to_file_as_tabular("trading_statistics_tabular.txt")
 
@@ -2310,6 +2319,7 @@ class AlgoTrader:
             # # HTML formatında kaydet
             # trader.write_data_frame_to_file("trading_0_data.html")
             pass
+            # --------------------------------------------------------------
 
         # --------------------------------------------------------------
         self.active_trader = self.mySystem.get_trader(0)
@@ -2326,12 +2336,12 @@ class AlgoTrader:
             #     self.plot_combined_signals(self.active_trader.combined_data, 1000)
 
         # --------------------------------------------------------------
-        print("Saving data to files...")
+        print("\nSaving data to files...")
         dstDir = "."
-        self.SavePlotData(self.active_trader, dstDir)
+        # self.SavePlotData(self.active_trader, dstDir)
 
         # --------------------------------------------------------------
-        print("Plotting market data...")
+        print("\nPlotting market data...")
         # # self.plotData()
         # # self.plotData2(self.active_trader)
         # # self.plotData3(self.active_trader)  # matplotlib version - DISABLED
@@ -2884,7 +2894,7 @@ class AlgoTrader:
                 "direction": current_signal
             })
 
-        print(f"DEBUG: {len(segments)} segments found")
+        # print(f"DEBUG: {len(segments)} segments found")
         return segments
 
     def plotDataFinal(self, trader):
@@ -3265,7 +3275,7 @@ class AlgoTrader:
                     if j < len(combined_data_normalized):
                         combined_data_normalized[j] = signal_value
                 
-                print(f"DEBUG: Added {seg['direction']} segment {seg['start']}→{seg['end']} at level {seg['level']:.2f}, normalized: {signal_value}")
+                # print(f"DEBUG: Added {seg['direction']} segment {seg['start']}→{seg['end']} at level {seg['level']:.2f}, normalized: {signal_value}")
 
             return segments, combined_data, combined_data_normalized
             
@@ -3575,7 +3585,18 @@ class AlgoTrader:
         
         print(f"Indicator data saved to: {dstFilePath4}")
 
-    def createPanelsByHandCoded(plotter: 'DataPlotterImgBundle'):
+    def createPanelsByHandCoded(self,  trader : 'CTrader', reader: 'CSVBarDataReader', plotter: 'DataPlotterImgBundle'):
+
+        # self.dataPlotter2.AddYData(2, balance, "balance")
+        # self.dataPlotter2.AddYData(3, bakiye, "bakiye")
+        # self.dataPlotter2.AddYData(4, getiriFiyatList, "getiriFiyatList")
+        # self.dataPlotter2.AddYData(5, getiriFiyatNetList, "getiriFiyatNetList")
+        # self.dataPlotter2.AddYData(6, getiriKz, "getiriKz")
+        # self.dataPlotter2.AddYData(7, getiriKzNet, "getiriKzNet")
+        # self.dataPlotter2.AddYData(8, karZararPuanList, "karZararPuanList")
+        # self.dataPlotter2.AddYData(9, karZararFiyatList, "karZararFiyatList")
+
+
         plotter.setWindowTitle(f"{reader.get_metadata('GrafikSembol')} - Multi Panel Chart")
 
         plotter.setTimeData(reader.time_data)
@@ -3760,8 +3781,191 @@ class AlgoTrader:
             pass
 
     def plotDataImgBundle(self, trader):
+
         # ==============================================================================
         plotter = self.dataPlotterImgBundle
+        reader = self.dataManager.get_reader()
+
+        # ==============================================================================
+        plotter.setTimeData(reader.time_data)
+        plotter.setOHLCData(reader.ohlc)
+        plotter.setVolumeData(reader.volume_data)
+        plotter.setLotData(reader.lot_data)
+        plotter.setDeltaData(reader.delta)
+        plotter.setDeltaPctData(reader.delta_pct)
+        dt_labels = [f"{bar.date} {bar.time}" for bar in reader.bars]
+        plotter.setDateTimeLabels(dt_labels)
+
+
+        # ==============================================================================
+        # self.dataPlotter2.SetTitle(f"{symbol} {timeframe}")
+        #
+        # self.dataPlotter2.AddYData(0, trader.combined_data_normalized, "_TradingSignals")
+        # self.dataPlotter2.AddYData(1, LevelZero1, "LevelZero1")
+        # self.dataPlotter2.AddYData(2, balance, "balance")
+        # self.dataPlotter2.AddYData(3, bakiye, "bakiye")
+        # self.dataPlotter2.AddYData(4, getiriFiyatList, "getiriFiyatList")
+        # self.dataPlotter2.AddYData(5, getiriFiyatNetList, "getiriFiyatNetList")
+        # self.dataPlotter2.AddYData(6, getiriKz, "getiriKz")
+        # self.dataPlotter2.AddYData(7, getiriKzNet, "getiriKzNet")
+        # self.dataPlotter2.AddYData(8, karZararPuanList, "karZararPuanList")
+        # self.dataPlotter2.AddYData(9, karZararFiyatList, "karZararFiyatList")
+        # self.dataPlotter2.AddYData(10, farkList, "farkList")
+        # self.dataPlotter2.AddYData(11, farkList2, "farkList2")
+        #
+        # self.dataPlotter2.AddYData(12, self.Ma5, "Ma5")
+        # self.dataPlotter2.AddYData(13, self.Ma8, "Ma8")
+        # self.dataPlotter2.AddYData(14, self.Ma13, "Ma13")
+        # self.dataPlotter2.AddYData(15, self.Ma21, "Ma21")
+        # self.dataPlotter2.AddYData(16, self.Ma50, "Ma50")
+        # self.dataPlotter2.AddYData(17, self.Ma100, "Ma100")
+        # self.dataPlotter2.AddYData(18, self.Ma200, "Ma200")
+        # self.dataPlotter2.AddYData(19, self.Most, "Most")
+        # self.dataPlotter2.AddYData(20, self.ExMov, "ExMov")
+        #
+        # self.dataPlotter2.AddYData(21, LevelZero2, "LevelZero2")
+        #
+        # self.dataPlotter2.RegisterDataSeriesToPanel("_TradingSignals", 1)
+        # self.dataPlotter2.RegisterDataSeriesToPanel("LevelZero1", 1)
+        # self.dataPlotter2.SetLineProperties("_TradingSignals", color='cyan', lineWidth=1)
+        # self.dataPlotter2.SetLineProperties("LevelZero1", color='red', lineWidth=1)
+        # # self.dataPlotter2.ShowTradingSignals(trader.combined_data, trader.segments)  # Al/sat sinyallerini ekle
+        #
+        # self.dataPlotter2.RegisterDataSeriesToPanel("ExMov", 0)
+        # self.dataPlotter2.RegisterDataSeriesToPanel("Most", 0)
+        #
+        # self.dataPlotter2.RegisterDataSeriesToPanel("LevelZero2", 2)
+        # self.dataPlotter2.RegisterDataSeriesToPanel("karZararFiyatList", 2)
+        # self.dataPlotter2.RegisterDataSeriesToPanel("getiriFiyatNetList", 3)
+        #
+        # self.dataPlotter2.SetLineProperties("LevelZero2", color='red', lineWidth=1)
+        #
+        # self.dataPlotter2.SetLineProperties("MA5", color='blue', lineWidth=2)
+        # self.dataPlotter2.SetLineProperties("MA200", color='orange', lineWidth=3)
+        # # ==============================================================================
+
+        # ==============================================================================
+        tradeSignals = self.active_trader.combined_data_normalized
+        karZararFiyatList = self.active_trader.Lists.KarZararFiyatList #self.karZararFiyatList
+        getiriFiyatNetList = self.active_trader.Lists.GetiriFiyatNetList #self.getiriFiyatNetList
+        
+        # ==============================================================================
+        plotter.setTradeSignals(tradeSignals)
+
+        # ==============================================================================
+        plotter.setWindowTitle(f"{reader.get_metadata('GrafikSembol')} - Multi Panel Chart")
+
+        # ==============================================================================
+        plotter.grafik_sembol = reader.get_metadata('GrafikSembol')
+        plotter.grafik_periyot = reader.get_metadata('GrafikPeriyot')
+        plotter.grafik_periyot_extension = reader.get_metadata('dk')
+
+        # ==============================================================================
+        # Panel 0: OHLC + Moving Averages
+        panel0 = plotter.AddPanel(0)
+        panel0.setTitle("Price Chart")
+        panel0.setYAxisLabel("Price")
+        panel0.setHeightRatio(2.0)  # Ana panel daha büyük
+        panel0.setOHLCData(plotter.getOHLCData())
+        # Info panel positioning for Panel 0 (adjust as desired)
+        panel0.setInfoPanelPosition(100, 2)
+        panel0.setInfoPanelOffsets(label_dx=5, value_dx=80)
+
+        # Moving averages ekle
+        panel0.setData(0, DataType.Line, self.Ma5, "SMA(5)", (1.0, 0.5, 0.0, 1.0))  # Turuncu
+        panel0.setData(1, DataType.Line, self.Ma21, "SMA(21)", (0.0, 0.5, 1.0, 1.0))  # Mavi
+        panel0.setData(2, DataType.Line, self.Ma200, "SMA(200)", (1.0, 0.0, 1.0, 1.0))  # Mor
+
+        # MOST ekle
+        panel0.setData(3, DataType.Line, self.Most, "MOST", (0.6, 0.6, 0.0, 1.0))
+        panel0.setData(4, DataType.Line, self.ExMov, "EMA", (0.5, 0.2, 0.8, 1.0))
+
+        # ==============================================================================
+        # Panel 1: TradeSignals
+        panel1 = plotter.AddPanel(1)
+        panel1.setTitle("TradeSignals")
+        panel1.setYAxisLabel("TradeSignals")
+        panel1.setHeightRatio(1.0)
+        # Info panel positioning for Panel 1
+        panel1.setInfoPanelPosition(100, 2)
+        panel1.setInfoPanelOffsets(label_dx=5, value_dx=80)
+
+        panel1.setData(0, DataType.Stairs, tradeSignals, "TradeSignals", (0.2, 0.8, 1.0, 1.0))
+        # ------------------------------------------
+        # Gizli Y-axis padding çizgileri (autoscale hack)
+        # ------------------------------------------
+        padding_min = np.full(len(tradeSignals), -2.0, dtype=np.float64)  # alt sınır
+        padding_max = np.full(len(tradeSignals), +2.0, dtype=np.float64)  # üst sınır
+        # görünmez çizgiler (alpha=0)
+        panel1.setData(
+            998,
+            DataType.Line,
+            padding_min,
+            "##pad_min",
+            (1, 1, 1, 0)
+        )
+
+        panel1.setData(
+            999,
+            DataType.Line,
+            padding_max,
+            "##pad_max",
+            (1, 1, 1, 0)
+        )
+
+
+        # ==============================================================================
+        # Panel 2: karZararFiyatList
+        panel2 = plotter.AddPanel(2)
+        panel2.setTitle("PnL")
+        panel2.setYAxisLabel("karZararFiyatList")
+        panel2.setHeightRatio(1.0)
+        # Info panel positioning for Panel 2
+        panel2.setInfoPanelPosition(100, 2)
+        panel2.setInfoPanelOffsets(label_dx=5, value_dx=80)
+        # panel2.setData(0, DataType.Line, karZararFiyatList, "karZararFiyatList", (0.0, 1.0, 1.0, 1.0))  # Cyan
+
+        # ==============================================================================
+        # Panel 3: getiriFiyatNetList
+        panel3 = plotter.AddPanel(3)
+        panel3.setTitle("Balance")
+        panel3.setYAxisLabel("getiriFiyatNetList")
+        panel3.setHeightRatio(1.0)
+        # Info panel positioning for Panel 3
+        panel3.setInfoPanelPosition(100, 2)
+        panel3.setInfoPanelOffsets(label_dx=5, value_dx=80)
+        # panel3.setData(0, DataType.Line, getiriFiyatNetList, "getiriFiyatNetList", (0.0, 1.0, 1.0, 1.0))  # Cyan
+
+
+
+        # ==============================================================================
+        groupId = 0  # Group 0: Panel 0,1,2
+        plotter.RegisterYSyncGroup(groupId, panel0)
+        # plotter.RegisterYSyncGroup(groupId, panel2)
+        # plotter.RegisterYSyncGroup(groupId, panel3)
+        # plotter.RegisterYSyncGroup(groupId, panel4)
+
+        try:
+            plotter.setEnableVerticalScrollBar(True)
+            plotter.setEnableSharedCrossHair(True)
+            plotter.setEnableSharedXAxis(True)
+            plotter.setShowInfoOnAllPanels(True)
+            plotter.setShowTradeSignals(True)
+        except Exception:
+            pass
+
+        # ==============================================================================
+        # Grafiği göster
+        print(f"\nToplam {len(plotter.panels)} panel oluşturuldu:")
+        for idx in sorted(plotter.panels.keys()):
+            panel = plotter.panels[idx]
+            print(f"  - Panel {idx}: {panel.title} ({len(panel.data_items)} data series)")
+        print("\nMulti-panel grafik açılıyor...")
+
+        # ==============================================================================
+        immapp.run(plotter.Plot, with_implot=True, window_size=(1600, 1200))
+
+        # self.createPanelsByHandCoded(trader, reader, plotter)
 
         return
 

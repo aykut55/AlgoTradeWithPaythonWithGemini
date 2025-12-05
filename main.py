@@ -2,8 +2,8 @@ import os
 from src.AlgoTrader import AlgoTrader
 
 if __name__ == "__main__":
+    print("\n")
     print("Hello, Gemini!")
-
     print("algoTrader, started!")
 
     algoTrader = AlgoTrader()
@@ -18,4 +18,5 @@ if __name__ == "__main__":
     else:
         pass
 
+    print("\n")
     print("algoTrader, finished!")
