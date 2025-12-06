@@ -3848,6 +3848,16 @@ class AlgoTrader:
         karZararFiyatList = self.active_trader.Lists.KarZararFiyatList #self.karZararFiyatList
         getiriFiyatList = self.active_trader.Lists.GetiriFiyatList #self.GetiriFiyatList
         getiriFiyatNetList = self.active_trader.Lists.GetiriFiyatNetList #self.getiriFiyatNetList
+        most = self.Most
+        exMov = self.ExMov
+
+        # ==============================================================================
+        tradeSignals = np.array(tradeSignals, dtype=np.float64)
+        karZararFiyatList = np.array(karZararFiyatList, dtype=np.float64)
+        getiriFiyatList = np.array(getiriFiyatList, dtype=np.float64)
+        getiriFiyatNetList = np.array(getiriFiyatNetList, dtype=np.float64)
+        most = np.array(most, dtype=np.float64)
+        exMov = np.array(exMov, dtype=np.float64)
         
         # ==============================================================================
         plotter.setTradeSignals(tradeSignals)
@@ -3939,7 +3949,7 @@ class AlgoTrader:
         panel3.setInfoPanelOffsets(label_dx=5, value_dx=80)
         panel3.setData(0, DataType.Line, getiriFiyatList, "Balance",  (0.0, 0.5, 1.0, 1.0))       # Mavi
         panel3.setData(1, DataType.Line, getiriFiyatNetList, "Net Balance", (1.0, 1.0, 0.0, 1.0))  # Sarı
-        
+
         # Purple (0.5, 0.0, 0.5, 1.0)
 
         # ==============================================================================
@@ -3951,8 +3961,8 @@ class AlgoTrader:
         # Info panel positioning for Panel 3
         panel4.setInfoPanelPosition(100, 2)
         panel4.setInfoPanelOffsets(label_dx=5, value_dx=80)
-        panel4.setData(0, DataType.Line, self.Most, "MOST", (0.6, 0.6, 0.0, 1.0))
-        panel4.setData(1, DataType.Line, self.ExMov, "EMA", (0.5, 0.2, 0.8, 1.0))
+        panel4.setData(0, DataType.Line, most, "MOST", (0.6, 0.6, 0.0, 1.0))
+        panel4.setData(1, DataType.Line, exMov, "EMA", (0.5, 0.2, 0.8, 1.0))
 
         # ==============================================================================
         groupId = 0  # Group 0: Panel 0,1,2
