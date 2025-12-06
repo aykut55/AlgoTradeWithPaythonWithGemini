@@ -517,7 +517,7 @@ class AlgoTrader:
 
     def loadMarketData(self):
 
-        dataCount = 100_000
+        dataCount = 50_000
         # self.dataManager.set_read_mode_all_data()
         self.dataManager.set_read_mode_last_n(dataCount)
         # self.dataManager.set_read_mode_first_n(dataCount)
