@@ -5,6 +5,7 @@ import csv
 import re
 import json
 from pathlib import Path
+import shutil
 
 # .txt dosyalarının bulunduğu kaynak dizin
 source_dir = r"D:\iDeal\ChartData\_Exports"
@@ -294,7 +295,7 @@ def write_final_statistics(all_symbol_groups, total_files, files_created, files_
     print(f"📊 {len(all_symbol_groups)} sembol, {total_records} kayıt işlendi")
     print("="*50)
 
-def convert_files():
+def convert_files(flagCopySrcFilesToDest=False):
     """
     .txt dosyalarını bulur, içeriklerini okur ve CSV formatına dönüştürür.
     Header bilgileri de CSV'ye dahil edilir.
@@ -410,7 +411,19 @@ def convert_files():
                     parsed_data = parse_data_line(data_line, include_ids, data_separator)
                     if parsed_data:
                         csvfile.write(csv_separator.join(parsed_data) + '\n')
-            
+
+            if flagCopySrcFilesToDest and Path(target_csv_path).exists():
+                try:
+                    dest_txt_path = Path(target_csv_path).with_suffix('.txt')  # CSV ile aynı klasör, aynı ad, .txt uzantı
+                    dest_txt_path.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(txt_file_path, dest_txt_path)  # Kaynağı olduğu gibi kopyala
+                    # İstersen metadata için copy2 kullanabilirsin: shutil.copy2(txt_file_path, dest_txt_path)
+                except Exception as e:
+                    # Tercihen log kullan: logger.warning(...)
+                    print(f'Kaynak dosya kopyalanamadı: {e}')
+
+            # a = input("Press any key to cont...")
+
             print(f"  BASARILI: {target_csv_path}")
             files_created += 1
 
@@ -433,4 +446,5 @@ def convert_files():
 
 
 if __name__ == "__main__":
-    convert_files()
+    convert_files(flagCopySrcFilesToDest=False)
+
