@@ -2129,9 +2129,9 @@ class AlgoTrader:
 
     def create_config_file(self, configFilePath):
         self.mySystem.write_params_to_file(configFilePath,
-                                           self.mySystem.bUseParamsFromInputFile,
-                                           self.mySystem.CurrentRunIndex,
-                                           self.mySystem.TotalRunCount,
+                                            self.mySystem.bUseParamsFromInputFile,
+                                            self.mySystem.CurrentRunIndex,
+                                            self.mySystem.TotalRunCount,
 
                                            self.mySystem.bOptEnabled,
                                            self.mySystem.bIdealGetiriHesapla,
@@ -2145,9 +2145,41 @@ class AlgoTrader:
                                            self.mySystem.bSinyalleriEkranaCiz,
                                            self.mySystem.ParamsInputFileName,
                                            self.mySystem.IstatistiklerOutputFileName,
-                                           self.mySystem.IstatistiklerOptOutputFileName)
+                                            self.mySystem.IstatistiklerOptOutputFileName)
+
+    # ------------------------------------------------------------------
+    # Callback infrastructure
+    def set_callbacks(self, **kwargs):
+        """Register external callbacks.
+        Expected keys: indicators_ready, traders_configured, system_started,
+        after_main_loop, system_stopped, before_post_process.
+        Each callback must be callable and accept a single argument (context object)
+        and return a value.
+        """
+        mapping = {
+            'indicators_ready': 'on_indicators_ready',
+            'traders_configured': 'on_traders_configured'
+        }
+        for k, v in kwargs.items():
+            attr = mapping.get(k)
+            if attr is not None and callable(v):
+                setattr(self, attr, v)
+        return self
+
+
+    def _on_callback_func_1(self,  bar_count: int, trader_count: int):
+        print("functionAykut1 called")
+        return 0
+
+    def _on_callback_func_2(self,  trader_id, trader):
+        print("functionAykut2 called")
+        return 0
 
     def run_with_single_trader(self):
+        # --------------------------------------------------------------
+        self.set_callbacks(indicators_ready=self._on_callback_func_1)
+        self.set_callbacks(traders_configured=self._on_callback_func_2)
+
         # --------------------------------------------------------------
         # Read market data (equivalent to .GrafikVerileri operations)
         print("\nLoading market data...")
@@ -2192,6 +2224,12 @@ class AlgoTrader:
         self.Ma200 = self.indicatorManager.calculate_ema(self.Close, 200)
 
         # --------------------------------------------------------------
+        # TODO 2525 : Buraya bir callback fonksiyonu tanımla. Ekrana function1 called yazdır
+        bar_count = int(self.BarCount)
+        trader_count = int(self.mySystem.get_trader_count())
+        cb1_ret = self.on_indicators_ready(bar_count, trader_count)
+
+        # --------------------------------------------------------------
         for i in range(self.mySystem.get_trader_count()):
             trader = self.mySystem.get_trader(i)
             trader_id = trader.Id
@@ -2207,6 +2245,10 @@ class AlgoTrader:
             trader.Signals.ZararKesEnabled = False
             trader.Signals.GunSonuPozKapatEnabled = False
             trader.Signals.TimeFilteringEnabled = True
+
+            # --------------------------------------------------------------
+            # TODO 2526 : Buraya bir callback fonksiyonu tanımla. Ekrana function2 called yazdır
+            cb2_ret = self.on_traders_configured(trader_id, trader)
 
         # --------------------------------------------------------------
         self.mySystem.start()
