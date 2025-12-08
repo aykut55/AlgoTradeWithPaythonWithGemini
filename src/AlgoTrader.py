@@ -517,6 +517,13 @@ class AlgoTrader:
 
     def loadMarketData(self):
 
+        filePath             = "C:\\data\\csvFiles\\VIP\\01\\VIP-X030-T.csv"
+        dirName              = os.path.dirname(filePath)
+        fileName             = os.path.basename(filePath)
+        name_no_ext, ext     = os.path.splitext(fileName)
+        drive, path_no_drive = os.path.splitdrive(filePath)
+        norm                 = os.path.normpath(filePath)
+
         dataCount = 50_000
         # self.dataManager.set_read_mode_all_data()
         self.dataManager.set_read_mode_last_n(dataCount)
@@ -527,12 +534,8 @@ class AlgoTrader:
         # self.dataManager.set_read_mode_before_date("2024.12.01")
         # self.dataManager.set_read_mode_between_dates("2024.11.01", "2024.11.30")
 
-        dirName = "C:\\data"
-        subDirName = "VIP-X030-T"
-        fileName = "VIP'VIP-X030-T_1.csv"
-
         start_time = time.time()
-        self.dataManager.load_prices_from_csv_with_bar_data_reader(dirName, subDirName, fileName)
+        self.dataManager.load_prices_from_csv_with_bar_data_reader(filePath)
         self.dataManager.print_sample_bars(5)
         end_time = time.time()
         elapsed_ms = (end_time - start_time) * 1000  # Saniyeyi 1000 ile çarpıp ms'ye çeviriyoruz
@@ -570,7 +573,7 @@ class AlgoTrader:
         self.ItemsCount  = self.dataManager.get_items_count()
 
         print("\n=====================================================================")
-        print("FilePath    :", os.path.join(dirName, subDirName, fileName))
+        print("FilePath    :", os.path.join(filePath))
         print("FileName    :", os.path.join(fileName))
 
         print("BarCount    :", self.BarCount)

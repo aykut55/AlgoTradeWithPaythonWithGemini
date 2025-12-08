@@ -1544,10 +1544,19 @@ class DataManager:
         return self._timeit("create_data", _impl)
 
     def load_prices_from_csv_with_bar_data_reader(self, data_dir: str, subdir: str, file_name: str, auto_time=False):
-        def _impl():
-            self.clear_dataframe()
+        file_path = os.path.join(data_dir, subdir, file_name)
+        return self.load_prices_from_csv_with_bar_data_reader(file_path, auto_time)
 
-            file_path = os.path.join(data_dir, subdir, file_name)
+    def load_prices_from_csv_with_bar_data_reader(self, file_path: str, auto_time=False):
+        def _impl():
+
+            dir_path             = os.path.dirname(file_path)
+            file_name            = os.path.basename(file_path)
+            name_no_ext, ext     = os.path.splitext(file_name)
+            drive, path_no_drive = os.path.splitdrive(file_path)
+            norm                 = os.path.normpath(file_path)
+
+            self.clear_dataframe()
 
             # Reader'ı hazırla
             self.reader.set_file_path(file_path)
