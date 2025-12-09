@@ -764,10 +764,23 @@ class Panel:
             chunk_y = visible_y[i:chunk_end]
 
             # For stairs, preserve value changes within chunk
-            # Find all transition points (where value changes)
             if len(chunk_y) > 1:
                 transitions = np.where(chunk_y[:-1] != chunk_y[1:])[0]
-                if len(transitions) > 0:
+                
+                # If too many transitions (noisy data), fallback to Min/Max preservation
+                # This prevents generating millions of points for 2M datasets
+                if len(transitions) > 4:
+                    # Find indices of min and max values to capture the range
+                    min_idx = np.argmin(chunk_y)
+                    max_idx = np.argmax(chunk_y)
+                    
+                    indices_to_keep = sorted(list(set([0, min_idx, max_idx, len(chunk_y) - 1])))
+                    
+                    for idx in indices_to_keep:
+                        lod_x.append(visible_x[i + idx])
+                        lod_y.append(visible_y[i + idx])
+                
+                elif len(transitions) > 0:
                     # Include first point, all transition points, and last point
                     indices_to_keep = [0]
                     indices_to_keep.extend(transitions.tolist())
@@ -2302,7 +2315,7 @@ class DataPlotterImgBundle:
 
         imgui.same_line()
         imgui.text("|")
-        
+
         imgui.same_line()
         adjust_y_clicked = imgui.button("Adjust Y Axis")
 
