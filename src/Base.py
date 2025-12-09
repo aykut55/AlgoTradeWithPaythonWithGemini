@@ -1,3 +1,5 @@
+import numpy as np
+
 class CBase:
     def __init__(self):
         self.Id = 0
@@ -12,6 +14,8 @@ class CBase:
         self.Close = []
         self.Volume = []
         self.Lot = []
+        self.Delta = []
+        self.DeltaPct = []
         self.BarCount = 0
         self.LastBarIndex = 0
 
@@ -32,5 +36,7 @@ class CBase:
         self.Close = Close
         self.Volume = Volume
         self.Lot = Lot
+        self.Delta = Close - Open
+        self.DeltaPct = np.where(Open != 0, (Close - Open) / Open * 100, 0)
         self.BarCount = len(Close)
         self.LastBarIndex = len(Close) - 1

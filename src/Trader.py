@@ -1084,6 +1084,8 @@ class CTrader(CBase):
         pass
 
     def update_data_frame(self):
+
+
         # Clear DataFrame
         self._df = None
 
@@ -1098,9 +1100,10 @@ class CTrader(CBase):
             'Low': self.Low,
             'Close': self.Close,
             'Volume': self.Volume,
-            'Lot': self.Lot
+            'Delta': self.Delta,
+            'DeltaPct': self.DeltaPct
         })
-        
+
         # Add all lists and attributes to DataFrame
         if self.BarCount > 0:
             # Create BarIndex list if it doesn't exist

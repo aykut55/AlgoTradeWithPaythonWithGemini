@@ -2150,7 +2150,6 @@ class AlgoTrader:
 
 
     def initialize_strategy(self,  i: int, trader: 'AlgoTrader'):
-        print("initialize_strategy called")
 
         trader_id = trader.Id
 
@@ -2408,7 +2407,20 @@ class AlgoTrader:
 
         return 0         
 
-    def create_trade_signals(self, trader: 'AlgoTrader'):    
+    def create_trade_signals(self, trader: 'AlgoTrader'):
+        trader_id = trader.Id
+
+        if (trader_id == 0):
+            pass
+        elif (trader_id == 1):
+            pass
+        elif (trader_id == 2):
+            pass
+        elif (trader_id == 3):
+            pass
+        else:
+            pass
+
         combined_data = []
         combined_data_normalized = []
         segments, combined_data, combined_data_normalized  = self.create_signal_segments(trader)
@@ -2416,109 +2428,165 @@ class AlgoTrader:
             trader.segments = segments
             trader.combined_data = combined_data
             trader.combined_data_normalized = combined_data_normalized
+
         return 0
 
-    def update_data_frame(self, trader: 'AlgoTrader'):    
+    def update_data_frame(self, trader: 'AlgoTrader', save_to_file: bool = False):
 
         trader_id = trader.Id
 
         if (trader_id == 0):
-            # TODO : update_data_frame() içi güncell attribute'lere göre update edilecek
-            # trader.update_data_frame()
-            # print(trader._df)
+            trader.update_data_frame()
+            # print(trader._df.head())
+
             # print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
 
-            # TODO : pass'e kadar ola kısım kontrol edilecek
-            # trader.write_data_frame_to_file_as_tabular("trading_data_0_tabular.txt")
-            # trader.write_statistics_to_file_as_tabular("trading_statistics_0_tabular.txt")
+            if save_to_file:
 
-            # # CSV formatında kaydet
-            # trader.write_data_frame_to_file("trading_0_data.csv")
-            #
-            # # Excel formatında kaydet
-            # trader.write_data_frame_to_file("trading_0_data.xlsx")
-            #
-            # # JSON formatında kaydet
-            # trader.write_data_frame_to_file("trading_0_data.json")
-            #
-            # # HTML formatında kaydet
-            # trader.write_data_frame_to_file("trading_0_data.html")
+                # Tablo formatında kaydet
+                trader.write_data_frame_to_file_as_tabular("trading_data_0_tabular.txt")
+                trader.write_statistics_to_file_as_tabular("trading_statistics_0_tabular.txt")
+
+                # CSV formatında kaydet
+                trader.write_data_frame_to_file("trading_0_data.csv")
+
+                # # Excel formatında kaydet
+                # trader.write_data_frame_to_file("trading_0_data.xlsx")
+                #
+                # # JSON formatında kaydet
+                # trader.write_data_frame_to_file("trading_0_data.json")
+                #
+                # # HTML formatında kaydet
+                # trader.write_data_frame_to_file("trading_0_data.html")
+                #
+                # # DataFrame kaydet
+                # trader._df.to_csv('trading_0_data1.csv', index=False)
+                #
+                # trader._df.to_parquet('trading_0_data1.parquet', index=False)
+                #
+                # trader._df.to_pickle('trading_0_data1.pkl')
+                #
+                # trader._df.to_excel('trading_0_data1.xlsx', index=False)
+                #
+                # trader._df.to_feather('trading_0_data1.feather')
+
             pass
 
         elif (trader_id == 1):
-            # TODO : update_data_frame() içi güncell attribute'lere göre update edilecek
-            # trader.update_data_frame()
-            # print(trader._df)
+            trader.update_data_frame()
+            # print(trader._df.head())
+            
             # print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
 
-            # TODO : pass'e kadar ola kısım kontrol edilecek
-            # trader.write_data_frame_to_file_as_tabular("trading_data_1_tabular.txt")
-            # trader.write_statistics_to_file_as_tabular("trading_statistics_1_tabular.txt")
+            if save_to_file:
+            
+                # Tablo formatında kaydet
+                trader.write_data_frame_to_file_as_tabular("trading_data_1_tabular.txt")
+                trader.write_statistics_to_file_as_tabular("trading_statistics_1_tabular.txt")
 
-            # # CSV formatında kaydet
-            # trader.write_data_frame_to_file("trading_1_data.csv")
-            #
-            # # Excel formatında kaydet
-            # trader.write_data_frame_to_file("trading_1_data.xlsx")
-            #
-            # # JSON formatında kaydet
-            # trader.write_data_frame_to_file("trading_1_data.json")
-            #
-            # # HTML formatında kaydet
-            # trader.write_data_frame_to_file("trading_1_data.html")
+                # CSV formatında kaydet
+                trader.write_data_frame_to_file("trading_1_data.csv")
+
+                # # Excel formatında kaydet
+                # trader.write_data_frame_to_file("trading_1_data.xlsx")
+                #
+                # # JSON formatında kaydet
+                # trader.write_data_frame_to_file("trading_1_data.json")
+                #
+                # # HTML formatında kaydet
+                # trader.write_data_frame_to_file("trading_1_data.html")
+                #
+                # # DataFrame kaydet
+                # trader._df.to_csv('trading_1_data1.csv', index=False)
+                #
+                # trader._df.to_parquet('trading_1_data1.parquet', index=False)
+                #
+                # trader._df.to_pickle('trading_1_data1.pkl')
+                #
+                # trader._df.to_excel('trading_1_data1.xlsx', index=False)
+                #
+                # trader._df.to_feather('trading_1_data1.feather')
+
             pass
 
         elif (trader_id == 2):
-            # TODO : update_data_frame() içi güncell attribute'lere göre update edilecek
-            # trader.update_data_frame()
-            # print(trader._df)
+            trader.update_data_frame()
+            # print(trader._df.head())
+            
             # print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
 
-            # TODO : pass'e kadar ola kısım kontrol edilecek
-            # trader.write_data_frame_to_file_as_tabular("trading_data_2_tabular.txt")
-            # trader.write_statistics_to_file_as_tabular("trading_statistics_2_tabular.txt")
+            if save_to_file:
+            
+                # Tablo formatında kaydet
+                trader.write_data_frame_to_file_as_tabular("trading_data_2_tabular.txt")
+                trader.write_statistics_to_file_as_tabular("trading_statistics_2_tabular.txt")
 
-            # # CSV formatında kaydet
-            # trader.write_data_frame_to_file("trading_2_data.csv")
-            #
-            # # Excel formatında kaydet
-            # trader.write_data_frame_to_file("trading_2_data.xlsx")
-            #
-            # # JSON formatında kaydet
-            # trader.write_data_frame_to_file("trading_2_data.json")
-            #
-            # # HTML formatında kaydet
-            # trader.write_data_frame_to_file("trading_2_data.html")
+                # CSV formatında kaydet
+                trader.write_data_frame_to_file("trading_2_data.csv")
+
+                # # Excel formatında kaydet
+                # trader.write_data_frame_to_file("trading_2_data.xlsx")
+                #
+                # # JSON formatında kaydet
+                # trader.write_data_frame_to_file("trading_2_data.json")
+                #
+                # # HTML formatında kaydet
+                # trader.write_data_frame_to_file("trading_2_data.html")
+                #
+                # # DataFrame kaydet
+                # trader._df.to_csv('trading_2_data1.csv', index=False)
+                #
+                # trader._df.to_parquet('trading_2_data1.parquet', index=False)
+                #
+                # trader._df.to_pickle('trading_2_data1.pkl')
+                #
+                # trader._df.to_excel('trading_2_data1.xlsx', index=False)
+                #
+                # trader._df.to_feather('trading_2_data1.feather')
+
             pass
 
         elif (trader_id == 3):
-            # TODO : update_data_frame() içi güncell attribute'lere göre update edilecek
-            # trader.update_data_frame()
-            # print(trader._df)
+            trader.update_data_frame()
+            # print(trader._df.head())
+            
             # print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
 
-            # TODO : pass'e kadar ola kısım kontrol edilecek
-            # trader.write_data_frame_to_file_as_tabular("trading_data_3_tabular.txt")
-            # trader.write_statistics_to_file_as_tabular("trading_statistics_3_tabular.txt")
+            if save_to_file:
+            
+                # Tablo formatında kaydet
+                trader.write_data_frame_to_file_as_tabular("trading_data_3_tabular.txt")
+                trader.write_statistics_to_file_as_tabular("trading_statistics_3_tabular.txt")
 
-            # # CSV formatında kaydet
-            # trader.write_data_frame_to_file("trading_3_data.csv")
-            #
-            # # Excel formatında kaydet
-            # trader.write_data_frame_to_file("trading_3_data.xlsx")
-            #
-            # # JSON formatında kaydet
-            # trader.write_data_frame_to_file("trading_3_data.json")
-            #
-            # # HTML formatında kaydet
-            # trader.write_data_frame_to_file("trading_3_data.html")
+                # CSV formatında kaydet
+                trader.write_data_frame_to_file("trading_3_data.csv")
+
+                # # Excel formatında kaydet
+                # trader.write_data_frame_to_file("trading_3_data.xlsx")
+                #
+                # # JSON formatında kaydet
+                # trader.write_data_frame_to_file("trading_3_data.json")
+                #
+                # # HTML formatında kaydet
+                # trader.write_data_frame_to_file("trading_3_data.html")
+                #
+                # # DataFrame kaydet
+                # trader._df.to_csv('trading_3_data1.csv', index=False)
+                #
+                # trader._df.to_parquet('trading_3_data1.parquet', index=False)
+                #
+                # trader._df.to_pickle('trading_3_data1.pkl')
+                #
+                # trader._df.to_excel('trading_3_data1.xlsx', index=False)
+                #
+                # trader._df.to_feather('trading_3_data1.feather')
+
             pass
 
         else:
             pass
 
         return 0 
-
 
     def run_with_single_trader(self):
         # --------------------------------------------------------------  
@@ -2587,17 +2655,19 @@ class AlgoTrader:
             # --------------------------------------------------------------
             self.active_trader = self.mySystem.get_trader(i)
             # --------------------------------------------------------------
-            print("\nGetting trade signals...")                    
+            print(f"\nTrader {self.active_trader.Id}...")
+            # --------------------------------------------------------------
+            print("\tGetting trade signals...")
             self.create_trade_signals(self.active_trader)
             # --------------------------------------------------------------
-            print("\nUpdating dataFrame...")        
+            print("\tUpdating dataFrame...")
             self.update_data_frame(self.active_trader)
             # --------------------------------------------------------------
-            print("\nSaving data to files...")
+            print("\tSaving data to files...")
             dstDir = "."
             # self.SavePlotData(self.active_trader, dstDir)
             # --------------------------------------------------------------
-            print("\nPlotting market data...")
+            print("\tPlotting market data...")
             self.plotDataImgBundle(self.active_trader)
 
         # --------------------------------------------------------------
@@ -2669,22 +2739,23 @@ class AlgoTrader:
             trader = self.mySystem.get_trader(i)
             self.finalize_strategy(i, trader)
 
-        # --------------------------------------------------------------
         for i in range(self.mySystem.get_trader_count()):
             # --------------------------------------------------------------
             self.active_trader = self.mySystem.get_trader(i)
             # --------------------------------------------------------------
-            print("\nGetting trade signals...")                    
+            print(f"\nTrader {self.active_trader.Id}...")
+            # --------------------------------------------------------------
+            print("\tGetting trade signals...")
             self.create_trade_signals(self.active_trader)
             # --------------------------------------------------------------
-            print("\nUpdating dataFrame...")        
+            print("\tUpdating dataFrame...")
             self.update_data_frame(self.active_trader)
             # --------------------------------------------------------------
-            print("\nSaving data to files...")
+            print("\tSaving data to files...")
             dstDir = "."
             # self.SavePlotData(self.active_trader, dstDir)
             # --------------------------------------------------------------
-            print("\nPlotting market data...")
+            print("\tPlotting market data...")
             # self.plotDataImgBundle(self.active_trader)
 
         # --------------------------------------------------------------
