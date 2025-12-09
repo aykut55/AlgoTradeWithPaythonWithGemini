@@ -1858,7 +1858,7 @@ class DataPlotterImgBundle:
             # wheel event: log and consider this panel as source; trigger auto-sync
             if etype == "wheel":
                 self._src_panel = pid
-                self._auto_sync_request = True
+                self._auto_sync_request = True # On scroll events, request auto sync (Tum plotlarda sync bu flag ile saglaniyor
                 print(f"[EVENT] panel={pid} {etype} evt={ {k:v for k,v in event.items() if k!='ppx'} }")
                 return
 
@@ -2789,6 +2789,9 @@ class DataPlotterImgBundle:
                             new_visible = int(max(1, src_x_max - src_x_min))
                             for idx2 in self.panels.keys():
                                 static.panel_x_overrides[idx2] = (new_offset, new_visible)
+                            # Update scroll bar position to match the sync
+                            static.offset = new_offset
+                            static.visible_count = new_visible
                             # UpdateOtherPlotsY (same Y-sync group)
                             src_panel = self.panels.get(static.src_panel_id)
                             if src_panel and src_panel.y_sync_group is not None:
