@@ -13,3 +13,17 @@ python main.py ile çalıştır. (Code Runner ile çalıştır (Bu çalışmadı
 
 .\.venv\Scripts\activate
 python main.py
+
+
+Aşağıdaki hatayı alırsan
+.\.venv\Scripts\activate : File D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\.venv\Scripts\activate.ps1 cannot be loaded because running scripts is disabled on this system. For more information, see about_Execution_Policies at https:/go.microsoft.com/fwlink/?Link
+ID=135170.
+At line:1 char:1
++ .\.venv\Scripts\activate
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : SecurityError: (:) [], PSSecurityException
+    + FullyQualifiedErrorId : UnauthorizedAccess
+Bu adresteki     
+https://stackoverflow.com/questions/18713086/virtualenv-wont-activate-on-windows
+    Set-ExecutionPolicy Unrestricted -Force
+    set-executionpolicy remotesigned
