@@ -517,8 +517,8 @@ class AlgoTrader:
 
     def loadMarketData(self):
 
-        filePath             = "C:\\data\\csvFiles\\VIP\\01\\VIP-X030-T.csv"
         filePath             = "C:\\data\\VIP-X030-T\\VIP'VIP-X030-T_1.csv"
+        filePath             = "C:\\data\\csvFiles\\VIP\\01\\VIP-X030-T.csv"
         dirName              = os.path.dirname(filePath)
         fileName             = os.path.basename(filePath)
         name_no_ext, ext     = os.path.splitext(fileName)
@@ -2148,116 +2148,13 @@ class AlgoTrader:
                                            self.mySystem.IstatistiklerOutputFileName,
                                             self.mySystem.IstatistiklerOptOutputFileName)
 
-    # ------------------------------------------------------------------
-    # Callback infrastructure
-    def set_callbacks(self, **kwargs):
-        """Register external callbacks.
-        Expected keys: indicators_ready, traders_configured, system_started,
-        after_main_loop, system_stopped, before_post_process.
-        Each callback must be callable and accept a single argument (context object)
-        and return a value.
-        """
-        mapping = {
-            'indicators_ready': 'on_indicators_ready',
-            'traders_configured': 'on_traders_configured'
-        }
-        for k, v in kwargs.items():
-            attr = mapping.get(k)
-            if attr is not None and callable(v):
-                setattr(self, attr, v)
-        return self
-    
-    def _on_before_strategy_execution_callback_func(self,  bar_count: int, trader_count: int):
-        print("_on_before_strategy_execution_callback_func called")
-        return 0    
-    
-    
-    def _on_strategy_execution_callback_func(self,  bar_count: int, trader_count: int):
-        print("_on_strategy_execution_callback_func called")
-        return 0       
-    
-    
-    def _on_after_strategy_execution_callback_func(self,  bar_count: int, trader_count: int):
-        print("_on_after_strategy_execution_callback_func called")
-        return 0           
-    
-    
-    def _on_build_data_frame_callback_func(self,  bar_count: int, trader_count: int):
-        print("_on_build_data_frame_callback_func called")
-        return 0             
-    
-    
-    def _on_write_data_frame_callback_func(self,  bar_count: int, trader_count: int):
-        print("_on_write_data_frame_callback_func called")
-        return 0    
-  
-    def _on_callback_func_1(self,  bar_count: int, trader_count: int):
-        print("functionAykut1 called")
-        return 0
 
-    def _on_callback_func_2(self,  trader_id, trader):
-        print("functionAykut2 called")
-        return 0
+    def initialize_strategy(self,  i: int, trader: 'AlgoTrader'):
+        print("initialize_strategy called")
 
-    def run_with_single_trader(self):
-        # --------------------------------------------------------------
-        self.set_callbacks(indicators_ready=self._on_callback_func_1)
-        self.set_callbacks(traders_configured=self._on_callback_func_2)
+        trader_id = trader.Id
 
-        # --------------------------------------------------------------
-        # Read market data (equivalent to .GrafikVerileri operations)
-        print("\nLoading market data...")
-        self.loadMarketData()
-        # self.loadMarketDataFromSqliteDB()
-
-        # --------------------------------------------------------------
-        # Create level series
-        self.LevelUp4 = self.create_level_series(self.BarCount, 6000)
-        self.LevelUp3 = self.create_level_series(self.BarCount, 5750)
-        self.LevelUp2 = self.create_level_series(self.BarCount, 5500)
-        self.LevelUp1 = self.create_level_series(self.BarCount, 5250)
-
-        self.Level = self.create_level_series(self.BarCount, 5000)
-
-        self.LevelDown1 = self.create_level_series(self.BarCount, 4750)
-        self.LevelDown2 = self.create_level_series(self.BarCount, 4500)
-        self.LevelDown3 = self.create_level_series(self.BarCount, 4250)
-        self.LevelDown4 = self.create_level_series(self.BarCount, 4000)
-
-        self.LevelZero = self.create_level_series(self.BarCount, 0)
-
-        # --------------------------------------------------------------
-        self.mySystem.create_modules().initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
-
-        self.mySystem.reset()
-        self.mySystem.initialize_params_with_defaults()
-        self.mySystem.set_params_for_single_run()
-
-        # --------------------------------------------------------------
-        self.indicatorManager = self.mySystem.myIndicators
-
-        # self.Most, self.ExMov = self.calculate_most(period=21, percent=1.0)
-        self.Most, self.ExMov = self.indicatorManager.calculate_most(period=21, percent=0.5)
-
-        self.Ma5 = self.indicatorManager.calculate_ema(self.Close, 5)
-        self.Ma8 = self.indicatorManager.calculate_ema(self.Close, 8)
-        self.Ma13= self.indicatorManager.calculate_ema(self.Close, 13)
-        self.Ma21 = self.indicatorManager.calculate_ema(self.Close, 21)
-        self.Ma50 = self.indicatorManager.calculate_ema(self.Close, 50)
-        self.Ma100 = self.indicatorManager.calculate_ema(self.Close, 100)
-        self.Ma200 = self.indicatorManager.calculate_ema(self.Close, 200)
-
-        # --------------------------------------------------------------
-        # TODO 2525 : Buraya bir callback fonksiyonu tanımla. Ekrana function1 called yazdır
-        bar_count = int(self.BarCount)
-        trader_count = int(self.mySystem.get_trader_count())
-        cb1_ret = self.on_indicators_ready(bar_count, trader_count)
-
-        # --------------------------------------------------------------
-        for i in range(self.mySystem.get_trader_count()):
-            trader = self.mySystem.get_trader(i)
-            trader_id = trader.Id
-
+        if (trader_id == 0):
             DateTimes = ["25.05.2025 14:30:00", "02.06.2025 14:00:00"]
             Dates = ["01.01.1900", "01.01.2100"]
             Times = ["09:30:00", "11:59:00"]
@@ -2270,85 +2167,163 @@ class AlgoTrader:
             trader.Signals.GunSonuPozKapatEnabled = False
             trader.Signals.TimeFilteringEnabled = True
 
-            # --------------------------------------------------------------
-            ret = self._on_before_strategy_execution_callback_func(trader_id, trader)
+        elif (trader_id == 1):
+            DateTimes = ["25.05.2025 14:30:00", "02.06.2025 14:00:00"]
+            Dates = ["01.01.1900", "01.01.2100"]
+            Times = ["09:30:00", "11:59:00"]
 
-        # --------------------------------------------------------------
-        self.mySystem.start()
+            trader.reset_date_times
+            trader.set_date_times(DateTimes[0], DateTimes[1])
 
-        # --------------------------------------------------------------
-        for i in range(self.BarCount):
-            for j in range(self.mySystem.get_trader_count()):
-                trader = self.mySystem.get_trader(j)
+            trader.Signals.KarAlEnabled = False
+            trader.Signals.ZararKesEnabled = False
+            trader.Signals.GunSonuPozKapatEnabled = False
+            trader.Signals.TimeFilteringEnabled = True
 
-                # print(f"bar {i} : trader {trader.Id} is runnig...\n")
+        elif (trader_id == 2):
+            DateTimes = ["25.05.2025 14:30:00", "02.06.2025 14:00:00"]
+            Dates = ["01.01.1900", "01.01.2100"]
+            Times = ["09:30:00", "11:59:00"]
 
-                Al = False
-                Sat = False
-                FlatOl = False
-                PasGec = False
-                KarAl = False
-                ZararKes = False
-                isTradeEnabled = False
-                isPozKapatEnabled = False
+            trader.reset_date_times
+            trader.set_date_times(DateTimes[0], DateTimes[1])
 
-                trader.emirleri_resetle(i)
+            trader.Signals.KarAlEnabled = False
+            trader.Signals.ZararKesEnabled = False
+            trader.Signals.GunSonuPozKapatEnabled = False
+            trader.Signals.TimeFilteringEnabled = True
 
-                trader.emir_oncesi_dongu_foksiyonlarini_calistir(i)
+        elif (trader_id == 3):
+            DateTimes = ["25.05.2025 14:30:00", "02.06.2025 14:00:00"]
+            Dates = ["01.01.1900", "01.01.2100"]
+            Times = ["09:30:00", "11:59:00"]
 
-                if i < 1:
-                    continue
+            trader.reset_date_times
+            trader.set_date_times(DateTimes[0], DateTimes[1])
 
-                FlatOl = False
+            trader.Signals.KarAlEnabled = False
+            trader.Signals.ZararKesEnabled = False
+            trader.Signals.GunSonuPozKapatEnabled = False
+            trader.Signals.TimeFilteringEnabled = True
 
-                Al = self.myUtils.yukari_kesti(i, self.ExMov, self.Most)
+        else:
+            pass
+      
+        return 0     
+    
+    def run_strategy(self,  i: int, trader: 'AlgoTrader'):
 
-                Sat = self.myUtils.asagi_kesti(i, self.ExMov, self.Most)
+        trader_id = trader.Id
+        # print(f"bar {i} : trader {trader.Id} is runnig...\n")
+        
+        Al = False
+        Sat = False
+        FlatOl = False
+        PasGec = False
+        KarAl = False
+        ZararKes = False
+        isTradeEnabled = False
+        isPozKapatEnabled = False
 
-                KarAl = trader.Signals.KarAlEnabled
-                KarAl = KarAl and trader.KarAlZararKes.son_fiyata_gore_kar_al_seviye_hesapla(i, 5, 50, 1000) != 0
+        trader.emirleri_resetle(i)
 
-                ZararKes = trader.Signals.ZararKesEnabled
-                ZararKes = ZararKes and trader.KarAlZararKes.son_fiyata_gore_zarar_kes_seviye_hesapla(i, -1, -10, 1000) != 0
+        trader.emir_oncesi_dongu_foksiyonlarini_calistir(i)
 
-                IsSonYonA = trader.is_son_yon_a()
+        if i < 1:
+            return 0
+        
+        if (trader_id == 0): 
+        
+            FlatOl = False
 
-                IsSonYonS = trader.is_son_yon_s()
+            Al = self.myUtils.yukari_kesti(i, self.ExMov, self.Most)
 
-                IsSonYonF = trader.is_son_yon_f()
+            Sat = self.myUtils.asagi_kesti(i, self.ExMov, self.Most)
 
-                # useTimeFiltering = trader.Signals.TimeFilteringEnabled
+            KarAl = trader.Signals.KarAlEnabled
+            KarAl = KarAl and trader.KarAlZararKes.son_fiyata_gore_kar_al_seviye_hesapla(i, 5, 50, 1000) != 0
 
-                trader.emirleri_setle(i, Al, Sat, FlatOl, PasGec, KarAl, ZararKes)
+            ZararKes = trader.Signals.ZararKesEnabled
+            ZararKes = ZararKes and trader.KarAlZararKes.son_fiyata_gore_zarar_kes_seviye_hesapla(i, -1, -10, 1000) != 0
+        
+        elif (trader_id == 1): 
+        
+            FlatOl = False
 
-                # TODO : YAPILACAK
-                trader.islem_zaman_filtresi_uygula(i)
+            Al = self.myUtils.yukari_kesti(i, self.ExMov, self.Most)
 
-                trader.emir_sonrasi_dongu_foksiyonlarini_calistir(i)
+            Sat = self.myUtils.asagi_kesti(i, self.ExMov, self.Most)
 
-                # if Al:
-                #     print(f"bar {i} : trader {trader.Id} : Signal : Buy, Close {self.Close[i]}")
-                # if Sat:
-                #     print(f"bar {i} : trader {trader.Id} : Signal : Sell, Close {self.Close[i]}")
+            KarAl = trader.Signals.KarAlEnabled
+            KarAl = KarAl and trader.KarAlZararKes.son_fiyata_gore_kar_al_seviye_hesapla(i, 5, 50, 1000) != 0
 
-                self.KarZararPuanList = trader.Lists.KarZararPuanList
-                self.KarZararFiyatList = trader.Lists.KarZararFiyatList
-                self.BakiyeFiyatList = trader.Lists.BakiyeFiyatList
-                self.YonList = trader.Lists.YonList
-                self.SeviyeList = trader.Lists.SeviyeList
+            ZararKes = trader.Signals.ZararKesEnabled
+            ZararKes = ZararKes and trader.KarAlZararKes.son_fiyata_gore_zarar_kes_seviye_hesapla(i, -1, -10, 1000) != 0
+        
+        elif (trader_id == 2): 
+        
+            FlatOl = False
 
-                ret = self._on_strategy_execution_callback_func(trader_id, trader)
+            Al = self.myUtils.yukari_kesti(i, self.ExMov, self.Most)
 
-        # --------------------------------------------------------------
-        self.mySystem.stop()
+            Sat = self.myUtils.asagi_kesti(i, self.ExMov, self.Most)
 
-        # --------------------------------------------------------------
-        for i in range(self.mySystem.get_trader_count()):
-            trader = self.mySystem.get_trader(i)
-            trader_id = trader.Id
+            KarAl = trader.Signals.KarAlEnabled
+            KarAl = KarAl and trader.KarAlZararKes.son_fiyata_gore_kar_al_seviye_hesapla(i, 5, 50, 1000) != 0
 
-            ret = self._on_after_strategy_execution_callback_func(trader_id, trader)
+            ZararKes = trader.Signals.ZararKesEnabled
+            ZararKes = ZararKes and trader.KarAlZararKes.son_fiyata_gore_zarar_kes_seviye_hesapla(i, -1, -10, 1000) != 0
+        
+        elif (trader_id == 3): 
+        
+            FlatOl = False
 
+            Al = self.myUtils.yukari_kesti(i, self.ExMov, self.Most)
+
+            Sat = self.myUtils.asagi_kesti(i, self.ExMov, self.Most)
+
+            KarAl = trader.Signals.KarAlEnabled
+            KarAl = KarAl and trader.KarAlZararKes.son_fiyata_gore_kar_al_seviye_hesapla(i, 5, 50, 1000) != 0
+
+            ZararKes = trader.Signals.ZararKesEnabled
+            ZararKes = ZararKes and trader.KarAlZararKes.son_fiyata_gore_zarar_kes_seviye_hesapla(i, -1, -10, 1000) != 0
+
+        else:
+            pass
+
+        IsSonYonA = trader.is_son_yon_a()
+
+        IsSonYonS = trader.is_son_yon_s()
+
+        IsSonYonF = trader.is_son_yon_f()
+
+        # useTimeFiltering = trader.Signals.TimeFilteringEnabled
+
+        trader.emirleri_setle(i, Al, Sat, FlatOl, PasGec, KarAl, ZararKes)
+
+        # TODO : YAPILACAK
+        trader.islem_zaman_filtresi_uygula(i)
+
+        trader.emir_sonrasi_dongu_foksiyonlarini_calistir(i)
+
+        # if Al:
+        #     print(f"bar {i} : trader {trader.Id} : Signal : Buy, Close {self.Close[i]}")
+        # if Sat:
+        #     print(f"bar {i} : trader {trader.Id} : Signal : Sell, Close {self.Close[i]}")
+
+        # self.KarZararPuanList = trader.Lists.KarZararPuanList
+        # self.KarZararFiyatList = trader.Lists.KarZararFiyatList
+        # self.BakiyeFiyatList = trader.Lists.BakiyeFiyatList
+        # self.YonList = trader.Lists.YonList
+        # self.SeviyeList = trader.Lists.SeviyeList
+
+        return 0       
+    
+    def finalize_strategy(self,  i: int, trader: 'AlgoTrader'):    
+
+        trader_id = trader.Id
+
+        if (trader_id == 0):
             if (self.mySystem.bIdealGetiriHesapla):
                 trader.ideal_getiri_hesapla()
 
@@ -2368,18 +2343,94 @@ class AlgoTrader:
                 trader.istatistikleri_dosyaya_yaz(self.mySystem.IstatistiklerOutputFileName)
                 pass
 
-            # --------------------------------------------------------------
-            ret = self._on_build_data_frame_callback_func(trader_id, trader)
+        elif (trader_id == 1):
+            if (self.mySystem.bIdealGetiriHesapla):
+                trader.ideal_getiri_hesapla()
 
+            if (self.mySystem.bIstatistikleriHesapla):
+                trader.istatistikleri_hesapla()
+                pass
+
+            if (self.mySystem.bIstatistikleriEkranaYaz):
+                # trader.istatistikleri_ekrana_yaz(1)
+                pass
+
+            if (self.mySystem.bGetiriIstatistikleriEkranaYaz):
+                # trader.istatistikleri_ekrana_yaz(2)
+                pass
+
+            if (self.mySystem.bIstatistikleriDosyayaYaz):
+                trader.istatistikleri_dosyaya_yaz(self.mySystem.IstatistiklerOutputFileName)
+                pass
+
+        elif (trader_id == 2):
+            if (self.mySystem.bIdealGetiriHesapla):
+                trader.ideal_getiri_hesapla()
+
+            if (self.mySystem.bIstatistikleriHesapla):
+                trader.istatistikleri_hesapla()
+                pass
+
+            if (self.mySystem.bIstatistikleriEkranaYaz):
+                # trader.istatistikleri_ekrana_yaz(1)
+                pass
+
+            if (self.mySystem.bGetiriIstatistikleriEkranaYaz):
+                # trader.istatistikleri_ekrana_yaz(2)
+                pass
+
+            if (self.mySystem.bIstatistikleriDosyayaYaz):
+                trader.istatistikleri_dosyaya_yaz(self.mySystem.IstatistiklerOutputFileName)
+                pass
+
+        elif (trader_id == 3):
+            if (self.mySystem.bIdealGetiriHesapla):
+                trader.ideal_getiri_hesapla()
+
+            if (self.mySystem.bIstatistikleriHesapla):
+                trader.istatistikleri_hesapla()
+                pass
+
+            if (self.mySystem.bIstatistikleriEkranaYaz):
+                # trader.istatistikleri_ekrana_yaz(1)
+                pass
+
+            if (self.mySystem.bGetiriIstatistikleriEkranaYaz):
+                # trader.istatistikleri_ekrana_yaz(2)
+                pass
+
+            if (self.mySystem.bIstatistikleriDosyayaYaz):
+                trader.istatistikleri_dosyaya_yaz(self.mySystem.IstatistiklerOutputFileName)
+                pass
+
+        else:
+            pass
+
+        return 0         
+
+    def create_trade_signals(self, trader: 'AlgoTrader'):    
+        combined_data = []
+        combined_data_normalized = []
+        segments, combined_data, combined_data_normalized  = self.create_signal_segments(trader)
+        if segments:  # En az bir segment varsa
+            trader.segments = segments
+            trader.combined_data = combined_data
+            trader.combined_data_normalized = combined_data_normalized
+        return 0
+
+    def update_data_frame(self, trader: 'AlgoTrader'):    
+
+        trader_id = trader.Id
+
+        if (trader_id == 0):
             # TODO : update_data_frame() içi güncell attribute'lere göre update edilecek
             # trader.update_data_frame()
             # print(trader._df)
             # print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
 
-            ret = self._on_write_data_frame_callback_func(trader_id, trader)
             # TODO : pass'e kadar ola kısım kontrol edilecek
-            # trader.write_data_frame_to_file_as_tabular("trading_data_tabular.txt")
-            # trader.write_statistics_to_file_as_tabular("trading_statistics_tabular.txt")
+            # trader.write_data_frame_to_file_as_tabular("trading_data_0_tabular.txt")
+            # trader.write_statistics_to_file_as_tabular("trading_statistics_0_tabular.txt")
 
             # # CSV formatında kaydet
             # trader.write_data_frame_to_file("trading_0_data.csv")
@@ -2393,55 +2444,86 @@ class AlgoTrader:
             # # HTML formatında kaydet
             # trader.write_data_frame_to_file("trading_0_data.html")
             pass
-            # --------------------------------------------------------------
 
-        # --------------------------------------------------------------
-        self.active_trader = self.mySystem.get_trader(0)
+        elif (trader_id == 1):
+            # TODO : update_data_frame() içi güncell attribute'lere göre update edilecek
+            # trader.update_data_frame()
+            # print(trader._df)
+            # print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
 
-        # --------------------------------------------------------------
-        combined_data = []
-        combined_data_normalized = []
-        segments, combined_data, combined_data_normalized  = self.create_signal_segments(self.active_trader)
-        if segments:  # En az bir segment varsa
-            self.active_trader.segments = segments
-            self.active_trader.combined_data = combined_data
-            self.active_trader.combined_data_normalized = combined_data_normalized
-            # if self.active_trader.combined_data:
-            #     self.plot_combined_signals(self.active_trader.combined_data, 1000)
+            # TODO : pass'e kadar ola kısım kontrol edilecek
+            # trader.write_data_frame_to_file_as_tabular("trading_data_1_tabular.txt")
+            # trader.write_statistics_to_file_as_tabular("trading_statistics_1_tabular.txt")
 
-        # --------------------------------------------------------------
-        print("\nSaving data to files...")
-        dstDir = "."
-        # self.SavePlotData(self.active_trader, dstDir)
+            # # CSV formatında kaydet
+            # trader.write_data_frame_to_file("trading_1_data.csv")
+            #
+            # # Excel formatında kaydet
+            # trader.write_data_frame_to_file("trading_1_data.xlsx")
+            #
+            # # JSON formatında kaydet
+            # trader.write_data_frame_to_file("trading_1_data.json")
+            #
+            # # HTML formatında kaydet
+            # trader.write_data_frame_to_file("trading_1_data.html")
+            pass
 
-        # --------------------------------------------------------------
-        print("\nPlotting market data...")
-        # # self.plotData()
-        # # self.plotData2(self.active_trader)
-        # # self.plotData3(self.active_trader)  # matplotlib version - DISABLED
-        #
-        # # Use Dear PyGui version instead
-        # # self.plotData3_DearPyGui(self.active_trader)
-        # # self.plotData4_DearPyGui(self.active_trader)
-        # self.plotDataFinal(self.active_trader)
-        # self.plotDataLightningChart(self.active_trader)
-        # self.plotDataPlotly(self.active_trader)
-        self.plotDataImgBundle(self.active_trader)
+        elif (trader_id == 2):
+            # TODO : update_data_frame() içi güncell attribute'lere göre update edilecek
+            # trader.update_data_frame()
+            # print(trader._df)
+            # print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
 
-        # --------------------------------------------------------------
-        # Show timing reports
-        self.dataManager.reportTimes()
-        self.mySystem.reportTimes()
+            # TODO : pass'e kadar ola kısım kontrol edilecek
+            # trader.write_data_frame_to_file_as_tabular("trading_data_2_tabular.txt")
+            # trader.write_statistics_to_file_as_tabular("trading_statistics_2_tabular.txt")
 
-        print(self.BakiyeFiyatList[0])
-        print(self.BakiyeFiyatList[1])
+            # # CSV formatında kaydet
+            # trader.write_data_frame_to_file("trading_2_data.csv")
+            #
+            # # Excel formatında kaydet
+            # trader.write_data_frame_to_file("trading_2_data.xlsx")
+            #
+            # # JSON formatında kaydet
+            # trader.write_data_frame_to_file("trading_2_data.json")
+            #
+            # # HTML formatında kaydet
+            # trader.write_data_frame_to_file("trading_2_data.html")
+            pass
 
-    def run_with_multiple_trader(self):
-        # --------------------------------------------------------------
-        # Read market data (equivalent to .GrafikVerileri operations)
-        print("Loading market data...")
+        elif (trader_id == 3):
+            # TODO : update_data_frame() içi güncell attribute'lere göre update edilecek
+            # trader.update_data_frame()
+            # print(trader._df)
+            # print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
+
+            # TODO : pass'e kadar ola kısım kontrol edilecek
+            # trader.write_data_frame_to_file_as_tabular("trading_data_3_tabular.txt")
+            # trader.write_statistics_to_file_as_tabular("trading_statistics_3_tabular.txt")
+
+            # # CSV formatında kaydet
+            # trader.write_data_frame_to_file("trading_3_data.csv")
+            #
+            # # Excel formatında kaydet
+            # trader.write_data_frame_to_file("trading_3_data.xlsx")
+            #
+            # # JSON formatında kaydet
+            # trader.write_data_frame_to_file("trading_3_data.json")
+            #
+            # # HTML formatında kaydet
+            # trader.write_data_frame_to_file("trading_3_data.html")
+            pass
+
+        else:
+            pass
+
+        return 0 
+
+
+    def run_with_single_trader(self):
+        # --------------------------------------------------------------  
+        print("\nLoading market data...")
         self.loadMarketData()
-        # self.loadMarketDataFromSqliteDB()
 
         # --------------------------------------------------------------
         # Create level series
@@ -2469,265 +2551,148 @@ class AlgoTrader:
         # --------------------------------------------------------------
         self.indicatorManager = self.mySystem.myIndicators
 
-        # self.Most, self.ExMov = self.calculate_most(period=21, percent=1.0)
-        self.Most, self.ExMov = self.indicatorManager.calculate_most(period=21, percent=1.0)
+        self.Most, self.ExMov = self.indicatorManager.calculate_most(period=21, percent=0.5)
 
         self.Ma5 = self.indicatorManager.calculate_ema(self.Close, 5)
         self.Ma8 = self.indicatorManager.calculate_ema(self.Close, 8)
-        self.Ma13 = self.indicatorManager.calculate_ema(self.Close, 13)
+        self.Ma13= self.indicatorManager.calculate_ema(self.Close, 13)
         self.Ma21 = self.indicatorManager.calculate_ema(self.Close, 21)
+        self.Ma50 = self.indicatorManager.calculate_ema(self.Close, 50)
+        self.Ma100 = self.indicatorManager.calculate_ema(self.Close, 100)
+        self.Ma200 = self.indicatorManager.calculate_ema(self.Close, 200)
 
+        # --------------------------------------------------------------
+        print("\nInitializing strategy params...")        
         for i in range(self.mySystem.get_trader_count()):
             trader = self.mySystem.get_trader(i)
-            trader_id = trader.Id
+            self.initialize_strategy(i, trader)
 
-            if (trader_id == 0):
-                DateTimes = ["25.05.2025 14:30:00", "02.06.2025 14:00:00"]
-                Dates = ["01.01.1900", "01.01.2100"]
-                Times = ["09:30:00", "11:59:00"]
-
-                trader.reset_date_times
-                trader.set_date_times(DateTimes[0], DateTimes[1])
-
-                trader.Signals.KarAlEnabled = False
-                trader.Signals.ZararKesEnabled = False
-                trader.Signals.GunSonuPozKapatEnabled = False
-                trader.Signals.TimeFilteringEnabled = True
-
-            elif (trader_id == 1):
-                DateTimes = ["25.05.2025 14:30:00", "02.06.2025 14:00:00"]
-                Dates = ["01.01.1900", "01.01.2100"]
-                Times = ["09:30:00", "11:59:00"]
-
-                trader.reset_date_times
-                trader.set_date_times(DateTimes[0], DateTimes[1])
-
-                trader.Signals.KarAlEnabled = False
-                trader.Signals.ZararKesEnabled = False
-                trader.Signals.GunSonuPozKapatEnabled = False
-                trader.Signals.TimeFilteringEnabled = True
-
-            elif (trader_id == 2):
-                DateTimes = ["25.05.2025 14:30:00", "02.06.2025 14:00:00"]
-                Dates = ["01.01.1900", "01.01.2100"]
-                Times = ["09:30:00", "11:59:00"]
-
-                trader.reset_date_times
-                trader.set_date_times(DateTimes[0], DateTimes[1])
-
-                trader.Signals.KarAlEnabled = False
-                trader.Signals.ZararKesEnabled = False
-                trader.Signals.GunSonuPozKapatEnabled = False
-                trader.Signals.TimeFilteringEnabled = True
-
-            elif (trader_id == 3):
-                DateTimes = ["25.05.2025 14:30:00", "02.06.2025 14:00:00"]
-                Dates = ["01.01.1900", "01.01.2100"]
-                Times = ["09:30:00", "11:59:00"]
-
-                trader.reset_date_times
-                trader.set_date_times(DateTimes[0], DateTimes[1])
-
-                trader.Signals.KarAlEnabled = False
-                trader.Signals.ZararKesEnabled = False
-                trader.Signals.GunSonuPozKapatEnabled = False
-                trader.Signals.TimeFilteringEnabled = True
-
-            else:
-                pass
-
+        # --------------------------------------------------------------
+        print("\nRunning strategy...")                
         self.mySystem.start()
         for i in range(self.BarCount):
             for j in range(self.mySystem.get_trader_count()):
                 trader = self.mySystem.get_trader(j)
-
-                # print(f"bar {i} : trader {trader.Id} is runnig...\n")
-
-                Al = False
-                Sat = False
-                FlatOl = False
-                PasGec = False
-                KarAl = False
-                ZararKes = False
-                isTradeEnabled = False
-                isPozKapatEnabled = False
-
-                trader.emirleri_resetle(i)
-
-                trader.emir_oncesi_dongu_foksiyonlarini_calistir(i)
-
-                if i < 1:
-                    continue
-
-                FlatOl = False
-
-                Al = self.myUtils.yukari_kesti(i, self.ExMov, self.Most)
-
-                Sat = self.myUtils.asagi_kesti(i, self.ExMov, self.Most)
-
-                KarAl = trader.Signals.KarAlEnabled
-                KarAl = KarAl and trader.KarAlZararKes.son_fiyata_gore_kar_al_seviye_hesapla(i, 5, 50, 1000) != 0
-
-                ZararKes = trader.Signals.ZararKesEnabled
-                ZararKes = ZararKes and trader.KarAlZararKes.son_fiyata_gore_zarar_kes_seviye_hesapla(i, -1, -10, 1000) != 0
-
-                IsSonYonA = trader.is_son_yon_a()
-
-                IsSonYonS = trader.is_son_yon_s()
-
-                IsSonYonF = trader.is_son_yon_f()
-
-                # useTimeFiltering = trader.Signals.TimeFilteringEnabled
-
-                trader.emirleri_setle(i, Al, Sat, FlatOl, PasGec, KarAl, ZararKes)
-
-                # YAPILACAK
-                trader.islem_zaman_filtresi_uygula(i)
-
-                trader.emir_sonrasi_dongu_foksiyonlarini_calistir(i)
-
-                if Al:
-                    print(f"bar {i} : trader {trader.Id} : Signal : Buy, Close {self.Close[i]}")
-                if Sat:
-                    print(f"bar {i} : trader {trader.Id} : Signal : Sell, Close {self.Close[i]}")
-
-                self.KarZararPuanList = trader.Lists.KarZararPuanList
-                self.KarZararFiyatList = trader.Lists.KarZararFiyatList
-                self.BakiyeFiyatList = trader.Lists.BakiyeFiyatList
-                self.YonList = trader.Lists.YonList
-                self.SeviyeList = trader.Lists.SeviyeList
-
+                self.run_strategy(i, trader)
         self.mySystem.stop()
 
+        # --------------------------------------------------------------
+        print("\nGetting strategy results...")             
         for i in range(self.mySystem.get_trader_count()):
             trader = self.mySystem.get_trader(i)
-            trader_id = trader.Id
-
-            if (trader_id == 0):
-                if ( self.mySystem.bIdealGetiriHesapla):
-                    trader.ideal_getiri_hesapla()
-
-                if ( self.mySystem.bIstatistikleriHesapla):
-                    trader.istatistikleri_hesapla()
-                    pass
-
-                if ( self.mySystem.bIstatistikleriEkranaYaz):
-                    # trader.istatistikleri_ekrana_yaz(1)
-                    pass
-
-                if ( self.mySystem.bGetiriIstatistikleriEkranaYaz):
-                    # trader.istatistikleri_ekrana_yaz(2)
-                    pass
-
-                if ( self.mySystem.bIstatistikleriDosyayaYaz):
-                    trader.istatistikleri_dosyaya_yaz( self.mySystem.IstatistiklerOutputFileName)
-                    pass
-
-
-                trader.update_data_frame()
-                print(trader._df)
-                print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
-                trader.write_data_frame_to_file_as_tabular("trading_data_tabular.txt")
-                trader.write_statistics_to_file_as_tabular("trading_statistics_tabular.txt")
-
-                # # CSV formatında kaydet
-                # trader.write_data_frame_to_file("trading_0_data.csv")
-                #
-                # # Excel formatında kaydet
-                # trader.write_data_frame_to_file("trading_0_data.xlsx")
-                #
-                # # JSON formatında kaydet
-                # trader.write_data_frame_to_file("trading_0_data.json")
-                #
-                # # HTML formatında kaydet
-                # trader.write_data_frame_to_file("trading_0_data.html")
-
-                pass
-
-            elif (trader_id == 1):
-                if ( self.mySystem.bIdealGetiriHesapla):
-                    trader.ideal_getiri_hesapla()
-
-                if ( self.mySystem.bIstatistikleriHesapla):
-                    trader.istatistikleri_hesapla()
-                    pass
-
-                if ( self.mySystem.bIstatistikleriEkranaYaz):
-                    # trader.istatistikleri_ekrana_yaz(1)
-                    pass
-
-                if ( self.mySystem.bGetiriIstatistikleriEkranaYaz):
-                    # trader.istatistikleri_ekrana_yaz(2)
-                    pass
-
-                if ( self.mySystem.bIstatistikleriDosyayaYaz):
-                    trader.istatistikleri_dosyaya_yaz( self.mySystem.IstatistiklerOutputFileName)
-                    pass
-                pass
-
-            elif (trader_id == 2):
-                if ( self.mySystem.bIdealGetiriHesapla):
-                    trader.ideal_getiri_hesapla()
-
-                if ( self.mySystem.bIstatistikleriHesapla):
-                    trader.istatistikleri_hesapla()
-                    pass
-
-                if ( self.mySystem.bIstatistikleriEkranaYaz):
-                    # trader.istatistikleri_ekrana_yaz(1)
-                    pass
-
-                if ( self.mySystem.bGetiriIstatistikleriEkranaYaz):
-                    # trader.istatistikleri_ekrana_yaz(2)
-                    pass
-
-                if ( self.mySystem.bIstatistikleriDosyayaYaz):
-                    trader.istatistikleri_dosyaya_yaz( self.mySystem.IstatistiklerOutputFileName)
-                    pass
-                pass
-
-            elif (trader_id == 3):
-                if ( self.mySystem.bIdealGetiriHesapla):
-                    trader.ideal_getiri_hesapla()
-
-                if ( self.mySystem.bIstatistikleriHesapla):
-                    trader.istatistikleri_hesapla()
-                    pass
-
-                if ( self.mySystem.bIstatistikleriEkranaYaz):
-                    # trader.istatistikleri_ekrana_yaz(1)
-                    pass
-
-                if ( self.mySystem.bGetiriIstatistikleriEkranaYaz):
-                    # trader.istatistikleri_ekrana_yaz(2)
-                    pass
-
-                if ( self.mySystem.bIstatistikleriDosyayaYaz):
-                    trader.istatistikleri_dosyaya_yaz( self.mySystem.IstatistiklerOutputFileName)
-                    pass
-                pass
-
-            else:
-                pass
+            self.finalize_strategy(i, trader)
 
         # --------------------------------------------------------------
-        print("Plotting market data...")
-        self.active_trader = self.mySystem.get_trader(0)
-        # self.plotData()
-        # self.plotData2(self.active_trader)
-        # self.plotData3(self.active_trader)  # matplotlib version - DISABLED
-        
-        # Use Dear PyGui version instead
-        # self.plotData3_DearPyGui(self.active_trader)
-        self.plotData4_DearPyGui(self.active_trader)
+        for i in range(self.mySystem.get_trader_count()):
+            # --------------------------------------------------------------
+            self.active_trader = self.mySystem.get_trader(i)
+            # --------------------------------------------------------------
+            print("\nGetting trade signals...")                    
+            self.create_trade_signals(self.active_trader)
+            # --------------------------------------------------------------
+            print("\nUpdating dataFrame...")        
+            self.update_data_frame(self.active_trader)
+            # --------------------------------------------------------------
+            print("\nSaving data to files...")
+            dstDir = "."
+            # self.SavePlotData(self.active_trader, dstDir)
+            # --------------------------------------------------------------
+            print("\nPlotting market data...")
+            self.plotDataImgBundle(self.active_trader)
 
         # --------------------------------------------------------------
         # Show timing reports
         self.dataManager.reportTimes()
         self.mySystem.reportTimes()
 
-        print(self.BakiyeFiyatList[0])
-        print(self.BakiyeFiyatList[1])
+        return 0 
+
+    def run_with_multiple_trader(self, trader_count=4):
+        # --------------------------------------------------------------
+        print("\nLoading market data...")
+        self.loadMarketData()
+
+        # --------------------------------------------------------------
+        # Create level series
+        self.LevelUp4 = self.create_level_series(self.BarCount, 6000)
+        self.LevelUp3 = self.create_level_series(self.BarCount, 5750)
+        self.LevelUp2 = self.create_level_series(self.BarCount, 5500)
+        self.LevelUp1 = self.create_level_series(self.BarCount, 5250)
+
+        self.Level = self.create_level_series(self.BarCount, 5000)
+
+        self.LevelDown1 = self.create_level_series(self.BarCount, 4750)
+        self.LevelDown2 = self.create_level_series(self.BarCount, 4500)
+        self.LevelDown3 = self.create_level_series(self.BarCount, 4250)
+        self.LevelDown4 = self.create_level_series(self.BarCount, 4000)
+
+        self.LevelZero = self.create_level_series(self.BarCount, 0)
+
+        # --------------------------------------------------------------
+        self.mySystem.create_modules(trader_count).initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
+
+        self.mySystem.reset()
+        self.mySystem.initialize_params_with_defaults()
+        self.mySystem.set_params_for_single_run()
+
+        # --------------------------------------------------------------
+        self.indicatorManager = self.mySystem.myIndicators
+
+        self.Most, self.ExMov = self.indicatorManager.calculate_most(period=21, percent=0.5)
+
+        self.Ma5 = self.indicatorManager.calculate_ema(self.Close, 5)
+        self.Ma8 = self.indicatorManager.calculate_ema(self.Close, 8)
+        self.Ma13= self.indicatorManager.calculate_ema(self.Close, 13)
+        self.Ma21 = self.indicatorManager.calculate_ema(self.Close, 21)
+        self.Ma50 = self.indicatorManager.calculate_ema(self.Close, 50)
+        self.Ma100 = self.indicatorManager.calculate_ema(self.Close, 100)
+        self.Ma200 = self.indicatorManager.calculate_ema(self.Close, 200)
+
+        # --------------------------------------------------------------
+        print("\nInitializing strategy params...")        
+        for i in range(self.mySystem.get_trader_count()):
+            trader = self.mySystem.get_trader(i)
+            self.initialize_strategy(i, trader)
+
+        # --------------------------------------------------------------
+        print("\nRunning strategy...")                
+        self.mySystem.start()
+        for i in range(self.BarCount):
+            for j in range(self.mySystem.get_trader_count()):
+                trader = self.mySystem.get_trader(j)
+                self.run_strategy(i, trader)
+        self.mySystem.stop()
+
+        # --------------------------------------------------------------
+        print("\nGetting strategy results...")             
+        for i in range(self.mySystem.get_trader_count()):
+            trader = self.mySystem.get_trader(i)
+            self.finalize_strategy(i, trader)
+
+        # --------------------------------------------------------------
+        for i in range(self.mySystem.get_trader_count()):
+            # --------------------------------------------------------------
+            self.active_trader = self.mySystem.get_trader(i)
+            # --------------------------------------------------------------
+            print("\nGetting trade signals...")                    
+            self.create_trade_signals(self.active_trader)
+            # --------------------------------------------------------------
+            print("\nUpdating dataFrame...")        
+            self.update_data_frame(self.active_trader)
+            # --------------------------------------------------------------
+            print("\nSaving data to files...")
+            dstDir = "."
+            # self.SavePlotData(self.active_trader, dstDir)
+            # --------------------------------------------------------------
+            print("\nPlotting market data...")
+            # self.plotDataImgBundle(self.active_trader)
+
+        # --------------------------------------------------------------
+        # Show timing reports
+        self.dataManager.reportTimes()
+        self.mySystem.reportTimes()
+
+        return 0 
 
     def run_optimization_with_single_trader(self):
         # --------------------------------------------------------------
@@ -2867,6 +2832,8 @@ class AlgoTrader:
         # Use best parameters for final run and plotting
         # self.Most, self.ExMov = self.calculate_most(period=best_period, percent=best_percent)
         self.Most, self.ExMov = self.indicatorManager.calculate_most(period=best_period, percent=best_percent)
+
+        return 0 
 
     def get_horizontal_levels(self):
         """
