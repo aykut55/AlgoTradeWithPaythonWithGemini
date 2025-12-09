@@ -2299,6 +2299,103 @@ class DataPlotterImgBundle:
 
         imgui.same_line()
         update_xy_clicked = imgui.button("UpdateOtherPlotsXY")
+
+        imgui.same_line()
+        imgui.text("|")
+        
+        imgui.same_line()
+        adjust_y_clicked = imgui.button("Adjust Y Axis")
+
+        # Adjust Y Axis Logic (Manual Fit to Visible Range)
+        if adjust_y_clicked:
+            # Calculate visible X range
+            start_idx = static.offset
+            end_idx = min(len(self.time_data), static.offset + static.visible_count)
+            
+            if start_idx < end_idx:
+                print(f"[Adjust Y Axis] Fitting Y-axis for visible range: [{start_idx}, {end_idx}]")
+                
+                # Iterate all panels and calculate local min/max for visible range
+                for idx, panel in self.panels.items():
+                    local_y_min = float('inf')
+                    local_y_max = float('-inf')
+                    found_data = False
+
+                    # Check OHLC data
+                    ohlc_src = None
+                    if panel.ohlc_array is not None:
+                        ohlc_src = panel.ohlc_array
+                    elif panel.ohlc_data is not None:
+                        ohlc_src = panel.ohlc_data.ohlc
+                    
+                    if ohlc_src is not None:
+                        # Slice visible OHLC
+                        visible_slice = ohlc_src[start_idx:end_idx]
+                        if len(visible_slice) > 0:
+                            try:
+                                local_y_max = max(local_y_max, float(np.max(visible_slice[:, 1]))) # High
+                                local_y_min = min(local_y_min, float(np.min(visible_slice[:, 2]))) # Low
+                                found_data = True
+                            except Exception:
+                                pass
+
+                    # Check other data items
+                    for item in panel.data_items:
+                        try:
+                            # Helper to get visible data slice
+                            d_len = len(item.data) if hasattr(item.data, '__len__') else 0
+                            s_i = max(0, min(start_idx, d_len))
+                            e_i = max(s_i, min(end_idx, d_len))
+                            
+                            if item.data_type in [DataType.Line, DataType.PnL, DataType.Balance]:
+                                visible_data = np.asarray(item.data[s_i:e_i], dtype=np.float64)
+                                if visible_data.size > 0 and np.any(~np.isnan(visible_data)):
+                                    local_y_min = min(local_y_min, float(np.nanmin(visible_data)))
+                                    local_y_max = max(local_y_max, float(np.nanmax(visible_data)))
+                                    found_data = True
+                                    
+                            elif item.data_type in [DataType.Volume, DataType.Histogram]:
+                                visible_data = np.asarray(item.data[s_i:e_i], dtype=np.float64)
+                                if visible_data.size > 0:
+                                    local_y_min = min(local_y_min, float(np.min(visible_data)))
+                                    local_y_max = max(local_y_max, float(np.max(visible_data)))
+                                    found_data = True
+                                    
+                            elif item.data_type == DataType.Bands:
+                                upper, lower = item.data
+                                v_upper = np.asarray(upper[s_i:e_i], dtype=np.float64)
+                                v_lower = np.asarray(lower[s_i:e_i], dtype=np.float64)
+                                if v_upper.size > 0:
+                                    local_y_max = max(local_y_max, float(np.nanmax(v_upper)))
+                                    found_data = True
+                                if v_lower.size > 0:
+                                    local_y_min = min(local_y_min, float(np.nanmin(v_lower)))
+                                    found_data = True
+                            
+                            elif item.data_type == DataType.Levels:
+                                levels = np.asarray(item.data, dtype=np.float64)
+                                if levels.size > 0:
+                                    local_y_min = min(local_y_min, float(np.min(levels)))
+                                    local_y_max = max(local_y_max, float(np.max(levels)))
+                                    found_data = True
+                                    
+                            # Note: Stairs/Signals usually handled by auto-scaling or fixed ranges
+                        except Exception:
+                            pass
+
+                    # Apply if valid range found
+                    if found_data and np.isfinite(local_y_min) and np.isfinite(local_y_max):
+                        # Add small padding
+                        rng = local_y_max - local_y_min
+                        pad = rng * 0.05 if rng > 0 else 1.0
+                        
+                        # Apply override (skip if Volume panel as usually 0-based is better, but user asked for adjust)
+                        # We will respect the calculated min/max
+                        static.panel_y_overrides[idx] = (local_y_min - pad, local_y_max + pad)
+                
+                static.needs_update = True
+                print(f"[Adjust Y Axis] Applied Y overrides to {len(static.panel_y_overrides)} panels")
+
         # ReadSrcPlotParams logic - Save current limits of src panel
         if read_src_clicked:
             if static.src_panel_id is not None and static.src_panel_id in static.panel_limits:
