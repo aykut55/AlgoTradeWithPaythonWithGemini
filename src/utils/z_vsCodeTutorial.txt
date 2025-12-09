@@ -1,0 +1,15 @@
+VSCode Kur
+Python Yükle
+Code Runner Yükle
+File->New Folder
+main.py
+Terminalde python -m venv imgui_bundle_env
+Shift > ile interpereter sec
+Terminalde .\imgui_bundle_env\Scripts\activate  ile değiştirdik.
+           .\.venv\Scripts\activate
+pip ile kur
+python main.py ile çalıştır. (Code Runner ile çalıştır (Bu çalışmadı))
+
+
+.\.venv\Scripts\activate
+python main.py
