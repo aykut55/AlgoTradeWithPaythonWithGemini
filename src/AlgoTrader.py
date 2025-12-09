@@ -518,6 +518,7 @@ class AlgoTrader:
     def loadMarketData(self):
 
         filePath             = "C:\\data\\csvFiles\\VIP\\01\\VIP-X030-T.csv"
+        filePath             = "C:\\data\\VIP-X030-T\\VIP'VIP-X030-T_1.csv"
         dirName              = os.path.dirname(filePath)
         fileName             = os.path.basename(filePath)
         name_no_ext, ext     = os.path.splitext(fileName)
@@ -3916,7 +3917,7 @@ class AlgoTrader:
         plotter.grafik_periyot_extension = reader.get_metadata('dk')
 
         # ==============================================================================
-        HeightRatioList= [1.5, 0.8, 0.8, 0.8, 1.4]
+        HeightRatioList= [1.0, 0.7, 0.7, 0.7, 1.0]
 
         # ==============================================================================
         # Panel 0: OHLC + Moving Averages
@@ -4022,6 +4023,7 @@ class AlgoTrader:
             plotter.setEnableSharedXAxis(True)
             plotter.setShowInfoOnAllPanels(True)
             plotter.setShowTradeSignals(True)
+            plotter.setEnableRangeSlider(True)
         except Exception:
             pass
 

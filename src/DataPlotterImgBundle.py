@@ -2521,6 +2521,239 @@ class DataPlotterImgBundle:
                     imgui.text(lod_text)
             except Exception:
                 pass
+
+            # imgui.new_line()
+            # ========================================
+            # RANGE SLIDER (Plotly-style overview + selection window)
+            # ========================================
+            if self.enable_range_slider:
+                try:
+                    imgui.separator()
+                    imgui.text("Range Slider")
+
+                    # Get close price data for mini chart
+                    close_prices = None
+                    if self.shared_ohlc_array is not None and len(self.shared_ohlc_array) > 0:
+                        close_prices = self.shared_ohlc_array[:, 3]  # Close column
+                    elif self.shared_ohlc_reader is not None:
+                        try:
+                            ohlc_data = self.shared_ohlc_reader.ohlc
+                            if ohlc_data is not None and len(ohlc_data) > 0:
+                                close_prices = ohlc_data[:, 3]
+                        except Exception:
+                            pass
+
+                    if close_prices is not None and len(close_prices) > 0:
+                        # Prepare LOD data for mini chart (cache for performance)
+                        if not hasattr(static, 'range_slider_lod_cache'):
+                            # Use aggressive LOD for entire dataset
+                            full_x = np.arange(len(close_prices), dtype=np.float64)
+                            full_range = (0, len(close_prices))
+
+                            # Simple downsampling for mini chart
+                            target_points = 300  # Max points for mini chart
+                            if len(close_prices) > target_points:
+                                step = max(1, len(close_prices) // target_points)
+                                lod_indices = np.arange(0, len(close_prices), step, dtype=int)
+                                lod_x = full_x[lod_indices]
+                                lod_y = close_prices[lod_indices]
+                            else:
+                                lod_x = full_x
+                                lod_y = close_prices
+
+                            static.range_slider_lod_cache = (lod_x, lod_y)
+
+                        lod_x, lod_y = static.range_slider_lod_cache
+
+                        # Mini chart size
+                        plot_size = imgui.ImVec2(-1, self.range_slider_height)
+                        plot_flags = (
+                            implot.Flags_.no_title |
+                            implot.Flags_.no_legend |
+                            implot.Flags_.no_mouse_text |
+                            implot.Flags_.no_menus
+                        )
+
+                        if implot.begin_plot("##range_slider", plot_size, plot_flags):
+                            # Setup axes
+                            implot.setup_axis(implot.ImAxis_.x1, "")
+                            implot.setup_axis(implot.ImAxis_.y1, "")
+                            implot.setup_axis_limits(
+                                implot.ImAxis_.x1,
+                                0, len(self.time_data),
+                                imgui.Cond_.always
+                            )
+
+                            # Auto-fit Y axis to data
+                            if len(lod_y) > 0:
+                                y_min = float(np.nanmin(lod_y))
+                                y_max = float(np.nanmax(lod_y))
+                                y_range = y_max - y_min
+                                y_padding = y_range * 0.05 if y_range > 0 else 1.0
+                                implot.setup_axis_limits(
+                                    implot.ImAxis_.y1,
+                                    y_min - y_padding, y_max + y_padding,
+                                    imgui.Cond_.always
+                                )
+
+                            # Plot mini chart line
+                            implot.set_next_line_style(imgui.ImVec4(0.5, 0.7, 1.0, 1.0))
+                            implot.plot_line("Data", lod_x, lod_y)
+
+                            # Get plot position and size for overlay drawing
+                            plot_pos = implot.get_plot_pos()
+                            plot_size_actual = implot.get_plot_size()
+
+                            # Calculate selection window coordinates
+                            x_start = static.offset
+                            x_end = static.offset + static.visible_count
+                            px_start = implot.plot_to_pixels(float(x_start), 0.0).x
+                            px_end = implot.plot_to_pixels(float(x_end), 0.0).x
+
+                            # Get draw list for overlay
+                            draw_list = implot.get_plot_draw_list()
+
+                            # 1. Dimmed areas (outside selection)
+                            if x_start > 0:
+                                draw_list.add_rect_filled(
+                                    imgui.ImVec2(plot_pos.x, plot_pos.y),
+                                    imgui.ImVec2(px_start, plot_pos.y + plot_size_actual.y),
+                                    imgui.get_color_u32((0.0, 0.0, 0.0, 0.6))
+                                )
+
+                            if x_end < len(self.time_data):
+                                draw_list.add_rect_filled(
+                                    imgui.ImVec2(px_end, plot_pos.y),
+                                    imgui.ImVec2(plot_pos.x + plot_size_actual.x, plot_pos.y + plot_size_actual.y),
+                                    imgui.get_color_u32((0.0, 0.0, 0.0, 0.6))
+                                )
+
+                            # 2. Selection window (semi-transparent highlight)
+                            draw_list.add_rect_filled(
+                                imgui.ImVec2(px_start, plot_pos.y),
+                                imgui.ImVec2(px_end, plot_pos.y + plot_size_actual.y),
+                                imgui.get_color_u32((0.3, 0.5, 0.8, 0.25))
+                            )
+
+                            # 3. Border
+                            draw_list.add_rect(
+                                imgui.ImVec2(px_start, plot_pos.y),
+                                imgui.ImVec2(px_end, plot_pos.y + plot_size_actual.y),
+                                imgui.get_color_u32((1.0, 1.0, 1.0, 0.9)),
+                                0.0, 0, 2.0
+                            )
+
+                            # 4. Edge handles (thick lines)
+                            draw_list.add_line(
+                                imgui.ImVec2(px_start, plot_pos.y),
+                                imgui.ImVec2(px_start, plot_pos.y + plot_size_actual.y),
+                                imgui.get_color_u32((1.0, 1.0, 1.0, 1.0)),
+                                5.0
+                            )
+                            draw_list.add_line(
+                                imgui.ImVec2(px_end, plot_pos.y),
+                                imgui.ImVec2(px_end, plot_pos.y + plot_size_actual.y),
+                                imgui.get_color_u32((1.0, 1.0, 1.0, 1.0)),
+                                5.0
+                            )
+
+                            # 5. Labels
+                            draw_list.add_text(
+                                imgui.ImVec2(px_start + 5, plot_pos.y + 5),
+                                imgui.get_color_u32((1.0, 1.0, 1.0, 1.0)),
+                                f"[{x_start}]"
+                            )
+                            draw_list.add_text(
+                                imgui.ImVec2(px_end - 50, plot_pos.y + 5),
+                                imgui.get_color_u32((1.0, 1.0, 1.0, 1.0)),
+                                f"[{x_end}]"
+                            )
+
+                            # 6. Mouse interaction (handle dragging/resizing)
+                            # IMPORTANT: Must be BEFORE end_plot()!
+                            if implot.is_plot_hovered():
+                                mouse_pos = imgui.get_mouse_pos()
+                                edge_tol = 8.0  # 8 pixel tolerance for edges
+
+                                # Detect which region mouse is in
+                                on_left = abs(mouse_pos.x - px_start) < edge_tol
+                                on_right = abs(mouse_pos.x - px_end) < edge_tol
+                                in_window = (px_start < mouse_pos.x < px_end)
+
+                                # Change cursor based on region
+                                if on_left or on_right:
+                                    imgui.set_mouse_cursor(imgui.MouseCursor_.resize_ew)
+                                elif in_window:
+                                    imgui.set_mouse_cursor(imgui.MouseCursor_.resize_all)
+
+                                # Initialize drag state if not exists
+                                if not hasattr(static, 'rs_mode'):
+                                    static.rs_mode = None
+
+                                # Click: Start drag/resize operation
+                                if imgui.is_mouse_clicked(0):
+                                    if on_left:
+                                        static.rs_mode = "resize_left"
+                                        static.rs_start_mouse = mouse_pos.x
+                                        static.rs_start_offset = x_start
+                                    elif on_right:
+                                        static.rs_mode = "resize_right"
+                                        static.rs_start_mouse = mouse_pos.x
+                                        static.rs_start_end = x_end
+                                    elif in_window:
+                                        static.rs_mode = "pan"
+                                        static.rs_start_mouse = mouse_pos.x
+                                        static.rs_start_offset = static.offset
+                                    else:
+                                        # Click outside: Jump to position
+                                        mouse_plot = implot.get_plot_mouse_pos()
+                                        new_center = int(mouse_plot.x)
+                                        half = static.visible_count // 2
+                                        static.offset = max(0, min(new_center - half,
+                                                                   len(self.time_data) - static.visible_count))
+                                        static.needs_update = True
+
+                                # Dragging: Update offset/visible_count
+                                if imgui.is_mouse_dragging(0) and static.rs_mode is not None:
+                                    delta_px = mouse_pos.x - static.rs_start_mouse
+                                    bar_count = len(self.time_data)
+                                    px_per_bar = plot_size_actual.x / bar_count if bar_count > 0 else 1.0
+                                    delta_bars = int(delta_px / px_per_bar)
+
+                                    if static.rs_mode == "resize_left":
+                                        # Resize from left edge
+                                        new_offset = static.rs_start_offset + delta_bars
+                                        new_offset = max(0, min(new_offset, x_end - 10))  # Min 10 bars
+                                        static.offset = new_offset
+                                        static.visible_count = x_end - new_offset
+                                        static.needs_update = True
+
+                                    elif static.rs_mode == "resize_right":
+                                        # Resize from right edge
+                                        new_end = static.rs_start_end + delta_bars
+                                        new_end = max(x_start + 10, min(new_end, bar_count))  # Min 10 bars
+                                        static.visible_count = new_end - x_start
+                                        static.needs_update = True
+
+                                    elif static.rs_mode == "pan":
+                                        # Pan window
+                                        new_offset = static.rs_start_offset + delta_bars
+                                        new_offset = max(0, min(new_offset, bar_count - static.visible_count))
+                                        static.offset = new_offset
+                                        static.needs_update = True
+
+                                # Release: Reset mode
+                                if imgui.is_mouse_released(0):
+                                    static.rs_mode = None
+
+                            # End plot AFTER mouse interaction
+                            implot.end_plot()
+                except Exception as e:
+                    # Silently handle range slider errors to avoid breaking main plot
+                    try:
+                        print(f"[DEBUG] Range slider error: {e}")
+                    except Exception:
+                        pass
             imgui.set_next_item_width(-1)
             old_offset = static.offset
             _, static.offset = imgui.slider_int(
@@ -2830,237 +3063,6 @@ class DataPlotterImgBundle:
             static.pending_fit = True
             static.needs_update = True
 
-        # ========================================
-        # RANGE SLIDER (Plotly-style overview + selection window)
-        # ========================================
-        if self.enable_range_slider:
-            try:
-                imgui.separator()
-                imgui.text("Range Slider")
-
-                # Get close price data for mini chart
-                close_prices = None
-                if self.shared_ohlc_array is not None and len(self.shared_ohlc_array) > 0:
-                    close_prices = self.shared_ohlc_array[:, 3]  # Close column
-                elif self.shared_ohlc_reader is not None:
-                    try:
-                        ohlc_data = self.shared_ohlc_reader.ohlc
-                        if ohlc_data is not None and len(ohlc_data) > 0:
-                            close_prices = ohlc_data[:, 3]
-                    except Exception:
-                        pass
-
-                if close_prices is not None and len(close_prices) > 0:
-                    # Prepare LOD data for mini chart (cache for performance)
-                    if not hasattr(static, 'range_slider_lod_cache'):
-                        # Use aggressive LOD for entire dataset
-                        full_x = np.arange(len(close_prices), dtype=np.float64)
-                        full_range = (0, len(close_prices))
-
-                        # Simple downsampling for mini chart
-                        target_points = 300  # Max points for mini chart
-                        if len(close_prices) > target_points:
-                            step = max(1, len(close_prices) // target_points)
-                            lod_indices = np.arange(0, len(close_prices), step, dtype=int)
-                            lod_x = full_x[lod_indices]
-                            lod_y = close_prices[lod_indices]
-                        else:
-                            lod_x = full_x
-                            lod_y = close_prices
-
-                        static.range_slider_lod_cache = (lod_x, lod_y)
-
-                    lod_x, lod_y = static.range_slider_lod_cache
-
-                    # Mini chart size
-                    plot_size = imgui.ImVec2(-1, self.range_slider_height)
-                    plot_flags = (
-                        implot.Flags_.no_title |
-                        implot.Flags_.no_legend |
-                        implot.Flags_.no_mouse_text |
-                        implot.Flags_.no_menus
-                    )
-
-                    if implot.begin_plot("##range_slider", plot_size, plot_flags):
-                        # Setup axes
-                        implot.setup_axis(implot.ImAxis_.x1, "")
-                        implot.setup_axis(implot.ImAxis_.y1, "")
-                        implot.setup_axis_limits(
-                            implot.ImAxis_.x1,
-                            0, len(self.time_data),
-                            imgui.Cond_.always
-                        )
-
-                        # Auto-fit Y axis to data
-                        if len(lod_y) > 0:
-                            y_min = float(np.nanmin(lod_y))
-                            y_max = float(np.nanmax(lod_y))
-                            y_range = y_max - y_min
-                            y_padding = y_range * 0.05 if y_range > 0 else 1.0
-                            implot.setup_axis_limits(
-                                implot.ImAxis_.y1,
-                                y_min - y_padding, y_max + y_padding,
-                                imgui.Cond_.always
-                            )
-
-                        # Plot mini chart line
-                        implot.set_next_line_style(imgui.ImVec4(0.5, 0.7, 1.0, 1.0))
-                        implot.plot_line("Data", lod_x, lod_y)
-
-                        # Get plot position and size for overlay drawing
-                        plot_pos = implot.get_plot_pos()
-                        plot_size_actual = implot.get_plot_size()
-
-                        # Calculate selection window coordinates
-                        x_start = static.offset
-                        x_end = static.offset + static.visible_count
-                        px_start = implot.plot_to_pixels(float(x_start), 0.0).x
-                        px_end = implot.plot_to_pixels(float(x_end), 0.0).x
-
-                        # Get draw list for overlay
-                        draw_list = implot.get_plot_draw_list()
-
-                        # 1. Dimmed areas (outside selection)
-                        if x_start > 0:
-                            draw_list.add_rect_filled(
-                                imgui.ImVec2(plot_pos.x, plot_pos.y),
-                                imgui.ImVec2(px_start, plot_pos.y + plot_size_actual.y),
-                                imgui.get_color_u32((0.0, 0.0, 0.0, 0.6))
-                            )
-
-                        if x_end < len(self.time_data):
-                            draw_list.add_rect_filled(
-                                imgui.ImVec2(px_end, plot_pos.y),
-                                imgui.ImVec2(plot_pos.x + plot_size_actual.x, plot_pos.y + plot_size_actual.y),
-                                imgui.get_color_u32((0.0, 0.0, 0.0, 0.6))
-                            )
-
-                        # 2. Selection window (semi-transparent highlight)
-                        draw_list.add_rect_filled(
-                            imgui.ImVec2(px_start, plot_pos.y),
-                            imgui.ImVec2(px_end, plot_pos.y + plot_size_actual.y),
-                            imgui.get_color_u32((0.3, 0.5, 0.8, 0.25))
-                        )
-
-                        # 3. Border
-                        draw_list.add_rect(
-                            imgui.ImVec2(px_start, plot_pos.y),
-                            imgui.ImVec2(px_end, plot_pos.y + plot_size_actual.y),
-                            imgui.get_color_u32((1.0, 1.0, 1.0, 0.9)),
-                            0.0, 0, 2.0
-                        )
-
-                        # 4. Edge handles (thick lines)
-                        draw_list.add_line(
-                            imgui.ImVec2(px_start, plot_pos.y),
-                            imgui.ImVec2(px_start, plot_pos.y + plot_size_actual.y),
-                            imgui.get_color_u32((1.0, 1.0, 1.0, 1.0)),
-                            5.0
-                        )
-                        draw_list.add_line(
-                            imgui.ImVec2(px_end, plot_pos.y),
-                            imgui.ImVec2(px_end, plot_pos.y + plot_size_actual.y),
-                            imgui.get_color_u32((1.0, 1.0, 1.0, 1.0)),
-                            5.0
-                        )
-
-                        # 5. Labels
-                        draw_list.add_text(
-                            imgui.ImVec2(px_start + 5, plot_pos.y + 5),
-                            imgui.get_color_u32((1.0, 1.0, 1.0, 1.0)),
-                            f"[{x_start}]"
-                        )
-                        draw_list.add_text(
-                            imgui.ImVec2(px_end - 50, plot_pos.y + 5),
-                            imgui.get_color_u32((1.0, 1.0, 1.0, 1.0)),
-                            f"[{x_end}]"
-                        )
-
-                        # 6. Mouse interaction (handle dragging/resizing)
-                        # IMPORTANT: Must be BEFORE end_plot()!
-                        if implot.is_plot_hovered():
-                            mouse_pos = imgui.get_mouse_pos()
-                            edge_tol = 8.0  # 8 pixel tolerance for edges
-
-                            # Detect which region mouse is in
-                            on_left = abs(mouse_pos.x - px_start) < edge_tol
-                            on_right = abs(mouse_pos.x - px_end) < edge_tol
-                            in_window = (px_start < mouse_pos.x < px_end)
-
-                            # Change cursor based on region
-                            if on_left or on_right:
-                                imgui.set_mouse_cursor(imgui.MouseCursor_.resize_ew)
-                            elif in_window:
-                                imgui.set_mouse_cursor(imgui.MouseCursor_.resize_all)
-
-                            # Initialize drag state if not exists
-                            if not hasattr(static, 'rs_mode'):
-                                static.rs_mode = None
-
-                            # Click: Start drag/resize operation
-                            if imgui.is_mouse_clicked(0):
-                                if on_left:
-                                    static.rs_mode = "resize_left"
-                                    static.rs_start_mouse = mouse_pos.x
-                                    static.rs_start_offset = x_start
-                                elif on_right:
-                                    static.rs_mode = "resize_right"
-                                    static.rs_start_mouse = mouse_pos.x
-                                    static.rs_start_end = x_end
-                                elif in_window:
-                                    static.rs_mode = "pan"
-                                    static.rs_start_mouse = mouse_pos.x
-                                    static.rs_start_offset = static.offset
-                                else:
-                                    # Click outside: Jump to position
-                                    mouse_plot = implot.get_plot_mouse_pos()
-                                    new_center = int(mouse_plot.x)
-                                    half = static.visible_count // 2
-                                    static.offset = max(0, min(new_center - half,
-                                                               len(self.time_data) - static.visible_count))
-                                    static.needs_update = True
-
-                            # Dragging: Update offset/visible_count
-                            if imgui.is_mouse_dragging(0) and static.rs_mode is not None:
-                                delta_px = mouse_pos.x - static.rs_start_mouse
-                                bar_count = len(self.time_data)
-                                px_per_bar = plot_size_actual.x / bar_count if bar_count > 0 else 1.0
-                                delta_bars = int(delta_px / px_per_bar)
-
-                                if static.rs_mode == "resize_left":
-                                    # Resize from left edge
-                                    new_offset = static.rs_start_offset + delta_bars
-                                    new_offset = max(0, min(new_offset, x_end - 10))  # Min 10 bars
-                                    static.offset = new_offset
-                                    static.visible_count = x_end - new_offset
-                                    static.needs_update = True
-
-                                elif static.rs_mode == "resize_right":
-                                    # Resize from right edge
-                                    new_end = static.rs_start_end + delta_bars
-                                    new_end = max(x_start + 10, min(new_end, bar_count))  # Min 10 bars
-                                    static.visible_count = new_end - x_start
-                                    static.needs_update = True
-
-                                elif static.rs_mode == "pan":
-                                    # Pan window
-                                    new_offset = static.rs_start_offset + delta_bars
-                                    new_offset = max(0, min(new_offset, bar_count - static.visible_count))
-                                    static.offset = new_offset
-                                    static.needs_update = True
-
-                            # Release: Reset mode
-                            if imgui.is_mouse_released(0):
-                                static.rs_mode = None
-
-                        # End plot AFTER mouse interaction
-                        implot.end_plot()
-            except Exception as e:
-                # Silently handle range slider errors to avoid breaking main plot
-                try:
-                    print(f"[DEBUG] Range slider error: {e}")
-                except Exception:
-                    pass
 
 
 
