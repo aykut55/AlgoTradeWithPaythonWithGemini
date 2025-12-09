@@ -2166,8 +2166,31 @@ class AlgoTrader:
             if attr is not None and callable(v):
                 setattr(self, attr, v)
         return self
-
-
+    
+    def _on_before_strategy_execution_callback_func(self,  bar_count: int, trader_count: int):
+        print("_on_before_strategy_execution_callback_func called")
+        return 0    
+    
+    
+    def _on_strategy_execution_callback_func(self,  bar_count: int, trader_count: int):
+        print("_on_strategy_execution_callback_func called")
+        return 0       
+    
+    
+    def _on_after_strategy_execution_callback_func(self,  bar_count: int, trader_count: int):
+        print("_on_after_strategy_execution_callback_func called")
+        return 0           
+    
+    
+    def _on_build_data_frame_callback_func(self,  bar_count: int, trader_count: int):
+        print("_on_build_data_frame_callback_func called")
+        return 0             
+    
+    
+    def _on_write_data_frame_callback_func(self,  bar_count: int, trader_count: int):
+        print("_on_write_data_frame_callback_func called")
+        return 0    
+  
     def _on_callback_func_1(self,  bar_count: int, trader_count: int):
         print("functionAykut1 called")
         return 0
@@ -2248,8 +2271,7 @@ class AlgoTrader:
             trader.Signals.TimeFilteringEnabled = True
 
             # --------------------------------------------------------------
-            # TODO 2526 : Buraya bir callback fonksiyonu tanımla. Ekrana function2 called yazdır
-            cb2_ret = self.on_traders_configured(trader_id, trader)
+            ret = self._on_before_strategy_execution_callback_func(trader_id, trader)
 
         # --------------------------------------------------------------
         self.mySystem.start()
@@ -2315,6 +2337,8 @@ class AlgoTrader:
                 self.YonList = trader.Lists.YonList
                 self.SeviyeList = trader.Lists.SeviyeList
 
+                ret = self._on_strategy_execution_callback_func(trader_id, trader)
+
         # --------------------------------------------------------------
         self.mySystem.stop()
 
@@ -2322,6 +2346,8 @@ class AlgoTrader:
         for i in range(self.mySystem.get_trader_count()):
             trader = self.mySystem.get_trader(i)
             trader_id = trader.Id
+
+            ret = self._on_after_strategy_execution_callback_func(trader_id, trader)
 
             if (self.mySystem.bIdealGetiriHesapla):
                 trader.ideal_getiri_hesapla()
@@ -2343,11 +2369,14 @@ class AlgoTrader:
                 pass
 
             # --------------------------------------------------------------
+            ret = self._on_build_data_frame_callback_func(trader_id, trader)
+
             # TODO : update_data_frame() içi güncell attribute'lere göre update edilecek
             # trader.update_data_frame()
             # print(trader._df)
             # print(f'BakiyeInitialized = {trader._df.attrs["BakiyeInitialized"]}')
 
+            ret = self._on_write_data_frame_callback_func(trader_id, trader)
             # TODO : pass'e kadar ola kısım kontrol edilecek
             # trader.write_data_frame_to_file_as_tabular("trading_data_tabular.txt")
             # trader.write_statistics_to_file_as_tabular("trading_statistics_tabular.txt")
