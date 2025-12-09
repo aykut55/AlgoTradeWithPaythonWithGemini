@@ -806,6 +806,7 @@ class Panel:
         event_handler: Optional[Callable[[Dict[str, Any]], None]] = None,
         panel_x_overrides: Optional[Dict[int, Tuple[int, int]]] = None,
         panel_y_overrides: Optional[Dict[int, Tuple[float, float]]] = None,
+        shared_xaxis_enabled: bool = False,
     ):
         """
         Render this panel using ImPlot.
@@ -819,9 +820,11 @@ class Panel:
             panel_x_overrides: Per-panel X override dict {panel_idx: (offset, visible_count)}
             panel_y_overrides: Per-panel Y override dict {panel_idx: (y_min, y_max)}
         """
-        # Check if this panel has X override (from UpdateOtherPlotsX)
+        # Check if this panel has X override (from UpdateOtherPlotsX or hover sync)
+        has_x_override = False
         if panel_x_overrides is not None and self.index in panel_x_overrides:
             offset, visible_count = panel_x_overrides[self.index]
+            has_x_override = True
 
         # Begin plot
         plot_flags = (
@@ -945,7 +948,12 @@ class Panel:
 
         # Apply axis limits
         axis_cond = imgui.Cond_.always if needs_update else imgui.Cond_.once
-        implot.setup_axis_limits(implot.ImAxis_.x1, x_min, x_max, axis_cond)
+        # Apply X limits as default window. If override present, force apply once.
+        # Using Cond.once for normal updates allows user pan/zoom to persist.
+        if has_x_override:
+            implot.setup_axis_limits(implot.ImAxis_.x1, x_min, x_max, imgui.Cond_.always)
+        else:
+            implot.setup_axis_limits(implot.ImAxis_.x1, x_min, x_max, axis_cond)
         implot.setup_axis_limits(implot.ImAxis_.y1, y_min - y_padding, y_max + y_padding, axis_cond)
 
         # Get visible range for LOD calculation
@@ -1739,6 +1747,8 @@ class DataPlotterImgBundle:
         self.config_file_path: Optional[str] = None
         # Data dictionary for LoadPlots functionality
         self.data_dict: Optional[Dict[str, Any]] = None
+        # Auto sync request flag (programmatic ReadSrcPlotParams + UpdateOtherPlotsX/Y)
+        self._auto_sync_request: bool = False
 
     def AddPanel(self, index: int) -> Panel:
         """
@@ -1845,9 +1855,12 @@ class DataPlotterImgBundle:
             if isinstance(btn, int):
                 btn = 'left' if btn == 0 else ('right' if btn == 1 else ('middle' if btn == 2 else None))
 
-            # wheel event: always log (no src_panel tracking)
+            # wheel event: log and consider this panel as source; trigger auto-sync
             if etype == "wheel":
+                self._src_panel = pid
+                self._auto_sync_request = True
                 print(f"[EVENT] panel={pid} {etype} evt={ {k:v for k,v in event.items() if k!='ppx'} }")
+                return
 
             # hover event: always log (no src_panel tracking, can be spammy)
             if etype == "hover" and 1 == 0:
@@ -1863,6 +1876,8 @@ class DataPlotterImgBundle:
                 self._btn_active[btn] = True
             if etype in ("release", "pan_finished", "drag_finished", "selection_finished") and btn in ("left","right","middle"):
                 self._btn_active[btn] = False
+                # On finish events, request auto sync (Tum plotlarda sync bu flag ile saglaniyor
+                self._auto_sync_request = True
 
             # clear src when nothing active
             if not any(self._btn_active.values()):
@@ -1881,7 +1896,7 @@ class DataPlotterImgBundle:
             pass
 
         # aykut kod buraya eklendi: event sonunda otomatik UpdateOtherPlotsXY
-        self._event_end_update_other_plots_xy(event)
+        # self._event_end_update_other_plots_xy(event)
 
     def _event_end_update_other_plots_xy(self, event: Dict[str, Any]) -> None:
         """If shared X is enabled, simulate UpdateOtherPlotsXY after an event.
@@ -2268,7 +2283,6 @@ class DataPlotterImgBundle:
 
         imgui.same_line()
         update_xy_clicked = imgui.button("UpdateOtherPlotsXY")
-
         # ReadSrcPlotParams logic - Save current limits of src panel
         if read_src_clicked:
             if static.src_panel_id is not None and static.src_panel_id in static.panel_limits:
@@ -2278,7 +2292,7 @@ class DataPlotterImgBundle:
             else:
                 print(f"[ReadSrcPlotParams] No source panel selected or limits not available")
 
-        # UpdateOtherPlotsX logic (X-axis only) - Auto-run ReadSrcPlotParams, then apply
+        # UpdateOtherPlotsX logic (X-axis only) - Use saved src_panel_limits
         if update_x_clicked:
             # Auto: ReadSrcPlotParams
             if static.src_panel_id is not None and static.src_panel_id in static.panel_limits:
@@ -2302,9 +2316,9 @@ class DataPlotterImgBundle:
                 static.needs_update = True
                 print(f"[UpdateOtherPlotsX] Panel{static.src_panel_id} X limits: [{src_x_min:.1f}, {src_x_max:.1f}] -> applied to {len(static.panel_x_overrides)} panels (src included with own limits)")
             else:
-                print(f"[UpdateOtherPlotsX] Auto ReadSrcPlotParams failed (no source)")
+                print(f"[UpdateOtherPlotsX] Please click ReadSrcPlotParams first")
 
-        # UpdateOtherPlotsY logic (Y-axis only, same Y-sync group) - Auto-run ReadSrcPlotParams, then apply
+        # UpdateOtherPlotsY logic (Y-axis only, same Y-sync group) - Use saved src_panel_limits
         if update_y_clicked:
             # Auto: ReadSrcPlotParams
             if static.src_panel_id is not None and static.src_panel_id in static.panel_limits:
@@ -2313,7 +2327,6 @@ class DataPlotterImgBundle:
                 print(f"[Auto-ReadSrcPlotParams] Saved Panel{static.src_panel_id} limits: X=[{x_min:.1f}, {x_max:.1f}], Y=[{y_min:.2f}, {y_max:.2f}]")
             else:
                 print(f"[Auto-ReadSrcPlotParams] No source panel selected or limits not available")
-
             if static.src_panel_limits is not None and static.src_panel_id is not None:
                 src_x_min, src_x_max, src_y_min, src_y_max = static.src_panel_limits
                 src_panel = self.panels.get(static.src_panel_id)
@@ -2596,6 +2609,7 @@ class DataPlotterImgBundle:
                         getattr(self, "eventHandler", None),
                         static.panel_x_overrides,
                         static.panel_y_overrides,
+                        shared_xaxis_enabled=getattr(self, "enable_shared_xaxis", False),
                     )
 
                 if static.needs_update:
@@ -2603,6 +2617,16 @@ class DataPlotterImgBundle:
                     # Clear overrides after one-shot sync (UpdateOtherPlotsX/Y)
                     static.panel_x_overrides.clear()
                     static.panel_y_overrides.clear()
+
+                # Copy panel limits from shared_lod to static for next frame (for programmatic sync)
+                for idx in sorted_indices:
+                    limit_key = f"limits_{idx}"
+                    if limit_key in shared_lod:
+                        static.panel_limits[idx] = shared_lod[limit_key]
+
+                # Update src panel id from eventHandler tracking
+                if self._src_panel is not None:
+                    static.src_panel_id = self._src_panel
 
                 # Persist crosshair x for next frame
                 try:
@@ -2692,6 +2716,7 @@ class DataPlotterImgBundle:
                         getattr(self, "eventHandler", None),
                         static.panel_x_overrides,
                         static.panel_y_overrides,
+                        shared_xaxis_enabled=getattr(self, "enable_shared_xaxis", False),
                     )
                     # Add a small separator between panels
                     imgui.dummy(imgui.ImVec2(1, 6))
@@ -2734,12 +2759,43 @@ class DataPlotterImgBundle:
                         bar_count = len(self.time_data)
                         h0, h1 = shared_lod.get("hover_limits")
                         if h0 is not None and h1 is not None:
-                            if h1 < h0: h0, h1 = h1, h0
+                            if h1 < h0:
+                                h0, h1 = h1, h0
                             start = max(0, min(int(np.floor(h0)), bar_count - 1))
                             end = min(int(np.ceil(h1)), bar_count)
                             end = max(start + 1, end)
                             static.offset = start
                             static.visible_count = max(1, end - start)
+                            # One-shot push to all panels so they sync with source interaction
+                            try:
+                                for idx2 in self.panels.keys():
+                                    static.panel_x_overrides[idx2] = (start, max(1, end - start))
+                            except Exception:
+                                pass
+                            static.needs_update = True
+                except Exception:
+                    pass
+
+                # Programmatic ReadSrcPlotParams + UpdateOtherPlotsX/Y on demand (scroll mode)
+                try:
+                    if getattr(self, '_auto_sync_request', False):
+                        self._auto_sync_request = False
+                        if static.src_panel_id is not None and static.src_panel_id in static.panel_limits:
+                            # ReadSrcPlotParams
+                            static.src_panel_limits = static.panel_limits[static.src_panel_id]
+                            src_x_min, src_x_max, src_y_min, src_y_max = static.src_panel_limits
+                            # UpdateOtherPlotsX
+                            new_offset = int(src_x_min)
+                            new_visible = int(max(1, src_x_max - src_x_min))
+                            for idx2 in self.panels.keys():
+                                static.panel_x_overrides[idx2] = (new_offset, new_visible)
+                            # UpdateOtherPlotsY (same Y-sync group)
+                            src_panel = self.panels.get(static.src_panel_id)
+                            if src_panel and src_panel.y_sync_group is not None:
+                                src_y_group = src_panel.y_sync_group
+                                for idx2, panel2 in self.panels.items():
+                                    if panel2.y_sync_group == src_y_group:
+                                        static.panel_y_overrides[idx2] = (src_y_min, src_y_max)
                             static.needs_update = True
                 except Exception:
                     pass
