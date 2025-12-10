@@ -8,7 +8,7 @@ if __name__ == "__main__":
 
     algoTrader = AlgoTrader()
 
-    choice = 0  # 0: single trader, 1: multiple trader, 2: optimization single trader
+    choice = 2  # 0: single trader, 1: multiple trader, 2: optimization single trader
     if choice == 0:
         algoTrader.run_with_single_trader()
     elif choice == 1:

@@ -776,68 +776,85 @@ class CTrader(CBase):
         self.StopDate = self.StopDateTime
         self.StartTime = self.StartDateTime
         self.StopTime = self.StopDateTime
-        self.StartDateTimeStr = self.StartDateTime.strftime(self.DateTimeStringFormat)
-        self.StopDateTimeStr = self.StopDateTime.strftime(self.DateTimeStringFormat)
-        self.StartDateStr = self.StartDate.strftime(self.DateStringFormat)
-        self.StopDateStr = self.StopDate.strftime(self.DateStringFormat)
-        self.StartTimeStr = self.StartTime.strftime(self.TimeStringFormat)
-        self.StopTimeStr = self.StopTime.strftime(self.TimeStringFormat)
+
+        # TODO : Asagisi Yapilacak
+        # self.StartDateTimeStr = self.StartDateTime
+        # self.StopDateTimeStr = self.StopDateTime
+        # self.StartDateStr = self.StartDate.strftime(self.DateStringFormat)
+        # self.StopDateStr = self.StopDate.strftime(self.DateStringFormat)
+        # self.StartTimeStr = self.StartTime.strftime(self.TimeStringFormat)
+        # self.StopTimeStr = self.StopTime.strftime(self.TimeStringFormat)
+
+        # self.StartDateTimeStr = self.StartDateTime.strftime(self.DateTimeStringFormat)
+        # self.StopDateTimeStr = self.StopDateTime.strftime(self.DateTimeStringFormat)
+        # self.StartDateStr = self.StartDate.strftime(self.DateStringFormat)
+        # self.StopDateStr = self.StopDate.strftime(self.DateStringFormat)
+        # self.StartTimeStr = self.StartTime.strftime(self.TimeStringFormat)
+        # self.StopTimeStr = self.StopTime.strftime(self.TimeStringFormat)
         return self
 
-    def set_date_times(self, StartDateTime, StopDateTime):
-        pass
+    def set_date_times(self, StartDateTime : str, StopDateTime : str):
+        StartDate = StartDateTime.strip()[0:10]
+        StartTime = StartDateTime.strip()[11:]
+        StopDate = StopDateTime.strip()[0:10]
+        StopTime = StopDateTime.strip()[11:]
+        return self.set_date_times2(StartDate, StartTime, StopDate, StopTime)
 
-    def set_date_times2(self, StartDate, StartTime, StopDate, StopTime):
-        date1 = StartDate.strip()
-        time1 = StartTime.strip()
-        date2 = StopDate.strip()
-        time2 = StopTime.strip()
-        dateTime1 = date1 + " " + time1
-        dateTime2 = date2 + " " + time2
-        suffixDate = "09:30:00"
-        prefixTime = "01.01.1900"
-        self.StartDateTime = self.TimeUtils.get_date_time(date1, time1)
-        self.StopDateTime = self.TimeUtils.get_date_time(date2, time2)
-        self.StartDate = self.TimeUtils.get_date_time(date1 + " " + suffixDate)
-        self.StopDate = self.TimeUtils.get_date_time(date2 + " " + suffixDate)
-        self.StartTime = self.TimeUtils.get_date_time(prefixTime + " " + time1)
-        self.StopTime = self.TimeUtils.get_date_time(prefixTime + " " + time2)
-        self.StartDateTimeStr = self.StartDateTime.strftime(self.DateTimeStringFormat)
-        self.StopDateTimeStr = self.StopDateTime.strftime(self.DateTimeStringFormat)
-        self.StartDateStr = self.StartDate.strftime(self.DateStringFormat)
-        self.StopDateStr = self.StopDate.strftime(self.DateStringFormat)
-        self.StartTimeStr = self.StartTime.strftime(self.TimeStringFormat)
-        self.StopTimeStr = self.StopTime.strftime(self.TimeStringFormat)
+    def set_date_times2(self, StartDate : str, StartTime : str, StopDate : str, StopTime : str):
+        # TODO : Asagisi Yapilacak
+        # date1 = StartDate.strip()
+        # time1 = StartTime.strip()
+        # date2 = StopDate.strip()
+        # time2 = StopTime.strip()
+        # dateTime1 = date1 + " " + time1
+        # dateTime2 = date2 + " " + time2
+        # suffixDate = "09:30:00"
+        # prefixTime = "01.01.1900"
+        #
+        # self.StartDateTimeStr = dateTime1
+        # self.StopDateTimeStr = dateTime2
+        # self.StartDateStr = date1
+        # self.StopDateStr = date2
+        # self.StartTimeStr = time1
+        # self.StopTimeStr = time2
+        #
+        # self.StartDateTime = self.TimeUtils.get_date_time(date1, time1)
+        # self.StopDateTime = self.TimeUtils.get_date_time(date2, time2)
+        # self.StartDate = self.TimeUtils.get_date_time(date1 + " " + suffixDate)
+        # self.StopDate = self.TimeUtils.get_date_time(date2 + " " + suffixDate)
+        # self.StartTime = self.TimeUtils.get_date_time(prefixTime + " " + time1)
+        # self.StopTime = self.TimeUtils.get_date_time(prefixTime + " " + time2)
         return self
 
-    def set_date_times_from_strings(self, StartDateTime, StopDateTime):
-        dateTime1 = StartDateTime.strip()
-        dateTime2 = StopDateTime.strip()
-        date1 = dateTime1[0:10]
-        time1 = dateTime1[11:]
-        date2 = dateTime2[0:10]
-        time2 = dateTime2[11:]
-        suffixDate = "09:30:00"
-        prefixTime = "01.01.1900"
-        self.StartDateTime = self.TimeUtils.get_date_time(dateTime1)
-        self.StopDateTime = self.TimeUtils.get_date_time(dateTime2)
-        self.StartDate = self.TimeUtils.get_date_time(date1 + " " + suffixDate)
-        self.StopDate = self.TimeUtils.get_date_time(date2 + " " + suffixDate)
-        self.StartTime = self.TimeUtils.get_date_time(prefixTime + " " + time1)
-        self.StopTime = self.TimeUtils.get_date_time(prefixTime + " " + time2)
-        self.StartDateTimeStr = self.StartDateTime.strftime(self.DateTimeStringFormat)
-        self.StopDateTimeStr = self.StopDateTime.strftime(self.DateTimeStringFormat)
-        self.StartDateStr = self.StartDate.strftime(self.DateStringFormat)
-        self.StopDateStr = self.StopDate.strftime(self.DateStringFormat)
-        self.StartTimeStr = self.StartTime.strftime(self.TimeStringFormat)
-        self.StopTimeStr = self.StopTime.strftime(self.TimeStringFormat)
+    def set_date_times_from_strings(self, StartDateTime : str, StopDateTime : str):
+        # TODO : Asagisi Yapilacak
+        # dateTime1 = StartDateTime.strip()
+        # dateTime2 = StopDateTime.strip()
+        # date1 = dateTime1[0:10]
+        # time1 = dateTime1[11:]
+        # date2 = dateTime2[0:10]
+        # time2 = dateTime2[11:]
+        # suffixDate = "09:30:00"
+        # prefixTime = "01.01.1900"
+        # self.StartDateTime = self.TimeUtils.get_date_time(dateTime1)
+        # self.StopDateTime = self.TimeUtils.get_date_time(dateTime2)
+        # self.StartDate = self.TimeUtils.get_date_time(date1 + " " + suffixDate)
+        # self.StopDate = self.TimeUtils.get_date_time(date2 + " " + suffixDate)
+        # self.StartTime = self.TimeUtils.get_date_time(prefixTime + " " + time1)
+        # self.StopTime = self.TimeUtils.get_date_time(prefixTime + " " + time2)
+        # self.StartDateTimeStr = self.StartDateTime.strftime(self.DateTimeStringFormat)
+        # self.StopDateTimeStr = self.StopDateTime.strftime(self.DateTimeStringFormat)
+        # self.StartDateStr = self.StartDate.strftime(self.DateStringFormat)
+        # self.StopDateStr = self.StopDate.strftime(self.DateStringFormat)
+        # self.StartTimeStr = self.StartTime.strftime(self.TimeStringFormat)
+        # self.StopTimeStr = self.StopTime.strftime(self.TimeStringFormat)
         return self
 
-    def set_date_time(self, StartDate, StartTime):
+    def set_date_time(self, StartDate : str, StartTime : str):
         StartDateTime = StartDate + " " + StartTime
         return self.set_date_time_from_string(StartDateTime)
 
-    def set_date_time_from_string(self, StartDateTime):
+    def set_date_time_from_string(self, StartDateTime : str):
         return self.set_date_times_from_strings(StartDateTime, datetime.datetime.now().strftime(self.DateTimeStringFormat))
 
     def islem_zaman_filtresi_uygula(self, BarIndex, FilterMode, IsTradeEnabled, IsPozKapatEnabled, CheckResult):

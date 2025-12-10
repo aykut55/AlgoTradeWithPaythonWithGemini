@@ -104,7 +104,7 @@ class AlgoTrader:
         Dates = ["01.01.1900", "01.01.2100"]
         Times = ["09:30:00", "11:59:00"]
 
-        trader.reset_date_times
+        trader.reset_date_times()
         trader.set_date_times(DateTimes[0], DateTimes[1])
 
         trader.Signals.KarAlEnabled = False
@@ -482,6 +482,83 @@ class AlgoTrader:
         print(f"Average Balance: {df['final_balance'].mean():.2f}")
         print(f"Results saved to: {output_dir}")
 
+    def write_optimization_results_to_file_3(self, output_dir, result):
+        """
+        Write single optimization result to file in tabular format.
+        First call creates file with header, subsequent calls append data rows.
+        Each iteration appends one row to the same file.
+        
+        Args:
+            output_dir: Directory to save the file
+            result: Single optimization result dictionary
+        """
+        import os
+
+        # Ensure output directory exists
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Define filename (same file for entire optimization run)
+        filename = os.path.join(output_dir, "optimization_results_tabular.txt")
+
+        # Check if file exists - if not, write header first
+        file_exists = os.path.exists(filename)
+
+        if not file_exists:
+            # First iteration - create file and write header
+            with open(filename, 'w', encoding='utf-8') as f:
+                headers = [
+                    "Period",
+                    "Percent",
+                    "FinalBalance",
+                    "TotalTrades",
+                    "ProfitTrades",
+                    "LossTrades",
+                    "WinRate%",
+                    "IslemSayisi",
+                    "AlisSayisi",
+                    "SatisSayisi",
+                    "NetKar",
+                    "Komisyon",
+                    "MaxKar",
+                    "MaxZarar",
+                    "MaxDD",
+                    "MaxDD%",
+                    "Sharpe",
+                    "Sortino"
+                ]
+                f.write("\t".join(headers) + "\n")
+                f.write("-" * 180 + "\n")
+
+        # Append data row (every iteration)
+        with open(filename, 'a', encoding='utf-8') as f:
+            values = [
+                f"{result['period']}",
+                f"{result['percent']:.1f}",
+                f"{result['final_balance']:.2f}",
+                f"{result['total_trades']}",
+                f"{result['profit_trades']}",
+                f"{result['loss_trades']}",
+                f"{result['win_rate']*100:.2f}",
+                f"{result.get('islem_sayisi', 0)}",
+                f"{result.get('alis_sayisi', 0)}",
+                f"{result.get('satis_sayisi', 0)}",
+                f"{result.get('net_kar', 0):.2f}",
+                f"{result.get('komisyon_fiyat', 0):.2f}",
+                f"{result.get('max_kar', 0):.2f}",
+                f"{result.get('max_zarar', 0):.2f}",
+                f"{result.get('max_dd', 0):.2f}",
+                f"{result.get('max_dd_percent', 0)*100:.2f}",
+                f"{result.get('sharpe_ratio', 0):.3f}",
+                f"{result.get('sortino_ratio', 0):.3f}"
+            ]
+            f.write("\t".join(values) + "\n")
+            f.flush()  # Force write to disk immediately
+
+
+
+        
+
+
     def print_current_result(self, result):
         """Print current optimization result with basic metrics"""
         print(f"  Result: Balance={result['final_balance']:.2f}, Trades={result['total_trades']}, Win Rate={result['win_rate']:.2%}")
@@ -495,30 +572,81 @@ class AlgoTrader:
         print(f"    Win Rate: {result['win_rate']:.2%}")
         
         # Print additional metrics if available
-        if 'islem_sayisi' in result:
-            print(f"    İslem Sayisi: {result.get('islem_sayisi', 'N/A')}, Alış Sayisi: {result.get('alis_sayisi', 'N/A')}")
-        if 'satis_sayisi' in result:
-            print(f"    Satış Sayisi: {result.get('satis_sayisi', 'N/A')}, Net Kar: {result.get('net_kar', 'N/A')}")
-        if 'toplam_komisyon' in result:
-            print(f"    Toplam Komisyon: {result.get('toplam_komisyon', 'N/A'):.2f}")
-        if 'max_dd' in result:
-            print(f"    Max DD: {result.get('max_dd', 'N/A'):.2f}, Max DD %: {result.get('max_dd_percent', 'N/A'):.2%}")
-        if 'sharpe_ratio' in result:
-            print(f"    Sharpe Ratio: {result.get('sharpe_ratio', 'N/A'):.3f}, Sortino Ratio: {result.get('sortino_ratio', 'N/A'):.3f}")
-        
+        print(f"    İslem Sayisi: {result.get('islem_sayisi', 'N/A')}, Alış Sayisi: {result.get('alis_sayisi', 'N/A')}")
+        print(f"    Satış Sayisi: {result.get('satis_sayisi', 'N/A')}, Net Kar: {result.get('net_kar', 'N/A')}")
+        print(f"    Toplam Komisyon: {result.get('komisyon_fiyat', 'N/A'):.2f}")
+        print(f"    Max Kar: {result.get('max_kar', 'N/A'):.2f}")
+        print(f"    Max Zarar: {result.get('max_zarar', 'N/A'):.2f}")
+        print(f"    Max DD: {result.get('max_dd', 'N/A'):.2f}, Max DD %: {result.get('max_dd_percent', 'N/A'):.2%}")
+        print(f"    Sharpe Ratio: {result.get('sharpe_ratio', 'N/A'):.3f}, Sortino Ratio: {result.get('sortino_ratio', 'N/A'):.3f}")
+                    
         # Print remaining metrics if they exist
         metrics_to_skip = {'period', 'percent', 'final_balance', 'total_trades', 'profit_trades', 'loss_trades', 
                           'win_rate', 'islem_sayisi', 'alis_sayisi', 'satis_sayisi', 'net_kar', 'toplam_komisyon',
-                          'max_dd', 'max_dd_percent', 'sharpe_ratio', 'sortino_ratio'}
+                          'max_kar', 'max_zarar', 'max_dd', 'max_dd_percent', 'sharpe_ratio', 'sortino_ratio'}
         
         other_metrics = {k: v for k, v in result.items() if k not in metrics_to_skip}
         if other_metrics:
-            print(f"    Other metrics: {other_metrics}")
+            # print(f"    Other metrics: {other_metrics}")
+            pass
+
+    def print_current_result_3(self, result):
+        """Print current optimization result in tabular format (DataFrame-like)"""
+
+        # Header'ı sadece bir kere yazdır (ilk koşumda)
+        if not hasattr(self, '_header_printed') or not self._header_printed:
+            # Header satırı
+            headers = [
+                "Period",
+                "Percent",
+                "FinalBalance",
+                "TotalTrades",
+                "ProfitTrades",
+                "LossTrades",
+                "WinRate%",
+                "IslemSayisi",
+                "AlisSayisi",
+                "SatisSayisi",
+                "NetKar",
+                "Komisyon",
+                "MaxKar",
+                "MaxZarar",
+                "MaxDD",
+                "MaxDD%",
+                "Sharpe",
+                "Sortino"
+            ]
+            print("\t".join(headers))
+            print("-" * 150)  # Ayırıcı çizgi
+            self._header_printed = True
+
+        # Data satırı (tek satırda, tab-separated)
+        values = [
+            f"{result['period']}",
+            f"{result['percent']:.1f}",
+            f"{result['final_balance']:.2f}",
+            f"{result['total_trades']}",
+            f"{result['profit_trades']}",
+            f"{result['loss_trades']}",
+            f"{result['win_rate'] * 100:.2f}",
+            f"{result.get('islem_sayisi', 0)}",
+            f"{result.get('alis_sayisi', 0)}",
+            f"{result.get('satis_sayisi', 0)}",
+            f"{result.get('net_kar', 0):.2f}",
+            f"{result.get('komisyon_fiyat', 0):.2f}",
+            f"{result.get('max_kar', 0):.2f}",
+            f"{result.get('max_zarar', 0):.2f}",
+            f"{result.get('max_dd', 0):.2f}",
+            f"{result.get('max_dd_percent', 0) * 100:.2f}",
+            f"{result.get('sharpe_ratio', 0):.3f}",
+            f"{result.get('sortino_ratio', 0):.3f}"
+        ]
+        print("\t".join(values))
 
     def loadMarketData(self):
 
-        filePath             = "C:\\data\\VIP-X030-T\\VIP'VIP-X030-T_1.csv"
         filePath             = "C:\\data\\csvFiles\\VIP\\01\\VIP-X030-T.csv"
+        filePath             = "C:\\data\\VIP-X030-T\\VIP'VIP-X030-T_1.csv"
         dirName              = os.path.dirname(filePath)
         fileName             = os.path.basename(filePath)
         name_no_ext, ext     = os.path.splitext(fileName)
@@ -2158,7 +2286,7 @@ class AlgoTrader:
             Dates = ["01.01.1900", "01.01.2100"]
             Times = ["09:30:00", "11:59:00"]
 
-            trader.reset_date_times
+            trader.reset_date_times()
             trader.set_date_times(DateTimes[0], DateTimes[1])
 
             trader.Signals.KarAlEnabled = False
@@ -2171,7 +2299,7 @@ class AlgoTrader:
             Dates = ["01.01.1900", "01.01.2100"]
             Times = ["09:30:00", "11:59:00"]
 
-            trader.reset_date_times
+            trader.reset_date_times()
             trader.set_date_times(DateTimes[0], DateTimes[1])
 
             trader.Signals.KarAlEnabled = False
@@ -2184,7 +2312,7 @@ class AlgoTrader:
             Dates = ["01.01.1900", "01.01.2100"]
             Times = ["09:30:00", "11:59:00"]
 
-            trader.reset_date_times
+            trader.reset_date_times()
             trader.set_date_times(DateTimes[0], DateTimes[1])
 
             trader.Signals.KarAlEnabled = False
@@ -2197,7 +2325,7 @@ class AlgoTrader:
             Dates = ["01.01.1900", "01.01.2100"]
             Times = ["09:30:00", "11:59:00"]
 
-            trader.reset_date_times
+            trader.reset_date_times()
             trader.set_date_times(DateTimes[0], DateTimes[1])
 
             trader.Signals.KarAlEnabled = False
@@ -2766,6 +2894,400 @@ class AlgoTrader:
         return 0 
 
     def run_optimization_with_single_trader(self):
+        # --------------------------------------------------------------  
+        print("\nLoading market data...")
+        self.loadMarketData()
+
+        # --------------------------------------------------------------
+        # Create level series
+        self.LevelUp4 = self.create_level_series(self.BarCount, 6000)
+        self.LevelUp3 = self.create_level_series(self.BarCount, 5750)
+        self.LevelUp2 = self.create_level_series(self.BarCount, 5500)
+        self.LevelUp1 = self.create_level_series(self.BarCount, 5250)
+
+        self.Level = self.create_level_series(self.BarCount, 5000)
+
+        self.LevelDown1 = self.create_level_series(self.BarCount, 4750)
+        self.LevelDown2 = self.create_level_series(self.BarCount, 4500)
+        self.LevelDown3 = self.create_level_series(self.BarCount, 4250)
+        self.LevelDown4 = self.create_level_series(self.BarCount, 4000)
+
+        self.LevelZero = self.create_level_series(self.BarCount, 0)
+
+        # --------------------------------------------------------------
+        self.mySystem.create_modules().initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
+
+        # --------------------------------------------------------------      
+        self.mySystem.GrafikSembol = self.dataManager.reader.get_metadata('GrafikSembol')
+        self.mySystem.GrafikPeriyot = self.dataManager.reader.get_metadata('GrafikPeriyot')
+        self.mySystem.SistemAdi = "my_sistem_01"
+    
+        # --------------------------------------------------------------    
+        self.mySystem.reset()
+        self.mySystem.initialize_params_with_defaults()
+
+        # --------------------------------------------------------------
+        self.indicatorManager = self.mySystem.myIndicators
+        self.indicatorManager.reset()        
+        self.indicatorManager.initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
+
+        # --------------------------------------------------------------
+        # enable for single run
+        self.mySystem.set_params_for_single_run()
+        self.mySystem.clear_input_params()
+        self.mySystem.set_input_params(0, "Simple")
+        self.mySystem.set_input_params(1, "8")
+        self.mySystem.set_input_params(2, "13")
+        self.mySystem.set_input_params(3, "21")
+        self.mySystem.set_input_params(4, "50")
+        self.mySystem.set_input_params(5, "100")
+        self.mySystem.set_input_params(5, "200")
+
+        # enable for optimization
+        self.mySystem.set_params_for_optimizasyon()
+        self.mySystem.clear_input_params()
+        self.mySystem.set_input_params(0, "Simple")
+        self.mySystem.set_input_params(1, "8")
+        self.mySystem.set_input_params(2, "13")
+        self.mySystem.set_input_params(3, "21")
+        self.mySystem.set_input_params(4, "50")
+        self.mySystem.set_input_params(5, "100")
+        self.mySystem.set_input_params(5, "200")        
+
+        # --------------------------------------------------------------
+        self.Most, self.ExMov = self.indicatorManager.calculate_most(period=21, percent=0.5)
+
+        # --------------------------------------------------------------
+        parameter_scanning_method = 0
+        if parameter_scanning_method == 0:
+            period_start = 8
+            period_end = 50
+            period_increment = 1
+            
+            percent_start = 0.5
+            percent_end = 2.5
+            percent_increment = 0.5
+
+            # Generate period values using range
+            period_values = list(range(period_start, period_end + 1, period_increment))
+            
+            # Generate percent values using increment
+            percent_values = []
+            current_percent = percent_start
+            while current_percent <= percent_end:
+                percent_values.append(round(current_percent, 1))  # Round to avoid floating point issues
+                current_percent += percent_increment
+
+        elif parameter_scanning_method == 1:
+            period_values = [8, 13, 21, 34, 50]         # Different period values to test
+            percent_values = [0.5, 1.0, 1.5, 2.0, 2.5]  # Different percent values to test
+        else :          
+            pass
+
+        print(f"Period values to test: {period_values}")
+        print(f"Percent values to test: {percent_values}")
+        total_combinations = len(period_values) * len(percent_values)
+        print(f"Total combinations: {total_combinations}")
+        print("=" * 50)        
+
+        # --------------------------------------------------------------
+        best_result = None
+        best_period = None
+        best_percent = None
+        optimization_results = []
+
+        skip_iteration_enabled = True   # if resume, this flag must be set
+        skip_iteration = 200            # up to this iteration, the execution will be skipped
+
+        # --------------------------------------------------------------
+        current_iteration = 0
+        for period in period_values:
+            for percent in percent_values:
+                current_iteration += 1
+                progress_percent = (current_iteration / total_combinations) * 100
+                if skip_iteration_enabled:
+                    if current_iteration < skip_iteration:
+                        continue
+
+                print(f"[{current_iteration}/{total_combinations}] "
+                    f"({progress_percent:6.2f}%) "
+                    f"Testing  period={period:<3} percent={percent:<10}")
+                
+                # Run trading simulation for this parameter combination
+                result = self.run_single_optimization_internal(period, percent)
+                optimization_results.append(result)
+                
+                # Print current result
+                # self.print_current_result(result)
+                self.print_current_result_3(result)                
+                self.write_optimization_results_to_file_3(self.mySystem.OutputsDir, optimization_results)
+                
+                # Track best result (example: highest final balance)
+                if best_result is None or result['final_balance'] > best_result['final_balance']:
+                    best_result = result
+                    best_period = period
+                    best_percent = percent
+
+
+        # --------------------------------------------------------------
+        print(f"\nOptimization completed!")
+        print(f"Best parameters: period={best_period}, percent={best_percent}")
+        print(f"Best result: {best_result}")
+
+        # Write optimization results to file
+        # self.write_optimization_results_to_file(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
+        #self.write_optimization_results_to_file_4(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
+
+        # # Use best parameters for final run and plotting
+        # # self.Most, self.ExMov = self.calculate_most(period=best_period, percent=best_percent)
+        # self.Most, self.ExMov = self.indicatorManager.calculate_most(period=best_period, percent=best_percent)        
+
+
+
+        """         
+        # --------------------------------------------------------------
+        print("\nInitializing strategy params...")        
+        for i in range(self.mySystem.get_trader_count()):
+            trader = self.mySystem.get_trader(i)
+            self.initialize_strategy(i, trader)
+
+        # --------------------------------------------------------------
+        print("\nRunning strategy...")                
+        self.mySystem.start()
+        for i in range(self.BarCount):
+            for j in range(self.mySystem.get_trader_count()):
+                trader = self.mySystem.get_trader(j)
+                self.run_strategy(i, trader)
+        self.mySystem.stop()
+
+        # --------------------------------------------------------------
+        print("\nGetting strategy results...")             
+        for i in range(self.mySystem.get_trader_count()):
+            trader = self.mySystem.get_trader(i)
+            self.finalize_strategy(i, trader)
+
+        # --------------------------------------------------------------
+        for i in range(self.mySystem.get_trader_count()):
+            # --------------------------------------------------------------
+            self.active_trader = self.mySystem.get_trader(i)
+            # --------------------------------------------------------------
+            print(f"\nTrader {self.active_trader.Id}...")
+            # --------------------------------------------------------------
+            print("\tGetting trade signals...")
+            self.create_trade_signals(self.active_trader)
+            # --------------------------------------------------------------
+            print("\tUpdating dataFrame...")
+            self.update_data_frame(self.active_trader)
+            # --------------------------------------------------------------
+            print("\tSaving data to files...")
+            dstDir = "."
+            # self.SavePlotData(self.active_trader, dstDir)
+            # --------------------------------------------------------------
+            print("\tPlotting market data...")
+            self.plotDataImgBundle(self.active_trader)
+
+        # --------------------------------------------------------------
+        # Show timing reports
+        self.dataManager.reportTimes()
+        self.mySystem.reportTimes() 
+        """
+        return 0 
+
+    def run_single_optimization_internal(self, period, percent):
+
+        # --------------------------------------------------------------
+        self.Most, self.ExMov = self.indicatorManager.calculate_most(period, percent)
+
+        # --------------------------------------------------------------
+        print("\nInitializing strategy params...")        
+        for i in range(self.mySystem.get_trader_count()):
+            trader = self.mySystem.get_trader(i)
+            self.initialize_strategy(i, trader)
+
+        # --------------------------------------------------------------
+        print("\nRunning strategy...")                
+        self.mySystem.start()
+        for i in range(self.BarCount):
+            for j in range(self.mySystem.get_trader_count()):
+                trader = self.mySystem.get_trader(j)
+                self.run_strategy(i, trader)
+        self.mySystem.stop()
+
+        # --------------------------------------------------------------
+        print("\nGetting strategy results...")             
+        for i in range(self.mySystem.get_trader_count()):
+            trader = self.mySystem.get_trader(i)
+            self.finalize_strategy(i, trader)
+
+        # --------------------------------------------------------------
+        for i in range(self.mySystem.get_trader_count()):
+            # --------------------------------------------------------------
+            self.active_trader = self.mySystem.get_trader(i)
+            # --------------------------------------------------------------
+            print(f"\nTrader {self.active_trader.Id}...")
+            # --------------------------------------------------------------
+            print("\tGetting trade signals...")
+            self.create_trade_signals(self.active_trader)
+            # --------------------------------------------------------------
+            print("\tUpdating dataFrame...")
+            # self.update_data_frame(self.active_trader)
+            # --------------------------------------------------------------
+            print("\tSaving data to files...")
+            dstDir = "."
+            # self.SavePlotData(self.active_trader, dstDir)
+            # --------------------------------------------------------------
+            print("\tPlotting market data...")
+            # self.plotDataImgBundle(self.active_trader)
+
+        # --------------------------------------------------------------
+        trader = self.mySystem.get_trader(0)
+
+        # --------------------------------------------------------------
+        # Extract key metrics
+        final_balance = trader.Lists.BakiyeFiyatList[-1] if len(trader.Lists.BakiyeFiyatList) > 0 else 0
+        total_trades = len([x for x in trader.Lists.YonList if x != 'F'])
+        profit_trades = len([x for x in trader.Lists.KarZararFiyatList if x > 0])
+        loss_trades = len([x for x in trader.Lists.KarZararFiyatList if x < 0])
+        win_rate = (profit_trades / total_trades) if total_trades > 0 else 0
+        
+        # Extract additional metrics
+        islem_sayisi = trader.Lists.IslemSayisiList[-1] if len(trader.Lists.IslemSayisiList) > 0 else 0
+        alis_sayisi = trader.Lists.AlisSayisiList[-1] if len(trader.Lists.AlisSayisiList) > 0 else 0
+        satis_sayisi = trader.Lists.SatisSayisiList[-1] if len(trader.Lists.SatisSayisiList) > 0 else 0
+        flat_sayisi = trader.Lists.FlatSayisiList[-1] if len(trader.Lists.FlatSayisiList) > 0 else 0
+        pass_sayisi = trader.Lists.PassSayisiList[-1] if len(trader.Lists.PassSayisiList) > 0 else 0
+        
+        komisyon_islem_sayisi = trader.Lists.KomisyonIslemSayisiList[-1] if len(trader.Lists.KomisyonIslemSayisiList) > 0 else 0
+        komisyon_fiyat = trader.Lists.KomisyonFiyatList[-1] if len(trader.Lists.KomisyonFiyatList) > 0 else 0
+        
+        getiri_fiyat = trader.Lists.GetiriFiyatList[-1] if len(trader.Lists.GetiriFiyatList) > 0 else 0
+        getiri_fiyat_yuzde = trader.Lists.GetiriFiyatYuzdeList[-1] if len(trader.Lists.GetiriFiyatYuzdeList) > 0 else 0
+        
+        bakiye_fiyat_net = trader.Lists.BakiyeFiyatNetList[-1] if len(trader.Lists.BakiyeFiyatNetList) > 0 else 0
+        getiri_fiyat_net = trader.Lists.GetiriFiyatNetList[-1] if len(trader.Lists.GetiriFiyatNetList) > 0 else 0
+        getiri_fiyat_yuzde_net = trader.Lists.GetiriFiyatYuzdeNetList[-1] if len(trader.Lists.GetiriFiyatYuzdeNetList) > 0 else 0
+        
+        getiri_kz = trader.Lists.GetiriKz[-1] if len(trader.Lists.GetiriKz) > 0 else 0
+        getiri_kz_net = trader.Lists.GetiriKzNet[-1] if len(trader.Lists.GetiriKzNet) > 0 else 0
+
+        if len(trader.Lists.KarZararFiyatList) > 0:
+            max_kar = max(trader.Lists.KarZararFiyatList)  # En yüksek kar (pozitif değer)
+            max_zarar = min(trader.Lists.KarZararFiyatList)  # En büyük zarar (negatif değer)
+        else:
+            max_kar = 0.0
+            max_zarar = 0.0
+
+        metrics = self.calculate_performance_metrics(trader)
+        max_dd = metrics['max_dd']
+        max_dd_percent = metrics['max_dd_percent']
+        sharpe_ratio = metrics['sharpe_ratio']
+        sortino_ratio = metrics['sortino_ratio']
+
+        return {
+            'period': period,
+            'percent': percent,
+            'final_balance': final_balance,
+            'total_trades': total_trades,
+            'profit_trades': profit_trades,
+            'loss_trades': loss_trades,
+            'win_rate': win_rate,
+
+            'islem_sayisi': islem_sayisi,
+            'alis_sayisi': alis_sayisi,
+            'satis_sayisi': satis_sayisi,
+            'flat_sayisi': flat_sayisi,
+            'pass_sayisi': pass_sayisi,
+
+            'komisyon_islem_sayisi': komisyon_islem_sayisi,
+            'komisyon_fiyat': komisyon_fiyat,
+
+            'getiri_fiyat': getiri_fiyat,
+            'getiri_fiyat_yuzde': getiri_fiyat_yuzde,
+
+            'bakiye_fiyat_net': bakiye_fiyat_net,
+            'getiri_fiyat_net': getiri_fiyat_net,
+            'getiri_fiyat_yuzde_net': getiri_fiyat_yuzde_net,
+
+            'getiri_kz': getiri_kz,
+            'getiri_kz_net': getiri_kz_net,
+
+            "max_kar" : max_kar,
+            "max_zarar": max_zarar,
+
+            "max_dd": max_dd,
+            "max_dd_percent" : max_dd_percent,
+            "sharpe_ratio" : sharpe_ratio,
+            "sortino_ratio" : sortino_ratio
+        }
+
+    def calculate_performance_metrics(self, trader):
+        """Trader'dan performans metriklerini hesapla"""
+
+        # Bakiye listesinden Max DD hesapla
+        bakiye_list = trader.Lists.BakiyeFiyatList
+        max_dd, max_dd_percent = self.calculate_max_drawdown(bakiye_list)
+
+        # Getiri yüzdeleri hesapla (her bar için)
+        getiri_yuzde_list = []
+        for i in range(1, len(bakiye_list)):
+            if bakiye_list[i - 1] != 0:
+                getiri = (bakiye_list[i] - bakiye_list[i - 1]) / bakiye_list[i - 1] * 100
+                getiri_yuzde_list.append(getiri)
+
+        # Sharpe ve Sortino hesapla
+        sharpe = self.calculate_sharpe_ratio(getiri_yuzde_list)
+        sortino = self.calculate_sortino_ratio(getiri_yuzde_list)
+
+        return {
+            'max_dd': max_dd,
+            'max_dd_percent': max_dd_percent,
+            'sharpe_ratio': sharpe,
+            'sortino_ratio': sortino
+        }
+
+    def calculate_max_drawdown(self, bakiye_list):
+        max_dd = 0.0
+        max_dd_percent = 0.0
+        peak = bakiye_list[0] if len(bakiye_list) > 0 else 0
+
+        for bakiye in bakiye_list:
+            if bakiye > peak:
+                peak = bakiye
+            drawdown = peak - bakiye
+            if drawdown > max_dd:
+                max_dd = drawdown
+                max_dd_percent = (drawdown / peak * 100) if peak != 0 else 0.0
+
+        return max_dd, max_dd_percent
+
+    def calculate_sharpe_ratio(self, getiri_list, risk_free_rate=0.0):
+        if len(getiri_list) == 0:
+            return 0.0
+        getiri_array = np.array(getiri_list)
+        mean_return = np.mean(getiri_array)
+        std_return = np.std(getiri_array, ddof=1)
+        if std_return == 0:
+            return 0.0
+        return (mean_return - risk_free_rate) / std_return
+
+    def calculate_sortino_ratio(self, getiri_list, target_return=0.0):
+        if len(getiri_list) == 0:
+            return 0.0
+        getiri_array = np.array(getiri_list)
+        mean_return = np.mean(getiri_array)
+        downside_returns = getiri_array[getiri_array < target_return]
+        if len(downside_returns) == 0:
+            return float('inf')
+        downside_std = np.std(downside_returns, ddof=1)
+        if downside_std == 0:
+            return 0.0
+        return (mean_return - target_return) / downside_std
+
+
+
+
+
+    def run_optimization_with_single_trader_ESKISI(self):
         # --------------------------------------------------------------
         # Read market data (equivalent to .GrafikVerileri operations)
         print("Loading market data...")
@@ -2884,7 +3406,7 @@ class AlgoTrader:
                 
                 # Print current result
                 # self.print_current_result(result)
-                self.print_current_result_2(result)
+                self.print_current_result_3(result)
                 
                 # Track best result (example: highest final balance)
                 if best_result is None or result['final_balance'] > best_result['final_balance']:
