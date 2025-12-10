@@ -93,6 +93,46 @@ class CTrader(CBase):
         return self
 
     def reset(self):
+
+        self.BakiyeInitialized = False
+        self.ExecutionStepNumber = 0
+        self.LastResetTime = None
+        self.LastExecutionTime = None
+        self.LastExecutionTimeStart = None
+        self.LastExecutionTimeStop = None
+        self.LastStatisticsCalculationTime = None
+        self.TimeUtils = CTimeUtils()
+        self.ExecutionTimeInMSec = 0
+        self.DateTimeStringFormat = "%d.%m.%Y %H:%M:%S"
+        self.DateStringFormat = "%d.%m.%Y"
+        self.TimeStringFormat = "%H:%M:%S"
+        self.StartDateTime = None
+        self.StopDateTime = None
+        self.StartDate = None
+        self.StopDate = None
+        self.StartTime = None
+        self.StopTime = None
+        self.StartDateTimeStr = None
+        self.StopDateTimeStr = None
+        self.StartDateStr = None
+        self.StopDateStr = None
+        self.StartTimeStr = None
+        self.StopTimeStr = None
+        self.EnableDateTime = None
+        self.DisableDateTime = None
+        self.EnableDate = None
+        self.DisableDate = None
+        self.EnableTime = None
+        self.DisableTime = None
+        self.EnableDateTimeStr = None
+        self.DisableDateTimeStr = None
+        self.EnableDateStr = None
+        self.DisableDateStr = None
+        self.EnableTimeStr = None
+        self.DisableTimeStr = None
+
+        self._df: pd.DataFrame | None = None
+
         self.Signals.reset()
         self.Status.reset()
         self.Flags.reset()

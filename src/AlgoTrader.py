@@ -2496,6 +2496,25 @@ class AlgoTrader:
                                            self.mySystem.IstatistiklerOutputFileName,
                                             self.mySystem.IstatistiklerOptOutputFileName)
 
+    def reset_trader_for_new_iteration_during_optimization(self, trader: 'AlgoTrader'):
+
+        trader.reset()
+        trader.Signals.KarAlEnabled = False
+        trader.Signals.ZararKesEnabled = False
+        trader.Signals.KarAlindi = False
+        trader.Signals.ZararKesildi = False
+        trader.Signals.FlatOlundu = False
+        trader.Signals.PozAcilabilir = False
+        trader.Signals.PozAcildi = False
+        trader.Signals.PozKapatilabilir = False
+        trader.Signals.PozKapatildi = False
+        trader.Signals.PozAcilabilirAlis = False
+        trader.Signals.PozAcilabilirSatis = False
+        trader.Signals.PozAcildiAlis = False
+        trader.Signals.PozAcildiSatis = False
+        trader.Signals.GunSonuPozKapatEnabled = False
+        trader.Signals.GunSonuPozKapatildi = False
+        trader.Signals.TimeFilteringEnabled = False
 
     def initialize_strategy(self,  i: int, trader: 'AlgoTrader'):
 
@@ -3323,7 +3342,6 @@ class AlgoTrader:
         return 0 
 
     def run_single_optimization_internal(self, current_iteration, period, percent):
-
         # --------------------------------------------------------------
         self.Most, self.ExMov = self.indicatorManager.calculate_most(period, percent)
 
@@ -3331,6 +3349,7 @@ class AlgoTrader:
         print("\nInitializing strategy params...")        
         for i in range(self.mySystem.get_trader_count()):
             trader = self.mySystem.get_trader(i)
+            self.reset_trader_for_new_iteration_during_optimization(trader)
             self.initialize_strategy(i, trader)
 
         # --------------------------------------------------------------
@@ -3373,6 +3392,7 @@ class AlgoTrader:
 
         # --------------------------------------------------------------
         # Extract key metrics
+        initial_balance = trader.Lists.BakiyeFiyatList[0] if len(trader.Lists.BakiyeFiyatList) > 0 else 0
         final_balance = trader.Lists.BakiyeFiyatList[-1] if len(trader.Lists.BakiyeFiyatList) > 0 else 0
         total_trades = len([x for x in trader.Lists.YonList if x != 'F'])
         profit_trades = len([x for x in trader.Lists.KarZararFiyatList if x > 0])
@@ -3412,38 +3432,42 @@ class AlgoTrader:
         sharpe_ratio = metrics['sharpe_ratio']
         sortino_ratio = metrics['sortino_ratio']
 
+        final_balance = getiri_fiyat_net
+
         return {
             'current_iteration': current_iteration,
+            # -----------------------------------------------
             'period': period,
             'percent': percent,
+            # -----------------------------------------------
+            "initial_balance": initial_balance,
             'final_balance': final_balance,
+            'getiri_fiyat': getiri_fiyat,
+            'komisyon_fiyat': komisyon_fiyat,
+            'getiri_fiyat_net': getiri_fiyat_net,
+            # -----------------------------------------------
             'total_trades': total_trades,
             'profit_trades': profit_trades,
             'loss_trades': loss_trades,
             'win_rate': win_rate,
-
+            # -----------------------------------------------
             'islem_sayisi': islem_sayisi,
             'alis_sayisi': alis_sayisi,
             'satis_sayisi': satis_sayisi,
             'flat_sayisi': flat_sayisi,
             'pass_sayisi': pass_sayisi,
-
             'komisyon_islem_sayisi': komisyon_islem_sayisi,
-            'komisyon_fiyat': komisyon_fiyat,
-
-            'getiri_fiyat': getiri_fiyat,
-            'getiri_fiyat_yuzde': getiri_fiyat_yuzde,
-
+            # -----------------------------------------------
             'bakiye_fiyat_net': bakiye_fiyat_net,
-            'getiri_fiyat_net': getiri_fiyat_net,
+            'getiri_fiyat_yuzde': getiri_fiyat_yuzde,
             'getiri_fiyat_yuzde_net': getiri_fiyat_yuzde_net,
 
             'getiri_kz': getiri_kz,
             'getiri_kz_net': getiri_kz_net,
-
+            # -----------------------------------------------
             "max_kar" : max_kar,
             "max_zarar": max_zarar,
-
+            # -----------------------------------------------
             "max_dd": max_dd,
             "max_dd_percent" : max_dd_percent,
             "sharpe_ratio" : sharpe_ratio,
