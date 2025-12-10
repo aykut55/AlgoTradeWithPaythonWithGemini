@@ -482,81 +482,301 @@ class AlgoTrader:
         print(f"Average Balance: {df['final_balance'].mean():.2f}")
         print(f"Results saved to: {output_dir}")
 
-    def write_optimization_results_to_file_3(self, output_dir, result):
+    def write_optimization_results_to_file_3(self, output_dir, df : 'DataFrame'):
         """
         Write single optimization result to file in tabular format.
         First call creates file with header, subsequent calls append data rows.
-        Each iteration appends one row to the same file.
-        
+        Each iteration appends one row to the same file with fixed column widths.
+
         Args:
             output_dir: Directory to save the file
-            result: Single optimization result dictionary
+            df: DataFrame containing optimization results
         """
+        if df.empty:
+            return
+
         import os
+        import json
 
         # Ensure output directory exists
         os.makedirs(output_dir, exist_ok=True)
 
         # Define filename (same file for entire optimization run)
         filename = os.path.join(output_dir, "optimization_results_tabular.txt")
+        widths_filename = os.path.join(output_dir, ".column_widths.json")
 
         # Check if file exists - if not, write header first
         file_exists = os.path.exists(filename)
 
-        if not file_exists:
-            # First iteration - create file and write header
-            with open(filename, 'w', encoding='utf-8') as f:
-                headers = [
-                    "Period",
-                    "Percent",
-                    "FinalBalance",
-                    "TotalTrades",
-                    "ProfitTrades",
-                    "LossTrades",
-                    "WinRate%",
-                    "IslemSayisi",
-                    "AlisSayisi",
-                    "SatisSayisi",
-                    "NetKar",
-                    "Komisyon",
-                    "MaxKar",
-                    "MaxZarar",
-                    "MaxDD",
-                    "MaxDD%",
-                    "Sharpe",
-                    "Sortino"
-                ]
-                f.write("\t".join(headers) + "\n")
-                f.write("-" * 180 + "\n")
+        # Helper function to format values based on column name and type
+        def format_value(col, val):
+            """Format a value based on column name and type"""
+            if isinstance(val, float):
+                if 'percent' in col.lower() or 'rate' in col.lower() or 'yuzde' in col.lower():
+                    # Values are already in percent format (e.g., 2.5 = 2.5%), no need to multiply by 100
+                    return f"{val:.2f}"
+                elif 'ratio' in col.lower():
+                    return f"{val:.3f}"
+                else:
+                    return f"{val:.2f}"
+            elif isinstance(val, int):
+                return f"{val}"
+            else:
+                return f"{val}"
 
-        # Append data row (every iteration)
+        # Get headers from DataFrame columns (convert snake_case to PascalCase)
+        headers = []
+        for col in df.columns:
+            # Convert snake_case to PascalCase
+            header = ''.join(word.capitalize() for word in col.split('_'))
+            # Special cases for display
+            if header == 'WinRate':
+                header = 'WinRate%'
+            elif header == 'MaxDdPercent':
+                header = 'MaxDD%'
+            elif header == 'GetiriFiyatYuzde':
+                header = 'GetiriFiyatYuzde%'
+            elif header == 'GetiriFiyatYuzdeNet':
+                header = 'GetiriFiyatYuzdeNet%'
+            headers.append(header)
+
+        # Load or calculate column widths
+        if not file_exists:
+            # First iteration - calculate column widths based on header + estimated max value length
+            column_widths = []
+            for i, col in enumerate(df.columns):
+                # Start with header length
+                max_width = len(headers[i])
+
+                # Estimate max data width based on column type
+                # For safety, use generous estimates
+                if 'iteration' in col.lower():
+                    estimated_width = 8  # e.g., "10000"
+                elif 'period' in col.lower():
+                    estimated_width = 6  # e.g., "100"
+                elif 'percent' in col.lower() or 'rate' in col.lower() or 'yuzde' in col.lower():
+                    estimated_width = 8  # e.g., "100.00"
+                elif 'ratio' in col.lower():
+                    estimated_width = 8  # e.g., "10.000"
+                elif isinstance(df.iloc[-1][col], float):
+                    estimated_width = 12  # e.g., "100000.00"
+                elif isinstance(df.iloc[-1][col], int):
+                    estimated_width = 10  # e.g., "100000"
+                else:
+                    estimated_width = 15  # text columns
+
+                max_width = max(max_width, estimated_width)
+
+                # Add padding (3 spaces minimum)
+                column_widths.append(max_width + 10)
+
+            # Save column widths to file for consistency
+            with open(widths_filename, 'w') as f:
+                json.dump(column_widths, f)
+
+            # Write header
+            with open(filename, 'w', encoding='utf-8') as f:
+                # Write headers with calculated widths (left-aligned)
+                header_line = ""
+                for i, header in enumerate(headers):
+                    header_line += header.ljust(column_widths[i])
+                f.write(header_line.rstrip() + "\n")
+
+                # Write separator line
+                separator = ""
+                for width in column_widths:
+                    separator += "-" * width
+                f.write(separator.rstrip() + "\n")
+        else:
+            # Load column widths from file for consistency
+            try:
+                with open(widths_filename, 'r') as f:
+                    column_widths = json.load(f)
+            except:
+                # Fallback: recalculate if widths file is missing
+                column_widths = [max(len(headers[i]), 15) + 3 for i in range(len(headers))]
+
+        # Append last row of DataFrame (every iteration)
+        last_row = df.iloc[-1]
         with open(filename, 'a', encoding='utf-8') as f:
-            values = [
-                f"{result['period']}",
-                f"{result['percent']:.1f}",
-                f"{result['final_balance']:.2f}",
-                f"{result['total_trades']}",
-                f"{result['profit_trades']}",
-                f"{result['loss_trades']}",
-                f"{result['win_rate']*100:.2f}",
-                f"{result.get('islem_sayisi', 0)}",
-                f"{result.get('alis_sayisi', 0)}",
-                f"{result.get('satis_sayisi', 0)}",
-                f"{result.get('net_kar', 0):.2f}",
-                f"{result.get('komisyon_fiyat', 0):.2f}",
-                f"{result.get('max_kar', 0):.2f}",
-                f"{result.get('max_zarar', 0):.2f}",
-                f"{result.get('max_dd', 0):.2f}",
-                f"{result.get('max_dd_percent', 0)*100:.2f}",
-                f"{result.get('sharpe_ratio', 0):.3f}",
-                f"{result.get('sortino_ratio', 0):.3f}"
-            ]
-            f.write("\t".join(values) + "\n")
+            data_line = ""
+            for i, col in enumerate(df.columns):
+                val = last_row[col]
+                formatted_val = format_value(col, val)
+                # Right-align numbers, left-align text for better readability
+                if isinstance(val, (int, float)):
+                    data_line += formatted_val.ljust(column_widths[i])
+                else:
+                    data_line += formatted_val.rjust(column_widths[i])
+
+            f.write(data_line.rstrip() + "\n")
             f.flush()  # Force write to disk immediately
 
+    def write_optimization_results_to_file_4(self, output_dir, df : 'DataFrame', best_result, best_period, best_percent):
+        """
+        Write complete optimization results to files using DataFrame.
+        Creates CSV and detailed text report with all metrics in tabular format.
+
+        Args:
+            output_dir: Directory to save the files
+            df: DataFrame containing all optimization results
+            best_result: Dictionary with best result metrics
+            best_period: Best period parameter
+            best_percent: Best percent parameter
+        """
+        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # Ensure output directory exists
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Sort by final_balance descending to show best results first
+        df = df.sort_values('final_balance', ascending=False)
+
+        # Add ranking column
+        df['rank'] = range(1, len(df) + 1)
+
+        # Write to CSV
+        csv_filename = os.path.join(output_dir, f"optimization_results_detailed_{current_time}.csv")
+        df.to_csv(csv_filename, index=False)
+        print(f"Detailed optimization results saved to: {csv_filename}")
+
+        # TODO 1: DONE - Write comprehensive text report with statistics
+        # TODO 2: DONE - Write DETAILED OPTIMIZATION REPORT from df
+        txt_filename = os.path.join(output_dir, f"optimization_report_detailed_{current_time}.txt")
+        with open(txt_filename, 'w', encoding='utf-8') as f:
+            f.write("=== DETAILED OPTIMIZATION REPORT (All Metrics) ===\n")
+            f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+
+            f.write("=== BEST RESULT (All Metrics) ===\n")
+            for key, value in best_result.items():
+                if isinstance(value, float):
+                    if 'percent' in key.lower() or 'rate' in key.lower() or 'yuzde' in key.lower():
+                        # Values are already in percent format, no need to multiply by 100
+                        f.write(f"{key}: {value:.2f}%\n")
+                    elif 'ratio' in key.lower():
+                        f.write(f"{key}: {value:.3f}\n")
+                    else:
+                        f.write(f"{key}: {value:.2f}\n")
+                else:
+                    f.write(f"{key}: {value}\n")
+            f.write("\n")
+
+            # TODO 1: DONE - Write statistics from df
+            f.write(f"=== STATISTICS ===\n")
+            f.write(f"Total tests run: {len(df)}\n")
+            f.write(f"Best balance: {df['final_balance'].max():.2f}\n")
+            f.write(f"Worst balance: {df['final_balance'].min():.2f}\n")
+            f.write(f"Average balance: {df['final_balance'].mean():.2f}\n")
+            f.write(f"Standard deviation: {df['final_balance'].std():.2f}\n")
+            f.write("\n")
+
+            # TODO 3: DONE - Write all data rows in tabular format
+            # Using similar approach from write_optimization_results_to_file_3()
+            f.write(f"=== ALL RESULTS (Tabular Format) ===\n")
+
+            # Helper function to format values based on column name and type
+            def format_value(col, val):
+                """Format a value based on column name and type"""
+                if isinstance(val, float):
+                    if 'percent' in col.lower() or 'rate' in col.lower() or 'yuzde' in col.lower():
+                        # Values are already in percent format (e.g., 2.5 = 2.5%)
+                        return f"{val:.2f}"
+                    elif 'ratio' in col.lower():
+                        return f"{val:.3f}"
+                    else:
+                        return f"{val:.2f}"
+                elif isinstance(val, int):
+                    return f"{val}"
+                else:
+                    return f"{val}"
+
+            # Get headers from DataFrame columns (convert snake_case to PascalCase)
+            headers = []
+            for col in df.columns:
+                # Convert snake_case to PascalCase
+                header = ''.join(word.capitalize() for word in col.split('_'))
+                # Special cases for display
+                if header == 'WinRate':
+                    header = 'WinRate%'
+                elif header == 'MaxDdPercent':
+                    header = 'MaxDD%'
+                elif header == 'GetiriFiyatYuzde':
+                    header = 'GetiriFiyatYuzde%'
+                elif header == 'GetiriFiyatYuzdeNet':
+                    header = 'GetiriFiyatYuzdeNet%'
+                headers.append(header)
+
+            # Calculate column widths based on header + estimated max value length
+            column_widths = []
+            for i, col in enumerate(df.columns):
+                # Start with header length
+                max_width = len(headers[i])
+
+                # Estimate max data width based on column type
+                if 'iteration' in col.lower():
+                    estimated_width = 8  # e.g., "10000"
+                elif 'period' in col.lower():
+                    estimated_width = 6  # e.g., "100"
+                elif 'percent' in col.lower() or 'rate' in col.lower() or 'yuzde' in col.lower():
+                    estimated_width = 8  # e.g., "100.00"
+                elif 'ratio' in col.lower():
+                    estimated_width = 8  # e.g., "10.000"
+                elif 'rank' in col.lower():
+                    estimated_width = 6  # e.g., "1000"
+                elif col in df.columns and df[col].dtype in ['float64', 'float32']:
+                    estimated_width = 12  # e.g., "100000.00"
+                elif col in df.columns and df[col].dtype in ['int64', 'int32']:
+                    estimated_width = 10  # e.g., "100000"
+                else:
+                    estimated_width = 15  # text columns
+
+                max_width = max(max_width, estimated_width)
+
+                # Add padding (3 spaces minimum)
+                column_widths.append(max_width + 3)
+
+            # Write headers with calculated widths (left-aligned)
+            header_line = ""
+            for i, header in enumerate(headers):
+                header_line += header.ljust(column_widths[i])
+            f.write(header_line.rstrip() + "\n")
+
+            # Write separator line
+            separator = ""
+            for width in column_widths:
+                separator += "-" * width
+            f.write(separator.rstrip() + "\n")
+
+            # Write all data rows
+            for idx, row in df.iterrows():
+                data_line = ""
+                for i, col in enumerate(df.columns):
+                    val = row[col]
+                    formatted_val = format_value(col, val)
+                    # Right-align numbers, left-align text for better readability
+                    if isinstance(val, (int, float)):
+                        data_line += formatted_val.ljust(column_widths[i])
+                    else:
+                        data_line += formatted_val.rjust(column_widths[i])
+
+                f.write(data_line.rstrip() + "\n")
+
+        print(f"Detailed optimization report saved to: {txt_filename}")
+
+        # TODO 4: DONE - Print summary to console using df
+        print(f"\n=== DETAILED OPTIMIZATION SUMMARY ===")
+        print(f"Best Period: {best_period}")
+        print(f"Best Percent: {best_percent}")
+        print(f"Best Final Balance: {best_result['final_balance']:.2f}")
+        print(f"Total Tests: {len(df)}")
+        print(f"Average Balance: {df['final_balance'].mean():.2f}")
+        print(f"Results saved to: {output_dir}")
 
 
-        
+
+
+
+
 
 
     def print_current_result(self, result):
@@ -645,8 +865,8 @@ class AlgoTrader:
 
     def loadMarketData(self):
 
-        filePath             = "C:\\data\\csvFiles\\VIP\\01\\VIP-X030-T.csv"
         filePath             = "C:\\data\\VIP-X030-T\\VIP'VIP-X030-T_1.csv"
+        filePath             = "C:\\data\\csvFiles\\VIP\\01\\VIP-X030-T.csv"
         dirName              = os.path.dirname(filePath)
         fileName             = os.path.basename(filePath)
         name_no_ext, ext     = os.path.splitext(fileName)
@@ -3000,6 +3220,9 @@ class AlgoTrader:
         skip_iteration = 200            # up to this iteration, the execution will be skipped
 
         # --------------------------------------------------------------
+        df = pd.DataFrame() # Create DataFrame
+
+        # --------------------------------------------------------------
         current_iteration = 0
         for period in period_values:
             for percent in percent_values:
@@ -3014,13 +3237,19 @@ class AlgoTrader:
                     f"Testing  period={period:<3} percent={percent:<10}")
                 
                 # Run trading simulation for this parameter combination
-                result = self.run_single_optimization_internal(period, percent)
+                result = self.run_single_optimization_internal(current_iteration, period, percent)
                 optimization_results.append(result)
-                
+
+                # Add result to DataFrame
+                df = pd.concat([df, pd.DataFrame([result])], ignore_index=True)
+
                 # Print current result
                 # self.print_current_result(result)
-                self.print_current_result_3(result)                
-                self.write_optimization_results_to_file_3(self.mySystem.OutputsDir, optimization_results)
+                self.print_current_result_3(result)
+                
+                # df'nin son elemanını write_optimization_results_to_file_3 ile dosyaya yaz
+                # write_optimization_results_to_file_3() içinde First iteration ise headeri da dosyaya yaz...
+                self.write_optimization_results_to_file_3(self.mySystem.OutputsDir, df)
                 
                 # Track best result (example: highest final balance)
                 if best_result is None or result['final_balance'] > best_result['final_balance']:
@@ -3036,7 +3265,7 @@ class AlgoTrader:
 
         # Write optimization results to file
         # self.write_optimization_results_to_file(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
-        #self.write_optimization_results_to_file_4(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
+        self.write_optimization_results_to_file_4(self.mySystem.OutputsDir, df, best_result, best_period, best_percent)
 
         # # Use best parameters for final run and plotting
         # # self.Most, self.ExMov = self.calculate_most(period=best_period, percent=best_percent)
@@ -3093,7 +3322,7 @@ class AlgoTrader:
         """
         return 0 
 
-    def run_single_optimization_internal(self, period, percent):
+    def run_single_optimization_internal(self, current_iteration, period, percent):
 
         # --------------------------------------------------------------
         self.Most, self.ExMov = self.indicatorManager.calculate_most(period, percent)
@@ -3184,6 +3413,7 @@ class AlgoTrader:
         sortino_ratio = metrics['sortino_ratio']
 
         return {
+            'current_iteration': current_iteration,
             'period': period,
             'percent': percent,
             'final_balance': final_balance,
