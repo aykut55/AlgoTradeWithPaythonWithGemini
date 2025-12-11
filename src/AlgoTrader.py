@@ -865,8 +865,8 @@ class AlgoTrader:
 
     def loadMarketData(self):
 
-        filePath             = "C:\\data\\VIP-X030-T\\VIP'VIP-X030-T_1.csv"
         filePath             = "C:\\data\\csvFiles\\VIP\\01\\VIP-X030-T.csv"
+        filePath             = "C:\\data\\VIP-X030-T\\VIP'VIP-X030-T_1.csv"
         dirName              = os.path.dirname(filePath)
         fileName             = os.path.basename(filePath)
         name_no_ext, ext     = os.path.splitext(fileName)
@@ -3432,7 +3432,231 @@ class AlgoTrader:
         sharpe_ratio = metrics['sharpe_ratio']
         sortino_ratio = metrics['sortino_ratio']
 
-        final_balance = getiri_fiyat_net
+        final_balance = bakiye_fiyat_net
+
+        max_kar_fiyat = trader.Statistics.MaxKarFiyat
+        max_zarar_fiyat = trader.Statistics.MaxZararFiyat
+        min_bakiye_fiyat = trader.Statistics.MinBakiyeFiyat
+        max_bakiye_fiyat = trader.Statistics.MaxBakiyeFiyat
+        min_bakiye_fiyat_net = trader.Statistics.MinBakiyeFiyatNet
+        max_bakiye_fiyat_net = trader.Statistics.MaxBakiyeFiyatNet
+        
+        profit_factor = trader.Statistics.ProfitFactor
+        karli_islem_orani = trader.Statistics.KarliIslemOrani
+        min_bakiye_fiyat_yuzde = trader.Statistics.MinBakiyeFiyatYuzde
+        max_bakiye_fiyat_yuzde = trader.Statistics.MaxBakiyeFiyatYuzde
+        min_bakiye_fiyatNet_yuzde = trader.Statistics.MinBakiyeFiyatNetYuzde
+        max_bakiye_fiyatNet_yuzde = trader.Statistics.MaxBakiyeFiyatNetYuzde   
+
+        initial_balance2 = trader.Statistics.IstatistiklerNew["IlkBakiyeFiyat"].strip()
+
+        # self.IstatistiklerNew["GrafikSembol"] = self.GrafikSembol
+        # self.IstatistiklerNew["GrafikPeriyot"] = self.GrafikPeriyot
+        # self.IstatistiklerNew["SistemId"] = str(self.SistemId)
+        # self.IstatistiklerNew["SistemName"] = self.SistemName
+        # self.IstatistiklerNew["LastExecutionTime"] = self.LastExecutionTime
+        # self.IstatistiklerNew["LastExecutionTimeStart"] = self.LastExecutionTimeStart
+        # self.IstatistiklerNew["LastExecutionTimeStop"] = self.LastExecutionTimeStop
+        # self.IstatistiklerNew["ExecutionTimeInMSec"] = str(self.ExecutionTimeInMSec)
+        # self.IstatistiklerNew["LastExecutionId"] = self.LastExecutionId
+        # self.IstatistiklerNew["LastResetTime"] = self.LastResetTime
+        # self.IstatistiklerNew["LastStatisticsCalculationTime"] = self.LastStatisticsCalculationTime
+        # self.IstatistiklerNew["ToplamGecenSureAy"] = f'{self.ToplamGecenSureAy:.1f}'
+        # self.IstatistiklerNew["ToplamGecenSureGun"] = str(self.ToplamGecenSureGun)
+        # self.IstatistiklerNew["ToplamGecenSureSaat"] = str(self.ToplamGecenSureSaat)
+        # self.IstatistiklerNew["ToplamGecenSureDakika"] = str(self.ToplamGecenSureDakika)
+        # self.IstatistiklerNew["ToplamBarSayisi"] = str(self.ToplamBarSayisi)
+        # self.IstatistiklerNew["SecilenBarNumarasi"] = str(self.SecilenBarNumarasi)
+        # # String tarihleri parse et ("YYYY.MM.DD" formatında)
+        # secilen_dt = datetime.datetime.strptime(self.SecilenBarTarihi, "%Y.%m.%d") if isinstance(self.SecilenBarTarihi, str) else self.SecilenBarTarihi
+        # ilk_dt = datetime.datetime.strptime(self.IlkBarTarihi, "%Y.%m.%d") if isinstance(self.IlkBarTarihi, str) else self.IlkBarTarihi
+        # son_dt = datetime.datetime.strptime(self.SonBarTarihi, "%Y.%m.%d") if isinstance(self.SonBarTarihi, str) else self.SonBarTarihi
+
+        # self.IstatistiklerNew["SecilenBarTarihi"] = secilen_dt.strftime("%d.%m.%Y") if hasattr(secilen_dt, 'strftime') else str(secilen_dt)
+        # self.IstatistiklerNew["SecilenBarSaati"] = str(secilen_dt.time()) if hasattr(secilen_dt, 'time') else "00:00:00"
+        # self.IstatistiklerNew["IlkBarTarihi"] = ilk_dt.strftime("%d.%m.%Y") if hasattr(ilk_dt, 'strftime') else str(ilk_dt)
+        # self.IstatistiklerNew["IlkBarSaati"] = str(ilk_dt.time()) if hasattr(ilk_dt, 'time') else "00:00:00"
+        # self.IstatistiklerNew["SonBarTarihi"] = son_dt.strftime("%d.%m.%Y") if hasattr(son_dt, 'strftime') else str(son_dt)
+        # self.IstatistiklerNew["SonBarSaati"] = str(son_dt.time()) if hasattr(son_dt, 'time') else "00:00:00"
+        # self.IstatistiklerNew["IlkBarIndex"] = str(self.IlkBarIndex)
+        # self.IstatistiklerNew["SonBarIndex"] = str(self.SonBarIndex)
+        # self.IstatistiklerNew["SonBarAcilisFiyati"] = str(self.SonBarAcilisFiyati)
+        # self.IstatistiklerNew["SonBarYuksekFiyati"] = str(self.SonBarYuksekFiyati)
+        # self.IstatistiklerNew["SonBarDusukFiyati"] = str(self.SonBarDusukFiyati)
+        # self.IstatistiklerNew["SonBarKapanisFiyati"] = str(self.SonBarKapanisFiyati)
+        # self.IstatistiklerNew["IlkBakiyeFiyat"] = str(self.IlkBakiyeFiyat)
+        # self.IstatistiklerNew["IlkBakiyePuan"] = str(self.IlkBakiyePuan)
+        # self.IstatistiklerNew["BakiyeFiyat"] = str(self.BakiyeFiyat)
+        # self.IstatistiklerNew["BakiyePuan"] = str(self.BakiyePuan)
+        # self.IstatistiklerNew["GetiriFiyat"] = str(self.GetiriFiyat)
+        # self.IstatistiklerNew["GetiriPuan"] = str(self.GetiriPuan)
+        # self.IstatistiklerNew["GetiriFiyatYuzde"] = str(self.GetiriFiyatYuzde)
+        # self.IstatistiklerNew["GetiriPuanYuzde"] = str(self.GetiriPuanYuzde)
+        # self.IstatistiklerNew["BakiyeFiyatNet"] = str(self.BakiyeFiyatNet)
+        # self.IstatistiklerNew["BakiyePuanNet"] = str(self.BakiyePuanNet)
+        # self.IstatistiklerNew["GetiriFiyatNet"] = str(self.GetiriFiyatNet)
+        # self.IstatistiklerNew["GetiriPuanNet"] = str(self.GetiriPuanNet)
+        # self.IstatistiklerNew["GetiriFiyatYuzdeNet"] = str(self.GetiriFiyatYuzdeNet)
+        # self.IstatistiklerNew["GetiriPuanYuzdeNet"] = str(self.GetiriPuanYuzdeNet)
+        # self.IstatistiklerNew["GetiriKz"] = str(self.GetiriKz)
+        # self.IstatistiklerNew["GetiriKzNet"] = str(self.GetiriKzNet)
+        # self.IstatistiklerNew["MinBakiyeFiyat"] = str(self.MinBakiyeFiyat)
+        # self.IstatistiklerNew["MaxBakiyeFiyat"] = str(self.MaxBakiyeFiyat)
+        # self.IstatistiklerNew["MinBakiyePuan"] = str(self.MinBakiyePuan)
+        # self.IstatistiklerNew["MaxBakiyePuan"] = str(self.MaxBakiyePuan)
+        # self.IstatistiklerNew["MinBakiyeFiyatYuzde"] = str(self.MinBakiyeFiyatYuzde)
+        # self.IstatistiklerNew["MaxBakiyeFiyatYuzde"] = str(self.MaxBakiyeFiyatYuzde)
+        # self.IstatistiklerNew["MinBakiyeFiyatIndex"] = str(self.MinBakiyeFiyatIndex)
+        # self.IstatistiklerNew["MaxBakiyeFiyatIndex"] = str(self.MaxBakiyeFiyatIndex)
+        # self.IstatistiklerNew["MinBakiyePuanIndex"] = str(self.MinBakiyePuanIndex)
+        # self.IstatistiklerNew["MaxBakiyePuanIndex"] = str(self.MaxBakiyePuanIndex)
+        # self.IstatistiklerNew["MinBakiyeFiyatNet"] = str(self.MinBakiyeFiyatNet)
+        # self.IstatistiklerNew["MaxBakiyeFiyatNet"] = str(self.MaxBakiyeFiyatNet)
+        # self.IstatistiklerNew["MinBakiyeFiyatNetIndex"] = str(self.MinBakiyeFiyatNetIndex)
+        # self.IstatistiklerNew["MaxBakiyeFiyatNetIndex"] = str(self.MaxBakiyeFiyatNetIndex)
+        # self.IstatistiklerNew["MinBakiyeFiyatNetYuzde"] = str(self.MinBakiyeFiyatNetYuzde)
+        # self.IstatistiklerNew["MaxBakiyeFiyatNetYuzde"] = str(self.MaxBakiyeFiyatNetYuzde)
+        # self.IstatistiklerNew["GetiriKzSistem"] = f'{self.GetiriKzSistem:.2f}'
+        # self.IstatistiklerNew["GetiriKzSistemYuzde"] = f'{self.GetiriKzSistemYuzde:.2f}'
+        # self.IstatistiklerNew["GetiriKzNetSistem"] = f'{self.GetiriKzNetSistem:.2f}'
+        # self.IstatistiklerNew["GetiriKzNetSistemYuzde"] = f'{self.GetiriKzNetSistemYuzde:.2f}'
+        # self.IstatistiklerNew["IslemSayisi"] = str(self.IslemSayisi)
+        # self.IstatistiklerNew["AlisSayisi"] = str(self.AlisSayisi)
+        # self.IstatistiklerNew["SatisSayisi"] = str(self.SatisSayisi)
+        # self.IstatistiklerNew["FlatSayisi"] = str(self.FlatSayisi)
+        # self.IstatistiklerNew["PassSayisi"] = str(self.PassSayisi)
+        # self.IstatistiklerNew["KarAlSayisi"] = str(self.KarAlSayisi)
+        # self.IstatistiklerNew["ZararKesSayisi"] = str(self.ZararKesSayisi)
+        # self.IstatistiklerNew["KazandiranIslemSayisi"] = str(self.KazandiranIslemSayisi)
+        # self.IstatistiklerNew["KaybettirenIslemSayisi"] = str(self.KaybettirenIslemSayisi)
+        # self.IstatistiklerNew["NotrIslemSayisi"] = str(self.NotrIslemSayisi)
+        # self.IstatistiklerNew["KazandiranAlisSayisi"] = str(self.KazandiranAlisSayisi)
+        # self.IstatistiklerNew["KaybettirenAlisSayisi"] = str(self.KaybettirenAlisSayisi)
+        # self.IstatistiklerNew["NotrAlisSayisi"] = str(self.NotrAlisSayisi)
+        # self.IstatistiklerNew["KazandiranSatisSayisi"] = str(self.KazandiranSatisSayisi)
+        # self.IstatistiklerNew["KaybettirenSatisSayisi"] = str(self.KaybettirenSatisSayisi)
+        # self.IstatistiklerNew["NotrSatisSayisi"] = str(self.NotrSatisSayisi)
+        # self.IstatistiklerNew["AlKomutSayisi"] = str(self.AlKomutSayisi)
+        # self.IstatistiklerNew["SatKomutSayisi"] = str(self.SatKomutSayisi)
+        # self.IstatistiklerNew["PasGecKomutSayisi"] = str(self.PasGecKomutSayisi)
+        # self.IstatistiklerNew["KarAlKomutSayisi"] = str(self.KarAlKomutSayisi)
+        # self.IstatistiklerNew["ZararKesKomutSayisi"] = str(self.ZararKesKomutSayisi)
+        # self.IstatistiklerNew["FlatOlKomutSayisi"] = str(self.FlatOlKomutSayisi)
+        # self.IstatistiklerNew["KomisyonIslemSayisi"] = str(self.KomisyonIslemSayisi)
+        # self.IstatistiklerNew["KomisyonVarlikAdedSayisi"] = str(self.KomisyonVarlikAdedSayisi)
+        # self.IstatistiklerNew["KomisyonCarpan"] = str(self.KomisyonCarpan)
+        # self.IstatistiklerNew["KomisyonFiyat"] = str(self.KomisyonFiyat)
+        # self.IstatistiklerNew["KomisyonFiyatYuzde"] = str(self.KomisyonFiyatYuzde)
+        # self.IstatistiklerNew["KomisyonuDahilEt"] = str(self.KomisyonuDahilEt)
+        # self.IstatistiklerNew["KarZararFiyat"] = str(self.KarZararFiyat)
+        # self.IstatistiklerNew["KarZararFiyatYuzde"] = str(self.KarZararFiyatYuzde)
+        # self.IstatistiklerNew["KarZararPuan"] = str(self.KarZararPuan)
+        # self.IstatistiklerNew["ToplamKarFiyat"] = str(self.ToplamKarFiyat)
+        # self.IstatistiklerNew["ToplamZararFiyat"] = str(self.ToplamZararFiyat)
+        # self.IstatistiklerNew["NetKarFiyat"] = str(self.NetKarFiyat)
+        # self.IstatistiklerNew["ToplamKarPuan"] = str(self.ToplamKarPuan)
+        # self.IstatistiklerNew["ToplamZararPuan"] = str(self.ToplamZararPuan)
+        # self.IstatistiklerNew["NetKarPuan"] = str(self.NetKarPuan)
+        # self.IstatistiklerNew["MaxKarFiyat"] = str(self.MaxKarFiyat)
+        # self.IstatistiklerNew["MaxZararFiyat"] = str(self.MaxZararFiyat)
+        # self.IstatistiklerNew["MaxKarPuan"] = str(self.MaxKarPuan)
+        # self.IstatistiklerNew["MaxZararPuan"] = str(self.MaxZararPuan)
+        # self.IstatistiklerNew["MaxZararFiyatIndex"] = str(self.MaxZararFiyatIndex)
+        # self.IstatistiklerNew["MaxKarFiyatIndex"] = str(self.MaxKarFiyatIndex)
+        # self.IstatistiklerNew["MaxZararPuanIndex"] = str(self.MaxZararPuanIndex)
+        # self.IstatistiklerNew["MaxKarPuanIndex"] = str(self.MaxKarPuanIndex)
+        # self.IstatistiklerNew["KardaBarSayisi"] = str(self.KardaBarSayisi)
+        # self.IstatistiklerNew["ZarardaBarSayisi"] = str(self.ZarardaBarSayisi)
+        # self.IstatistiklerNew["KarliIslemOrani"] = f'{self.KarliIslemOrani:.2f}'
+        # self.IstatistiklerNew["GetiriMaxDD"] = str(self.GetiriMaxDD)
+        # self.IstatistiklerNew["GetiriMaxDDTarih"] = "" #self.GetiriMaxDDTarih.strftime("%d.%m.%Y")
+        # self.IstatistiklerNew["GetiriMaxDDSaat"] = "" #str(self.GetiriMaxDDTarih.time())
+        # self.IstatistiklerNew["GetiriMaxKayip"] = str(self.GetiriMaxKayip)
+        # self.IstatistiklerNew["ProfitFactor"] = f'{self.ProfitFactor:.2f}'
+        # self.IstatistiklerNew["ProfitFactorSistem"] = f'{self.ProfitFactorSistem:.2f}'
+        # self.IstatistiklerNew["OrtAylikIslemSayisi"] = f'{self.OrtAylikIslemSayisi:.2f}'
+        # self.IstatistiklerNew["OrtHaftalikIslemSayisi"] = f'{self.OrtHaftalikIslemSayisi:.2f}'
+        # self.IstatistiklerNew["OrtGunlukIslemSayisi"] = f'{self.OrtGunlukIslemSayisi:.2f}'
+        # self.IstatistiklerNew["OrtSaatlikIslemSayisi"] = f'{self.OrtSaatlikIslemSayisi:.2f}'
+        # self.IstatistiklerNew["Sinyal"] = str(self.Sinyal)
+        # self.IstatistiklerNew["SonYon"] = str(self.SonYon)
+        # self.IstatistiklerNew["PrevYon"] = str(self.PrevYon)
+        # self.IstatistiklerNew["SonFiyat"] = str(self.SonFiyat)
+        # self.IstatistiklerNew["SonAFiyat"] = str(self.SonAFiyat)
+        # self.IstatistiklerNew["SonSFiyat"] = str(self.SonSFiyat)
+        # self.IstatistiklerNew["SonFFiyat"] = str(self.SonFFiyat)
+        # self.IstatistiklerNew["SonPFiyat"] = str(self.SonPFiyat)
+        # self.IstatistiklerNew["PrevFiyat"] = str(self.PrevFiyat)
+        # self.IstatistiklerNew["PrevAFiyat"] = str(self.PrevAFiyat)
+        # self.IstatistiklerNew["PrevSFiyat"] = str(self.PrevSFiyat)
+        # self.IstatistiklerNew["PrevFFiyat"] = str(self.PrevFFiyat)
+        # self.IstatistiklerNew["PrevPFiyat"] = str(self.PrevPFiyat)
+        # self.IstatistiklerNew["SonBarNo"] = str(self.SonBarNo)
+        # self.IstatistiklerNew["SonABarNo"] = str(self.SonABarNo)
+        # self.IstatistiklerNew["SonSBarNo"] = str(self.SonSBarNo)
+        # self.IstatistiklerNew["SonFBarNo"] = str(self.SonFBarNo)
+        # self.IstatistiklerNew["SonPBarNo"] = str(self.SonPBarNo)
+        # self.IstatistiklerNew["PrevBarNo"] = str(self.PrevBarNo)
+        # self.IstatistiklerNew["PrevABarNo"] = str(self.PrevABarNo)
+        # self.IstatistiklerNew["PrevSBarNo"] = str(self.PrevSBarNo)
+        # self.IstatistiklerNew["PrevFBarNo"] = str(self.PrevFBarNo)
+        # self.IstatistiklerNew["PrevPBarNo"] = str(self.PrevPBarNo)
+        # self.IstatistiklerNew["EmirKomut"] = str(self.EmirKomut)
+        # self.IstatistiklerNew["EmirStatus"] = str(self.EmirStatus)
+        # self.IstatistiklerNew["HisseSayisi"] = str(self.HisseSayisi)
+        # self.IstatistiklerNew["KontratSayisi"] = str(self.KontratSayisi)
+        # self.IstatistiklerNew["VarlikAdedCarpani"] = str(self.VarlikAdedCarpani)
+        # self.IstatistiklerNew["VarlikAdedSayisi"] = str(self.VarlikAdedSayisi)
+        # self.IstatistiklerNew["KaymaMiktari"] = str(self.KaymaMiktari)
+        # self.IstatistiklerNew["KaymayiDahilEt"] = str(self.KaymayiDahilEt)
+        # self.IstatistiklerNew["GetiriFiyatBuAy"] = f'{self.GetiriFiyatBuAy:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatAy1"] = f'{self.GetiriFiyatAy1:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatAy2"] = f'{self.GetiriFiyatAy2:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatAy3"] = f'{self.GetiriFiyatAy3:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatAy4"] = f'{self.GetiriFiyatAy4:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatAy5"] = f'{self.GetiriFiyatAy5:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatBuHafta"] = f'{self.GetiriFiyatBuHafta:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatHafta1"] = f'{self.GetiriFiyatHafta1:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatHafta2"] = f'{self.GetiriFiyatHafta2:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatHafta3"] = f'{self.GetiriFiyatHafta3:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatHafta4"] = f'{self.GetiriFiyatHafta4:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatHafta5"] = f'{self.GetiriFiyatHafta5:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatBuGun"] = f'{self.GetiriFiyatBuGun:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatGun1"] = f'{self.GetiriFiyatGun1:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatGun2"] = f'{self.GetiriFiyatGun2:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatGun3"] = f'{self.GetiriFiyatGun3:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatGun4"] = f'{self.GetiriFiyatGun4:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatGun5"] = f'{self.GetiriFiyatGun5:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatBuSaat"] = f'{self.GetiriFiyatBuSaat:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatSaat1"] = f'{self.GetiriFiyatSaat1:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatSaat2"] = f'{self.GetiriFiyatSaat2:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatSaat3"] = f'{self.GetiriFiyatSaat3:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatSaat4"] = f'{self.GetiriFiyatSaat4:.2f}'
+        # self.IstatistiklerNew["GetiriFiyatSaat5"] = f'{self.GetiriFiyatSaat5:.2f}'
+        # self.IstatistiklerNew["GetiriPuanBuAy"] = f'{self.GetiriPuanBuAy:.2f}'
+        # self.IstatistiklerNew["GetiriPuanAy1"] = f'{self.GetiriPuanAy1:.2f}'
+        # self.IstatistiklerNew["GetiriPuanAy2"] = f'{self.GetiriPuanAy2:.2f}'
+        # self.IstatistiklerNew["GetiriPuanAy3"] = f'{self.GetiriPuanAy3:.2f}'
+        # self.IstatistiklerNew["GetiriPuanAy4"] = f'{self.GetiriPuanAy4:.2f}'
+        # self.IstatistiklerNew["GetiriPuanAy5"] = f'{self.GetiriPuanAy5:.2f}'
+        # self.IstatistiklerNew["GetiriPuanBuHafta"] = f'{self.GetiriPuanBuHafta:.2f}'
+        # self.IstatistiklerNew["GetiriPuanHafta1"] = f'{self.GetiriPuanHafta1:.2f}'
+        # self.IstatistiklerNew["GetiriPuanHafta2"] = f'{self.GetiriPuanHafta2:.2f}'
+        # self.IstatistiklerNew["GetiriPuanHafta3"] = f'{self.GetiriPuanHafta3:.2f}'
+        # self.IstatistiklerNew["GetiriPuanHafta4"] = f'{self.GetiriPuanHafta4:.2f}'
+        # self.IstatistiklerNew["GetiriPuanHafta5"] = f'{self.GetiriPuanHafta5:.2f}'
+        # self.IstatistiklerNew["GetiriPuanBuGun"] = f'{self.GetiriPuanBuGun:.2f}'
+        # self.IstatistiklerNew["GetiriPuanGun1"] = f'{self.GetiriPuanGun1:.2f}'
+        # self.IstatistiklerNew["GetiriPuanGun2"] = f'{self.GetiriPuanGun2:.2f}'
+        # self.IstatistiklerNew["GetiriPuanGun3"] = f'{self.GetiriPuanGun3:.2f}'
+        # self.IstatistiklerNew["GetiriPuanGun4"] = f'{self.GetiriPuanGun4:.2f}'
+        # self.IstatistiklerNew["GetiriPuanGun5"] = f'{self.GetiriPuanGun5:.2f}'
+        # self.IstatistiklerNew["GetiriPuanBuSaat"] = f'{self.GetiriPuanBuSaat:.2f}'
+        # self.IstatistiklerNew["GetiriPuanSaat1"] = f'{self.GetiriPuanSaat1:.2f}'
+        # self.IstatistiklerNew["GetiriPuanSaat2"] = f'{self.GetiriPuanSaat2:.2f}'
+        # self.IstatistiklerNew["GetiriPuanSaat3"] = f'{self.GetiriPuanSaat3:.2f}'
+        # self.IstatistiklerNew["GetiriPuanSaat4"] = f'{self.GetiriPuanSaat4:.2f}'
+        # self.IstatistiklerNew["GetiriPuanSaat5"] = f'{self.GetiriPuanSaat5:.2f}'
 
         return {
             'current_iteration': current_iteration,
@@ -3471,7 +3695,23 @@ class AlgoTrader:
             "max_dd": max_dd,
             "max_dd_percent" : max_dd_percent,
             "sharpe_ratio" : sharpe_ratio,
-            "sortino_ratio" : sortino_ratio
+            "sortino_ratio" : sortino_ratio,
+            # -----------------------------------------------
+            "max_kar_fiyat": max_kar_fiyat,
+            "max_zarar_fiyat": max_zarar_fiyat,
+            "min_bakiye_fiyat": min_bakiye_fiyat,
+            "max_bakiye_fiyat": max_bakiye_fiyat,
+            "min_bakiye_fiyat_net": min_bakiye_fiyat_net,
+            "max_bakiye_fiyat_net": max_bakiye_fiyat_net,
+            "profit_factor": profit_factor,
+            "karli_islem_orani": karli_islem_orani,
+            "min_bakiye_fiyat_yuzde": min_bakiye_fiyat_yuzde,
+            "max_bakiye_fiyat_yuzde": max_bakiye_fiyat_yuzde,
+            "min_bakiye_fiyatNet_yuzde": min_bakiye_fiyatNet_yuzde,
+            "max_bakiye_fiyatNet_yuzde": max_bakiye_fiyatNet_yuzde,
+
+            "initial_balance2": initial_balance2
+            
         }
 
     def calculate_performance_metrics(self, trader):
