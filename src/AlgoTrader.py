@@ -612,38 +612,418 @@ class AlgoTrader:
             f.write(data_line.rstrip() + "\n")
             f.flush()  # Force write to disk immediately
 
-    def write_optimization_results_to_file_4(self, file_ptr, df: 'DataFrame', current_result=None):
+    def write_optimization_results_to_file_4(self, file_ptr,  df : 'DataFrame', current_result=None):
         """
-        Writes ALL rows of df to file, sorted by statistics['BakiyeFiyatNet'] descending.
-        Preserves your exact formatting system.
+        Write optimization results to file from DataFrame.
+        This function writes the last row of the DataFrame to the file.
+        If it's the first iteration, it also writes the header.
+
+        Args:
+            file_ptr: Open file pointer
+            df: DataFrame containing all optimization results
         """
 
+        # Check if DataFrame is empty
         if df.empty:
             return
 
-        # ============================================================
-        # === 1) DF ROWLARINI STATISTICS["BakiyeFiyatNet"] DEĞERİNE GÖRE SIRALA
-        # ============================================================
-        def extract_bfn(row):
-            stats = row.get("statistics", {})
-            if isinstance(stats, dict):
-                return stats.get("BakiyeFiyatNet", -1e18)
-            return -1e18
+        # Get the last row from DataFrame
+        last_row = df.iloc[-1]
 
-        df_sorted = df.copy()
-        df_sorted["__bfn__"] = df_sorted.apply(extract_bfn, axis=1)
-        df_sorted = df_sorted.sort_values(by="__bfn__", ascending=False)
-        df_sorted = df_sorted.drop(columns=["__bfn__"])
+        # Define the list of columns to write (in the desired order)
+        # Format: (column_name, width)
+        # These are the main columns from the result dictionary
+        main_columns = [
+            ('current_iteration', 10),
+            ('period', 10),
+            ('percent', 10),
+            ('initial_balance', 15),
+            ('final_balance', 15),
+            ('bakiye_fiyat_net', 15),
+            ('getiri_fiyat', 15),
+            ('getiri_fiyat_net', 15),
+            ('getiri_fiyat_yuzde', 18),
+            ('getiri_fiyat_yuzde_net', 22),
+            ('komisyon_fiyat', 15),
+            ('total_trades', 12),
+            ('profit_trades', 13),
+            ('loss_trades', 11),
+            ('win_rate', 10),
+            ('islem_sayisi', 13),
+            ('alis_sayisi', 12),
+            ('satis_sayisi', 13),
+            ('flat_sayisi', 12),
+            ('pass_sayisi', 12),
+            ('komisyon_islem_sayisi', 22),
+            ('getiri_kz', 12),
+            ('getiri_kz_net', 15),
+            ('max_kar', 10),
+            ('max_zarar', 12),
+            ('max_dd', 10),
+            ('max_dd_percent', 15),
+            ('sharpe_ratio', 13),
+            ('sortino_ratio', 14),
+            ('max_kar_fiyat', 15),
+            ('max_zarar_fiyat', 16),
+            ('min_bakiye_fiyat', 17),
+            ('max_bakiye_fiyat', 17),
+            ('min_bakiye_fiyat_net', 21),
+            ('max_bakiye_fiyat_net', 21),
+            ('profit_factor', 14),
+            ('karli_islem_orani', 18),
+            ('min_bakiye_fiyat_yuzde', 23),
+            ('max_bakiye_fiyat_yuzde', 23),
+            ('min_bakiye_fiyatNet_yuzde', 26),
+            ('max_bakiye_fiyatNet_yuzde', 26)
+        ]
 
-        # ============================================================
-        # === 2) KOLON TANIMLARI (SENİN ORİJİNALİN)
-        # ============================================================
+        # Define statistics columns to extract from IstatistiklerNew dictionary
+        # Format: (column_name, width)
+        # ===============================
+        # STATS COLUMN GROUP DEFINITIONS
+        # ===============================
+
+        # --- System metadata ---
+        stats_system_metadata = [
+            ('GrafikSembol', 15),
+            ('GrafikPeriyot', 15),
+            ('SistemId', 10),
+            ('SistemName', 15),
+        ]
+
+        # --- Timing data ---
+        stats_timing = [
+            ('LastExecutionTime', 20),
+            ('LastExecutionTimeStart', 25),
+            ('LastExecutionTimeStop', 24),
+            ('ExecutionTimeInMSec', 20),
+            ('LastExecutionId', 16),
+            ('LastResetTime', 16),
+            ('LastStatisticsCalculationTime', 32),
+            ('ToplamGecenSureAy', 19),
+            ('ToplamGecenSureGun', 20),
+            ('ToplamGecenSureSaat', 21),
+            ('ToplamGecenSureDakika', 23),
+        ]
+
+        # --- Bar data ---
+        stats_bar_data = [
+            ('ToplamBarSayisi', 17),
+            ('SecilenBarNumarasi', 20),
+            ('SecilenBarTarihi', 18),
+            ('SecilenBarSaati', 17),
+            ('IlkBarTarihi', 14),
+            ('IlkBarSaati', 13),
+            ('SonBarTarihi', 14),
+            ('SonBarSaati', 13),
+            ('IlkBarIndex', 13),
+            ('SonBarIndex', 13),
+            ('SonBarAcilisFiyati', 20),
+            ('SonBarYuksekFiyati', 21),
+            ('SonBarDusukFiyati', 19),
+            ('SonBarKapanisFiyati', 22),
+        ]
+
+        # --- Balance and returns ---
+        stats_balance = [
+            ('IlkBakiyeFiyat', 16),
+            ('IlkBakiyePuan', 15),
+            ('BakiyeFiyat', 13),
+            ('BakiyePuan', 12),
+            ('GetiriFiyat', 13),
+            ('GetiriPuan', 12),
+            ('GetiriFiyatYuzde', 18),
+            ('GetiriPuanYuzde', 17),
+            ('BakiyeFiyatNet', 16),
+            ('BakiyePuanNet', 15),
+            ('GetiriFiyatNet', 16),
+            ('GetiriPuanNet', 15),
+            ('GetiriFiyatYuzdeNet', 21),
+            ('GetiriPuanYuzdeNet', 20),
+            ('GetiriKz', 10),
+            ('GetiriKzNet', 13),
+        ]
+
+        # --- Min/Max balance ---
+        stats_minmax_balance = [
+            ('MinBakiyeFiyat', 16),
+            ('MaxBakiyeFiyat', 16),
+            ('MinBakiyePuan', 15),
+            ('MaxBakiyePuan', 15),
+            ('MinBakiyeFiyatYuzde', 21),
+            ('MaxBakiyeFiyatYuzde', 21),
+            ('MinBakiyeFiyatIndex', 21),
+            ('MaxBakiyeFiyatIndex', 21),
+            ('MinBakiyePuanIndex', 20),
+            ('MaxBakiyePuanIndex', 20),
+            ('MinBakiyeFiyatNet', 19),
+            ('MaxBakiyeFiyatNet', 19),
+            ('MinBakiyeFiyatNetIndex', 24),
+            ('MaxBakiyeFiyatNetIndex', 24),
+            ('MinBakiyeFiyatNetYuzde', 24),
+            ('MaxBakiyeFiyatNetYuzde', 24),
+        ]
+
+        # --- System returns ---
+        stats_system_returns = [
+            ('GetiriKzSistem', 16),
+            ('GetiriKzSistemYuzde', 21),
+            ('GetiriKzNetSistem', 19),
+            ('GetiriKzNetSistemYuzde', 24),
+        ]
+
+        # --- Trade counts ---
+        stats_trade_counts = [
+            ('IslemSayisi', 13),
+            ('AlisSayisi', 12),
+            ('SatisSayisi', 13),
+            ('FlatSayisi', 12),
+            ('PassSayisi', 12),
+            ('KarAlSayisi', 13),
+            ('ZararKesSayisi', 16),
+            ('KazandiranIslemSayisi', 22),
+            ('KaybettirenIslemSayisi', 23),
+            ('NotrIslemSayisi', 16),
+            ('KazandiranAlisSayisi', 21),
+            ('KaybettirenAlisSayisi', 22),
+            ('NotrAlisSayisi', 15),
+            ('KazandiranSatisSayisi', 22),
+            ('KaybettirenSatisSayisi', 23),
+            ('NotrSatisSayisi', 16),
+        ]
+
+        # --- Command counts ---
+        stats_command_counts = [
+            ('AlKomutSayisi', 15),
+            ('SatKomutSayisi', 16),
+            ('PasGecKomutSayisi', 19),
+            ('KarAlKomutSayisi', 18),
+            ('ZararKesKomutSayisi', 21),
+            ('FlatOlKomutSayisi', 19),
+        ]
+
+        # --- Commission ---
+        stats_commission = [
+            ('KomisyonIslemSayisi', 21),
+            ('KomisyonVarlikAdedSayisi', 26),
+            ('KomisyonCarpan', 15),
+            ('KomisyonFiyat', 15),
+            ('KomisyonFiyatYuzde', 20),
+            ('KomisyonuDahilEt', 17),
+        ]
+
+        # --- Profit / Loss ---
+        stats_profitloss = [
+            ('KarZararFiyat', 15),
+            ('KarZararFiyatYuzde', 20),
+            ('KarZararPuan', 14),
+            ('ToplamKarFiyat', 16),
+            ('ToplamZararFiyat', 18),
+            ('NetKarFiyat', 13),
+            ('ToplamKarPuan', 15),
+            ('ToplamZararPuan', 17),
+            ('NetKarPuan', 12),
+        ]
+
+        # --- Max/Min Profit/Loss indices ---
+        stats_profitloss_indices = [
+            ('MaxKarFiyat', 13),
+            ('MaxZararFiyat', 15),
+            ('MaxKarPuan', 12),
+            ('MaxZararPuan', 14),
+            ('MaxZararFiyatIndex', 20),
+            ('MaxKarFiyatIndex', 18),
+            ('MaxZararPuanIndex', 19),
+            ('MaxKarPuanIndex', 17),
+        ]
+
+        # --- Profit/Loss bar counts ---
+        stats_bar_counts = [
+            ('KardaBarSayisi', 16),
+            ('ZarardaBarSayisi', 17),
+        ]
+
+        # --- Performance metrics ---
+        stats_performance_metrics = [
+            ('KarliIslemOrani', 17),
+            ('GetiriMaxDD', 13),
+            ('GetiriMaxDDTarih', 18),
+            ('GetiriMaxDDSaat', 17),
+            ('GetiriMaxKayip', 16),
+            ('ProfitFactor', 14),
+            ('ProfitFactorSistem', 20),
+        ]
+
+        # --- Average trade counts ---
+        stats_avg_trade_counts = [
+            ('OrtAylikIslemSayisi', 21),
+            ('OrtHaftalikIslemSayisi', 24),
+            ('OrtGunlukIslemSayisi', 21),
+            ('OrtSaatlikIslemSayisi', 23),
+        ]
+
+        # --- Signal & position data ---
+        stats_signal_position = [
+            ('Sinyal', 8),
+            ('SonYon', 8),
+            ('PrevYon', 9),
+            ('SonFiyat', 10),
+            ('SonAFiyat', 11),
+            ('SonSFiyat', 11),
+            ('SonFFiyat', 11),
+            ('SonPFiyat', 11),
+            ('PrevFiyat', 11),
+            ('PrevAFiyat', 12),
+            ('PrevSFiyat', 12),
+            ('PrevFFiyat', 12),
+            ('PrevPFiyat', 12),
+        ]
+
+        # --- Bar numbers ---
+        stats_bar_numbers = [
+            ('SonBarNo', 10),
+            ('SonABarNo', 11),
+            ('SonSBarNo', 11),
+            ('SonFBarNo', 11),
+            ('SonPBarNo', 11),
+            ('PrevBarNo', 11),
+            ('PrevABarNo', 12),
+            ('PrevSBarNo', 12),
+            ('PrevFBarNo', 12),
+            ('PrevPBarNo', 12),
+        ]
+
+        # --- Order data ---
+        stats_order_data = [
+            ('EmirKomut', 11),
+            ('EmirStatus', 12),
+            ('HisseSayisi', 13),
+            ('KontratSayisi', 15),
+            ('VarlikAdedCarpani', 19),
+            ('VarlikAdedSayisi', 18),
+            ('KaymaMiktari', 14),
+            ('KaymayiDahilEt', 15),
+        ]
+
+        # --- Monthly Fiyat returns ---
+        stats_monthly_fiyat = [
+            ('GetiriFiyatBuAy', 17),
+            ('GetiriFiyatAy1', 16),
+            ('GetiriFiyatAy2', 16),
+            ('GetiriFiyatAy3', 16),
+            ('GetiriFiyatAy4', 16),
+            ('GetiriFiyatAy5', 16),
+        ]
+
+        # --- Weekly Fiyat returns ---
+        stats_weekly_fiyat = [
+            ('GetiriFiyatBuHafta', 20),
+            ('GetiriFiyatHafta1', 19),
+            ('GetiriFiyatHafta2', 19),
+            ('GetiriFiyatHafta3', 19),
+            ('GetiriFiyatHafta4', 19),
+            ('GetiriFiyatHafta5', 19),
+        ]
+
+        # --- Daily Fiyat returns ---
+        stats_daily_fiyat = [
+            ('GetiriFiyatBuGun', 18),
+            ('GetiriFiyatGun1', 17),
+            ('GetiriFiyatGun2', 17),
+            ('GetiriFiyatGun3', 17),
+            ('GetiriFiyatGun4', 17),
+            ('GetiriFiyatGun5', 17),
+        ]
+
+        # --- Hourly Fiyat returns ---
+        stats_hourly_fiyat = [
+            ('GetiriFiyatBuSaat', 19),
+            ('GetiriFiyatSaat1', 18),
+            ('GetiriFiyatSaat2', 18),
+            ('GetiriFiyatSaat3', 18),
+            ('GetiriFiyatSaat4', 18),
+            ('GetiriFiyatSaat5', 18),
+        ]
+
+        # --- Monthly Puan returns ---
+        stats_monthly_puan = [
+            ('GetiriPuanBuAy', 16),
+            ('GetiriPuanAy1', 15),
+            ('GetiriPuanAy2', 15),
+            ('GetiriPuanAy3', 15),
+            ('GetiriPuanAy4', 15),
+            ('GetiriPuanAy5', 15),
+        ]
+
+        # --- Weekly Puan returns ---
+        stats_weekly_puan = [
+            ('GetiriPuanBuHafta', 19),
+            ('GetiriPuanHafta1', 18),
+            ('GetiriPuanHafta2', 18),
+            ('GetiriPuanHafta3', 18),
+            ('GetiriPuanHafta4', 18),
+            ('GetiriPuanHafta5', 18),
+        ]
+
+        # --- Daily Puan returns ---
+        stats_daily_puan = [
+            ('GetiriPuanBuGun', 17),
+            ('GetiriPuanGun1', 16),
+            ('GetiriPuanGun2', 16),
+            ('GetiriPuanGun3', 16),
+            ('GetiriPuanGun4', 16),
+            ('GetiriPuanGun5', 16),
+        ]
+
+        # --- Hourly Puan returns ---
+        stats_hourly_puan = [
+            ('GetiriPuanBuSaat', 18),
+            ('GetiriPuanSaat1', 17),
+            ('GetiriPuanSaat2', 17),
+            ('GetiriPuanSaat3', 17),
+            ('GetiriPuanSaat4', 17),
+            ('GetiriPuanSaat5', 17),
+        ]
+
+        # =========================================
+        # FINAL MERGED STATS COLUMN LIST
+        # =========================================
+        stats_columns = (
+                stats_system_metadata
+                + stats_timing
+                + stats_bar_data
+                + stats_balance
+                + stats_minmax_balance
+                + stats_system_returns
+                + stats_trade_counts
+                + stats_command_counts
+                + stats_commission
+                + stats_profitloss
+                + stats_profitloss_indices
+                + stats_bar_counts
+                + stats_performance_metrics
+                + stats_avg_trade_counts
+                + stats_signal_position
+                + stats_bar_numbers
+                + stats_order_data
+                + stats_monthly_fiyat
+                + stats_weekly_fiyat
+                + stats_daily_fiyat
+                + stats_hourly_fiyat
+                + stats_monthly_puan
+                + stats_weekly_puan
+                + stats_daily_puan
+                + stats_hourly_puan
+        )
+
+        main_columns = []
         main_columns = [
             ('current_iteration', 20),
             ('period', 20),
             ('percent', 20),
         ]
 
+        stats_columns = []
         stats_columns = [
             ('IlkBakiyeFiyat', 30),
             ('KomisyonFiyat', 15),
@@ -669,108 +1049,156 @@ class AlgoTrader:
             ('NotrIslemSayisi', 16),
             ('KomisyonIslemSayisi', 21),
 
+            # ('GetiriFiyat', 13),
+            # ('BakiyeFiyat', 13),
+            # ('GetiriFiyatYuzde', 18),
+            # ('GetiriKz', 10),
+            # ('GetiriKzNet', 13),
+
             ('MinBakiyeFiyat', 30),
             ('MaxBakiyeFiyat', 16),
             ('MinBakiyeFiyatYuzde', 21),
             ('MaxBakiyeFiyatYuzde', 21),
+            # ('MinBakiyeFiyatIndex', 21),
+            # ('MaxBakiyeFiyatIndex', 21),
             ('MinBakiyeFiyatNet', 19),
             ('MaxBakiyeFiyatNet', 19),
+            # ('MinBakiyeFiyatNetIndex', 24),
+            # ('MaxBakiyeFiyatNetIndex', 24),
             ('MinBakiyeFiyatNetYuzde', 24),
             ('MaxBakiyeFiyatNetYuzde', 24),
+
+
+            # ('KomisyonFiyatYuzde', 20),
+            # ('KarZararFiyat', 15),
+            # ('KarZararFiyatYuzde', 20),
+            # ('ToplamKarFiyat', 16),
+            # ('ToplamZararFiyat', 18),
+            # ('NetKarFiyat', 13),
+            # # ('MaxKarFiyat', 13),
+            # # ('MaxZararFiyat', 15),
+            # ('MaxZararFiyatIndex', 20),
+            # ('MaxKarFiyatIndex', 18),
+            # ('KardaBarSayisi', 16),
+            # ('ZarardaBarSayisi', 17),
         ]
 
+        # ==================================================
+        # === FIXED WIDTH MODE (elle verilen kolon genişlikleri kullanılır)
+        # ==================================================
+
+        # Tüm kolon listesi
         all_columns = main_columns + stats_columns
 
-        # ============================================================
-        # === 3) ÖZEL FLOAT FORMAT KURALLARI
-        # ============================================================
+        # ==================================================
+        # === ÖZEL FORMAT TABLOSU (kolon adına göre format)
+        # ==================================================
         special_float_formats = {
             "GetiriFiyatYuzdeNet": "{:.2f}",
             "KomisyonFiyatYuzde": "{:.2f}",
             "GetiriFiyatYuzde": "{:.2f}",
             "GetiriPuanYuzdeNet": "{:.2f}",
             "GetiriPuanYuzde": "{:.2f}",
+            # buraya istediğin kadar ekleyebilirsin
         }
 
+        # Default float format (özel format olmayanlar için)
         default_float_format = "{:.2f}"
 
-        # ============================================================
-        # === 4) FORMATLANACAK DEĞERİ ÜRETEN
-        # ============================================================
+        # ==================================================
+        # === FORMATLANACAK DEĞERİ ÜRETEN YARDIMCI
+        # ==================================================
         def get_formatted_value(col_name, val):
+            """Kolon adına göre sayı formatı uygular ve string döner."""
             if val is None:
                 return "N/A"
 
+            # önce değeri string olarak al
             s = str(val)
 
             # sayı mı?
             try:
                 fval = float(s.replace(",", "."))
+                is_number = True
             except:
-                return s  # metin
+                return s  # sayı değil → metin olarak aynen dön
 
-            # integer ise → integer yaz
+            # --- INTEGER MI? ---
             if fval.is_integer():
+                # Eğer özel format varsa integer için bile uygulayalım mı?
+                # Kullanıcı genelde istemez → integer sade yazdırılır
                 return str(int(fval))
 
-            # özel float format varsa
-            if col_name in special_float_formats:
-                return special_float_formats[col_name].format(fval)
+            # --- FLOAT İSE FORMATLA ---
 
-            # default float format
+            # özel format?
+            if col_name in special_float_formats:
+                fmt = special_float_formats[col_name]
+                return fmt.format(fval)
+
+            # default
             return default_float_format.format(fval)
 
-        # ============================================================
-        # === 5) FORMATTER (sağa/sola hizalama)
-        # ============================================================
+
+        # ==================================================
+        # === FORMATTER (sayı sağa, metin sola)
+        # ==================================================
         def format_uniform(col_name, val, width):
+            """Sayı sağa, text sola hizalanır + özel format uygulanır."""
             s = get_formatted_value(col_name, val)
 
+            # sayı mı?
             try:
                 float(s.replace(",", "."))
-                is_num = True
+                is_number = True
             except:
-                is_num = False
+                is_number = False
 
-            return f"{s:>{width}}" if is_num else f"{s:<{width}}"
+            if is_number:
+                return f"{s:>{width}}"  # sağa hizalı
+            else:
+                return f"{s:<{width}}"  # sola hizalı
 
-        # ============================================================
-        # === 6) HEADER YAZ
-        # ============================================================
-        header_parts = [f"{name:>{width}}" for name, width in all_columns]
-        file_ptr.write("  ".join(header_parts) + "\n")
+        # ==================================================
+        # === HEADER (PIPE YOK!) – TÜMÜ SAĞA YASLI
+        # ==================================================
+        if len(df) == 1:
+            header_parts = []
+            for name, width in all_columns:
+                header_parts.append(f"{name:>{width}}")
 
-        # ============================================================
-        # === 7) TÜM SATIRLARI YAZ (ARTIK last_row YOK!)
-        # ============================================================
-        for idx, row in df_sorted.iterrows():
+            header_line = "  ".join(header_parts)
+            file_ptr.write(header_line + "\n")
 
-            stats_dict = row.get("statistics", {}) if isinstance(row.get("statistics"), dict) else {}
+        # ==================================================
+        # === DATA (PIPE YOK!)
+        # ==================================================
+        values = []
 
-            parts = []
+        # MAIN
+        for name, width in main_columns:
+            val = last_row.get(name, None)
+            values.append(format_uniform(name, val, width))
 
-            # MAIN columns
-            for name, width in main_columns:
-                val = row.get(name, None)
-                parts.append(format_uniform(name, val, width))
+        # STATS
+        stats_dict = last_row.get("statistics", {})
+        for name, width in stats_columns:
+            val = stats_dict.get(name, None)
+            values.append(format_uniform(name, val, width))
 
-            # STATS columns
-            for name, width in stats_columns:
-                val = stats_dict.get(name, None)
-                parts.append(format_uniform(name, val, width))
-
-            file_ptr.write("  ".join(parts) + "\n")
-
+        # Satırı yaz
+        data_line = "  ".join(values)
+        file_ptr.write(data_line + "\n")
         file_ptr.flush()
 
-        # # ==========================================
-        # # === PUT RESULT INTO EXTERNAL HOLDER
-        # # ==========================================
-        # current_result["BakiyeFiyatNet"] = last_row.get("bakiye_fiyat_net", None)
-        # current_result["period"] = last_row.get("period", None)
-        # current_result["percent"] = last_row.get("percent", None)
-        # current_result["current_iteration"] = last_row.get("current_iteration", None)
-        # current_result["row_data"] = last_row
+        # ==========================================
+        # === PUT RESULT INTO EXTERNAL HOLDER
+        # ==========================================
+        current_result["BakiyeFiyatNet"] = last_row.get("bakiye_fiyat_net", None)
+        current_result["period"] = last_row.get("period", None)
+        current_result["percent"] = last_row.get("percent", None)
+        current_result["current_iteration"] = last_row.get("current_iteration", None)
+        current_result["row_data"] = last_row
 
     def write_detailed_optimization_summary_to_file(self, file_ptr, df: 'DataFrame'):
         """
@@ -782,23 +1210,12 @@ class AlgoTrader:
             return
 
         # ============================================================
-        # === DF'yi statistics -> BakiyeFiyatNet değerine göre sırala
+        # === 1) DF'yi BakiyeFiyatNet e göre sırala (descending)
         # ============================================================
-
-        def extract_stat(df, stat_name):
-            """statistics dict içinden bir alanı çıkarır (yoksa None döner)."""
-            return df["statistics"].apply(
-                lambda d: d.get(stat_name, None) if isinstance(d, dict) else None
-            )
-
-        # BakiyeFiyatNet'i DF içine geçici kolon olarak ekle
-        df["_BakiyeFiyatNet"] = extract_stat(df, "BakiyeFiyatNet")
-
-        # ARTIK sıralama yapılabilir
-        df_sorted = df.sort_values(by="_BakiyeFiyatNet", ascending=False)
-
-        # İstersen geçici kolonu sil
-        # df_sorted = df_sorted.drop(columns=["_BakiyeFiyatNet"])
+        if "BakiyeFiyatNet" in df.columns:
+            df_sorted = df.sort_values(by="BakiyeFiyatNet", ascending=False)
+        else:
+            df_sorted = df.copy()
 
         # ============================================================
         # === 2) Kolon tanımları (write_optimization_results_to_file_4 ile aynı)
@@ -900,44 +1317,29 @@ class AlgoTrader:
             return f"{s:>{width}}" if is_number else f"{s:<{width}}"
 
         # ============================================================
-        # === 6) HEADER SADECE 1 KERE YAZILSIN
+        # === 6) HEADER YAZ (PIPE YOK)
         # ============================================================
-
-        # Fonksiyon her çağrıldığında tekrar yazmaması için flag
-        if not hasattr(self, "_opt_header_written"):
-            self._opt_header_written = False
-
-        if not self._opt_header_written:
-            header_parts = [f"{name:>{width}}" for name, width in all_columns]
-            file_ptr.write("  ".join(header_parts) + "\n")
-            self._opt_header_written = True
+        header_parts = [f"{name:>{width}}" for name, width in all_columns]
+        header_line = "  ".join(header_parts)
+        file_ptr.write(header_line + "\n")
 
         # ============================================================
         # === 7) TÜM SATIRLARI FORMATLI YAZ
         # ============================================================
         for idx, row in df_sorted.iterrows():
-
-            # satırdaki istatistik sözlüğü
-            stats_dict = row["statistics"] if isinstance(row.get("statistics"), dict) else {}
+            stats_dict = row.get("statistics", {})
 
             parts = []
 
-            # -----------------------
-            # MAIN COLUMNS
-            # -----------------------
-            for col_name, width in main_columns:
-                val = row.get(col_name, None)
-                parts.append(format_uniform(col_name, val, width))
+            # main columns
+            for name, width in main_columns:
+                parts.append(format_uniform(name, row.get(name), width))
 
-            # -----------------------
-            # STATS COLUMNS
-            # -----------------------
-            for col_name, width in stats_columns:
-                # dictionary'den çek (yoksa None)
-                val = stats_dict.get(col_name, None)
-                parts.append(format_uniform(col_name, val, width))
+            # stats columns
+            for name, width in stats_columns:
+                val = stats_dict.get(name, None)
+                parts.append(format_uniform(name, val, width))
 
-            # satırı yaz
             file_ptr.write("  ".join(parts) + "\n")
 
         # ============================================================
@@ -947,11 +1349,18 @@ class AlgoTrader:
         # ==========================================
         # === PUT RESULT INTO EXTERNAL HOLDER
         # ==========================================
-        if "bakiye_fiyat_net" in df.columns:
+        current_result["BakiyeFiyatNet"] = last_row.get("bakiye_fiyat_net", None)
+        current_result["period"] = last_row.get("period", None)
+        current_result["percent"] = last_row.get("percent", None)
+        current_result["current_iteration"] = last_row.get("current_iteration", None)
+        current_result["row_data"] = last_row
+
+
+        if "BakiyeFiyatNet" in df.columns:
             file_ptr.write(f"Best BakiyeFiyatNet : {df['bakiye_fiyat_net'].max()}\n")
-            file_ptr.write(f"Worst BakiyeFiyatNet: {df['bakiye_fiyat_net'].min()}\n")
-            file_ptr.write(f"Average: {df['bakiye_fiyat_net'].mean():.2f}\n")
-            file_ptr.write(f"StdDev : {df['bakiye_fiyat_net'].std():.2f}\n")
+            file_ptr.write(f"Worst BakiyeFiyatNet: {df['BakiyeFiyatNet'].min()}\n")
+            file_ptr.write(f"Average: {df['BakiyeFiyatNet'].mean():.2f}\n")
+            file_ptr.write(f"StdDev : {df['BakiyeFiyatNet'].std():.2f}\n")
 
         file_ptr.write(f"Total Tests: {len(df)}\n")
         file_ptr.flush()
@@ -3496,11 +3905,7 @@ class AlgoTrader:
 
         # Write optimization results to file
         # self.write_optimization_results_to_file(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
-        f.close()
-
-        filename = os.path.join(self.mySystem.OutputsDir, "optimization_results_tabular2.txt")
-        f = open(filename, 'w', encoding='utf-8')
-        self.write_detailed_optimization_summary_to_file(f, df)
+        # self.write_detailed_optimization_summary_to_file(f, df)
 
         # # Use best parameters for final run and plotting
         # # self.Most, self.ExMov = self.calculate_most(period=best_period, percent=best_percent)
