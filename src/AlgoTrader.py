@@ -612,169 +612,349 @@ class AlgoTrader:
             f.write(data_line.rstrip() + "\n")
             f.flush()  # Force write to disk immediately
 
-    def write_optimization_results_to_file_4(self, output_dir, df : 'DataFrame', best_result, best_period, best_percent):
+    def write_optimization_results_to_file_4(self, file_ptr, df: 'DataFrame', current_result=None):
         """
-        Write complete optimization results to files using DataFrame.
-        Creates CSV and detailed text report with all metrics in tabular format.
-
-        Args:
-            output_dir: Directory to save the files
-            df: DataFrame containing all optimization results
-            best_result: Dictionary with best result metrics
-            best_period: Best period parameter
-            best_percent: Best percent parameter
+        Writes ALL rows of df to file, sorted by statistics['BakiyeFiyatNet'] descending.
+        Preserves your exact formatting system.
         """
-        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        # Ensure output directory exists
-        os.makedirs(output_dir, exist_ok=True)
+        if df.empty:
+            return
 
-        # Sort by final_balance descending to show best results first
-        df = df.sort_values('final_balance', ascending=False)
+        # ============================================================
+        # === 1) DF ROWLARINI STATISTICS["BakiyeFiyatNet"] DEĞERİNE GÖRE SIRALA
+        # ============================================================
+        def extract_bfn(row):
+            stats = row.get("statistics", {})
+            if isinstance(stats, dict):
+                return stats.get("BakiyeFiyatNet", -1e18)
+            return -1e18
 
-        # Add ranking column
-        df['rank'] = range(1, len(df) + 1)
+        df_sorted = df.copy()
+        df_sorted["__bfn__"] = df_sorted.apply(extract_bfn, axis=1)
+        df_sorted = df_sorted.sort_values(by="__bfn__", ascending=False)
+        df_sorted = df_sorted.drop(columns=["__bfn__"])
 
-        # Write to CSV
-        csv_filename = os.path.join(output_dir, f"optimization_results_detailed_{current_time}.csv")
-        df.to_csv(csv_filename, index=False)
-        print(f"Detailed optimization results saved to: {csv_filename}")
+        # ============================================================
+        # === 2) KOLON TANIMLARI (SENİN ORİJİNALİN)
+        # ============================================================
+        main_columns = [
+            ('current_iteration', 20),
+            ('period', 20),
+            ('percent', 20),
+        ]
 
-        # TODO 1: DONE - Write comprehensive text report with statistics
-        # TODO 2: DONE - Write DETAILED OPTIMIZATION REPORT from df
-        txt_filename = os.path.join(output_dir, f"optimization_report_detailed_{current_time}.txt")
-        with open(txt_filename, 'w', encoding='utf-8') as f:
-            f.write("=== DETAILED OPTIMIZATION REPORT (All Metrics) ===\n")
-            f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+        stats_columns = [
+            ('IlkBakiyeFiyat', 30),
+            ('KomisyonFiyat', 15),
+            ('GetiriFiyatNet', 16),
+            ('BakiyeFiyatNet', 16),
+            ('GetiriFiyatYuzdeNet', 21),
 
-            f.write("=== BEST RESULT (All Metrics) ===\n")
-            for key, value in best_result.items():
-                if isinstance(value, float):
-                    if 'percent' in key.lower() or 'rate' in key.lower() or 'yuzde' in key.lower():
-                        # Values are already in percent format, no need to multiply by 100
-                        f.write(f"{key}: {value:.2f}%\n")
-                    elif 'ratio' in key.lower():
-                        f.write(f"{key}: {value:.3f}\n")
-                    else:
-                        f.write(f"{key}: {value:.2f}\n")
-                else:
-                    f.write(f"{key}: {value}\n")
-            f.write("\n")
+            ('ProfitFactor', 30),
+            ('KarliIslemOrani', 17),
+            ('MaxKarFiyat', 13),
+            ('MaxZararFiyat', 15),
 
-            # TODO 1: DONE - Write statistics from df
-            f.write(f"=== STATISTICS ===\n")
-            f.write(f"Total tests run: {len(df)}\n")
-            f.write(f"Best balance: {df['final_balance'].max():.2f}\n")
-            f.write(f"Worst balance: {df['final_balance'].min():.2f}\n")
-            f.write(f"Average balance: {df['final_balance'].mean():.2f}\n")
-            f.write(f"Standard deviation: {df['final_balance'].std():.2f}\n")
-            f.write("\n")
+            ('IslemSayisi', 30),
+            ('AlisSayisi', 12),
+            ('SatisSayisi', 13),
+            ('FlatSayisi', 12),
+            ('PassSayisi', 12),
+            ('KarAlSayisi', 13),
+            ('ZararKesSayisi', 16),
 
-            # TODO 3: DONE - Write all data rows in tabular format
-            # Using similar approach from write_optimization_results_to_file_3()
-            f.write(f"=== ALL RESULTS (Tabular Format) ===\n")
+            ('KazandiranIslemSayisi', 30),
+            ('KaybettirenIslemSayisi', 23),
+            ('NotrIslemSayisi', 16),
+            ('KomisyonIslemSayisi', 21),
 
-            # Helper function to format values based on column name and type
-            def format_value(col, val):
-                """Format a value based on column name and type"""
-                if isinstance(val, float):
-                    if 'percent' in col.lower() or 'rate' in col.lower() or 'yuzde' in col.lower():
-                        # Values are already in percent format (e.g., 2.5 = 2.5%)
-                        return f"{val:.2f}"
-                    elif 'ratio' in col.lower():
-                        return f"{val:.3f}"
-                    else:
-                        return f"{val:.2f}"
-                elif isinstance(val, int):
-                    return f"{val}"
-                else:
-                    return f"{val}"
+            ('MinBakiyeFiyat', 30),
+            ('MaxBakiyeFiyat', 16),
+            ('MinBakiyeFiyatYuzde', 21),
+            ('MaxBakiyeFiyatYuzde', 21),
+            ('MinBakiyeFiyatNet', 19),
+            ('MaxBakiyeFiyatNet', 19),
+            ('MinBakiyeFiyatNetYuzde', 24),
+            ('MaxBakiyeFiyatNetYuzde', 24),
+        ]
 
-            # Get headers from DataFrame columns (convert snake_case to PascalCase)
-            headers = []
-            for col in df.columns:
-                # Convert snake_case to PascalCase
-                header = ''.join(word.capitalize() for word in col.split('_'))
-                # Special cases for display
-                if header == 'WinRate':
-                    header = 'WinRate%'
-                elif header == 'MaxDdPercent':
-                    header = 'MaxDD%'
-                elif header == 'GetiriFiyatYuzde':
-                    header = 'GetiriFiyatYuzde%'
-                elif header == 'GetiriFiyatYuzdeNet':
-                    header = 'GetiriFiyatYuzdeNet%'
-                headers.append(header)
+        all_columns = main_columns + stats_columns
 
-            # Calculate column widths based on header + estimated max value length
-            column_widths = []
-            for i, col in enumerate(df.columns):
-                # Start with header length
-                max_width = len(headers[i])
+        # ============================================================
+        # === 3) ÖZEL FLOAT FORMAT KURALLARI
+        # ============================================================
+        special_float_formats = {
+            "GetiriFiyatYuzdeNet": "{:.2f}",
+            "KomisyonFiyatYuzde": "{:.2f}",
+            "GetiriFiyatYuzde": "{:.2f}",
+            "GetiriPuanYuzdeNet": "{:.2f}",
+            "GetiriPuanYuzde": "{:.2f}",
+        }
 
-                # Estimate max data width based on column type
-                if 'iteration' in col.lower():
-                    estimated_width = 8  # e.g., "10000"
-                elif 'period' in col.lower():
-                    estimated_width = 6  # e.g., "100"
-                elif 'percent' in col.lower() or 'rate' in col.lower() or 'yuzde' in col.lower():
-                    estimated_width = 8  # e.g., "100.00"
-                elif 'ratio' in col.lower():
-                    estimated_width = 8  # e.g., "10.000"
-                elif 'rank' in col.lower():
-                    estimated_width = 6  # e.g., "1000"
-                elif col in df.columns and df[col].dtype in ['float64', 'float32']:
-                    estimated_width = 12  # e.g., "100000.00"
-                elif col in df.columns and df[col].dtype in ['int64', 'int32']:
-                    estimated_width = 10  # e.g., "100000"
-                else:
-                    estimated_width = 15  # text columns
+        default_float_format = "{:.2f}"
 
-                max_width = max(max_width, estimated_width)
+        # ============================================================
+        # === 4) FORMATLANACAK DEĞERİ ÜRETEN
+        # ============================================================
+        def get_formatted_value(col_name, val):
+            if val is None:
+                return "N/A"
 
-                # Add padding (3 spaces minimum)
-                column_widths.append(max_width + 3)
+            s = str(val)
 
-            # Write headers with calculated widths (left-aligned)
-            header_line = ""
-            for i, header in enumerate(headers):
-                header_line += header.ljust(column_widths[i])
-            f.write(header_line.rstrip() + "\n")
+            # sayı mı?
+            try:
+                fval = float(s.replace(",", "."))
+            except:
+                return s  # metin
 
-            # Write separator line
-            separator = ""
-            for width in column_widths:
-                separator += "-" * width
-            f.write(separator.rstrip() + "\n")
+            # integer ise → integer yaz
+            if fval.is_integer():
+                return str(int(fval))
 
-            # Write all data rows
-            for idx, row in df.iterrows():
-                data_line = ""
-                for i, col in enumerate(df.columns):
-                    val = row[col]
-                    formatted_val = format_value(col, val)
-                    # Right-align numbers, left-align text for better readability
-                    if isinstance(val, (int, float)):
-                        data_line += formatted_val.ljust(column_widths[i])
-                    else:
-                        data_line += formatted_val.rjust(column_widths[i])
+            # özel float format varsa
+            if col_name in special_float_formats:
+                return special_float_formats[col_name].format(fval)
 
-                f.write(data_line.rstrip() + "\n")
+            # default float format
+            return default_float_format.format(fval)
 
-        print(f"Detailed optimization report saved to: {txt_filename}")
+        # ============================================================
+        # === 5) FORMATTER (sağa/sola hizalama)
+        # ============================================================
+        def format_uniform(col_name, val, width):
+            s = get_formatted_value(col_name, val)
 
-        # TODO 4: DONE - Print summary to console using df
-        print(f"\n=== DETAILED OPTIMIZATION SUMMARY ===")
-        print(f"Best Period: {best_period}")
-        print(f"Best Percent: {best_percent}")
-        print(f"Best Final Balance: {best_result['final_balance']:.2f}")
-        print(f"Total Tests: {len(df)}")
-        print(f"Average Balance: {df['final_balance'].mean():.2f}")
-        print(f"Results saved to: {output_dir}")
+            try:
+                float(s.replace(",", "."))
+                is_num = True
+            except:
+                is_num = False
 
+            return f"{s:>{width}}" if is_num else f"{s:<{width}}"
 
+        # ============================================================
+        # === 6) HEADER YAZ
+        # ============================================================
+        header_parts = [f"{name:>{width}}" for name, width in all_columns]
+        file_ptr.write("  ".join(header_parts) + "\n")
 
+        # ============================================================
+        # === 7) TÜM SATIRLARI YAZ (ARTIK last_row YOK!)
+        # ============================================================
+        for idx, row in df_sorted.iterrows():
 
+            stats_dict = row.get("statistics", {}) if isinstance(row.get("statistics"), dict) else {}
+
+            parts = []
+
+            # MAIN columns
+            for name, width in main_columns:
+                val = row.get(name, None)
+                parts.append(format_uniform(name, val, width))
+
+            # STATS columns
+            for name, width in stats_columns:
+                val = stats_dict.get(name, None)
+                parts.append(format_uniform(name, val, width))
+
+            file_ptr.write("  ".join(parts) + "\n")
+
+        file_ptr.flush()
+
+        # # ==========================================
+        # # === PUT RESULT INTO EXTERNAL HOLDER
+        # # ==========================================
+        # current_result["BakiyeFiyatNet"] = last_row.get("bakiye_fiyat_net", None)
+        # current_result["period"] = last_row.get("period", None)
+        # current_result["percent"] = last_row.get("percent", None)
+        # current_result["current_iteration"] = last_row.get("current_iteration", None)
+        # current_result["row_data"] = last_row
+
+    def write_detailed_optimization_summary_to_file(self, file_ptr, df: 'DataFrame'):
+        """
+        Writes the FULL optimization table + summary statistics.
+        Uses same formatting rules as write_optimization_results_to_file_4.
+        """
+
+        if df.empty:
+            return
+
+        # ============================================================
+        # === DF'yi statistics -> BakiyeFiyatNet değerine göre sırala
+        # ============================================================
+
+        def extract_stat(df, stat_name):
+            """statistics dict içinden bir alanı çıkarır (yoksa None döner)."""
+            return df["statistics"].apply(
+                lambda d: d.get(stat_name, None) if isinstance(d, dict) else None
+            )
+
+        # BakiyeFiyatNet'i DF içine geçici kolon olarak ekle
+        df["_BakiyeFiyatNet"] = extract_stat(df, "BakiyeFiyatNet")
+
+        # ARTIK sıralama yapılabilir
+        df_sorted = df.sort_values(by="_BakiyeFiyatNet", ascending=False)
+
+        # İstersen geçici kolonu sil
+        # df_sorted = df_sorted.drop(columns=["_BakiyeFiyatNet"])
+
+        # ============================================================
+        # === 2) Kolon tanımları (write_optimization_results_to_file_4 ile aynı)
+        # ============================================================
+        main_columns = [
+            ('current_iteration', 20),
+            ('period', 20),
+            ('percent', 20),
+        ]
+
+        stats_columns = [
+            ('IlkBakiyeFiyat', 30),
+            ('KomisyonFiyat', 15),
+            ('GetiriFiyatNet', 16),
+            ('BakiyeFiyatNet', 16),
+            ('GetiriFiyatYuzdeNet', 21),
+
+            ('ProfitFactor', 30),
+            ('KarliIslemOrani', 17),
+            ('MaxKarFiyat', 13),
+            ('MaxZararFiyat', 15),
+
+            ('IslemSayisi', 30),
+            ('AlisSayisi', 12),
+            ('SatisSayisi', 13),
+            ('FlatSayisi', 12),
+            ('PassSayisi', 12),
+            ('KarAlSayisi', 13),
+            ('ZararKesSayisi', 16),
+
+            ('KazandiranIslemSayisi', 30),
+            ('KaybettirenIslemSayisi', 23),
+            ('NotrIslemSayisi', 16),
+            ('KomisyonIslemSayisi', 21),
+
+            ('MinBakiyeFiyat', 30),
+            ('MaxBakiyeFiyat', 16),
+            ('MinBakiyeFiyatYuzde', 21),
+            ('MaxBakiyeFiyatYuzde', 21),
+            ('MinBakiyeFiyatNet', 19),
+            ('MaxBakiyeFiyatNet', 19),
+            ('MinBakiyeFiyatNetYuzde', 24),
+            ('MaxBakiyeFiyatNetYuzde', 24),
+        ]
+
+        all_columns = main_columns + stats_columns
+
+        # ============================================================
+        # === 3) Özel formatlar
+        # ============================================================
+        special_float_formats = {
+            "GetiriFiyatYuzdeNet": "{:.2f}",
+            "KomisyonFiyatYuzde": "{:.2f}",
+            "GetiriFiyatYuzde": "{:.2f}",
+            "GetiriPuanYuzdeNet": "{:.2f}",
+            "GetiriPuanYuzde": "{:.2f}",
+        }
+
+        default_float_format = "{:.2f}"
+
+        # ============================================================
+        # === 4) Değer formatlayıcı
+        # ============================================================
+        def get_formatted_value(col_name, val):
+            if val is None:
+                return "N/A"
+
+            s = str(val)
+
+            # sayı mı?
+            try:
+                fval = float(s.replace(",", "."))
+            except:
+                return s  # metin
+
+            # integer mi?
+            if fval.is_integer():
+                return str(int(fval))
+
+            # özel float format?
+            if col_name in special_float_formats:
+                return special_float_formats[col_name].format(fval)
+
+            return default_float_format.format(fval)
+
+        # ============================================================
+        # === 5) Hizalama fonksiyonu
+        # ============================================================
+        def format_uniform(col_name, value, width):
+            s = get_formatted_value(col_name, value)
+
+            # sayı mı?
+            try:
+                float(s.replace(",", "."))
+                is_number = True
+            except:
+                is_number = False
+
+            return f"{s:>{width}}" if is_number else f"{s:<{width}}"
+
+        # ============================================================
+        # === 6) HEADER SADECE 1 KERE YAZILSIN
+        # ============================================================
+
+        # Fonksiyon her çağrıldığında tekrar yazmaması için flag
+        if not hasattr(self, "_opt_header_written"):
+            self._opt_header_written = False
+
+        if not self._opt_header_written:
+            header_parts = [f"{name:>{width}}" for name, width in all_columns]
+            file_ptr.write("  ".join(header_parts) + "\n")
+            self._opt_header_written = True
+
+        # ============================================================
+        # === 7) TÜM SATIRLARI FORMATLI YAZ
+        # ============================================================
+        for idx, row in df_sorted.iterrows():
+
+            # satırdaki istatistik sözlüğü
+            stats_dict = row["statistics"] if isinstance(row.get("statistics"), dict) else {}
+
+            parts = []
+
+            # -----------------------
+            # MAIN COLUMNS
+            # -----------------------
+            for col_name, width in main_columns:
+                val = row.get(col_name, None)
+                parts.append(format_uniform(col_name, val, width))
+
+            # -----------------------
+            # STATS COLUMNS
+            # -----------------------
+            for col_name, width in stats_columns:
+                # dictionary'den çek (yoksa None)
+                val = stats_dict.get(col_name, None)
+                parts.append(format_uniform(col_name, val, width))
+
+            # satırı yaz
+            file_ptr.write("  ".join(parts) + "\n")
+
+        # ============================================================
+        # === 8) SUMMARY STATISTICS (en alta yaz)
+        # ============================================================
+        file_ptr.write("\n=== SUMMARY ===\n")
+        # ==========================================
+        # === PUT RESULT INTO EXTERNAL HOLDER
+        # ==========================================
+        if "bakiye_fiyat_net" in df.columns:
+            file_ptr.write(f"Best BakiyeFiyatNet : {df['bakiye_fiyat_net'].max()}\n")
+            file_ptr.write(f"Worst BakiyeFiyatNet: {df['bakiye_fiyat_net'].min()}\n")
+            file_ptr.write(f"Average: {df['bakiye_fiyat_net'].mean():.2f}\n")
+            file_ptr.write(f"StdDev : {df['bakiye_fiyat_net'].std():.2f}\n")
+
+        file_ptr.write(f"Total Tests: {len(df)}\n")
+        file_ptr.flush()
 
 
 
@@ -863,10 +1043,13 @@ class AlgoTrader:
         ]
         print("\t".join(values))
 
+    def print_current_result_4(self, result):
+        pass
+
     def loadMarketData(self):
 
-        filePath             = "C:\\data\\csvFiles\\VIP\\01\\VIP-X030-T.csv"
         filePath             = "C:\\data\\VIP-X030-T\\VIP'VIP-X030-T_1.csv"
+        filePath             = "C:\\data\\csvFiles\\VIP\\01\\VIP-X030-T.csv"
         dirName              = os.path.dirname(filePath)
         fileName             = os.path.basename(filePath)
         name_no_ext, ext     = os.path.splitext(fileName)
@@ -3230,9 +3413,11 @@ class AlgoTrader:
         print("=" * 50)        
 
         # --------------------------------------------------------------
+        current_result = {}
         best_result = None
         best_period = None
         best_percent = None
+        best_iteration = None
         optimization_results = []
 
         skip_iteration_enabled = True   # if resume, this flag must be set
@@ -3240,6 +3425,10 @@ class AlgoTrader:
 
         # --------------------------------------------------------------
         df = pd.DataFrame() # Create DataFrame
+
+        # --------------------------------------------------------------
+        filename = os.path.join(self.mySystem.OutputsDir, "optimization_results_tabular.txt")
+        f = open(filename, 'w', encoding='utf-8')
 
         # --------------------------------------------------------------
         current_iteration = 0
@@ -3257,39 +3446,68 @@ class AlgoTrader:
                 
                 # Run trading simulation for this parameter combination
                 result = self.run_single_optimization_internal(current_iteration, period, percent)
-                optimization_results.append(result)
+                # optimization_results.append(result)
 
                 # Add result to DataFrame
                 df = pd.concat([df, pd.DataFrame([result])], ignore_index=True)
 
-                # Print current result
-                # self.print_current_result(result)
-                self.print_current_result_3(result)
-                
-                # df'nin son elemanını write_optimization_results_to_file_3 ile dosyaya yaz
-                # write_optimization_results_to_file_3() içinde First iteration ise headeri da dosyaya yaz...
-                self.write_optimization_results_to_file_3(self.mySystem.OutputsDir, df)
-                
-                # Track best result (example: highest final balance)
-                if best_result is None or result['final_balance'] > best_result['final_balance']:
-                    best_result = result
-                    best_period = period
-                    best_percent = percent
+                # # Print current result
+                # # self.print_current_result(result)
+                # # self.print_current_result_3(result)
+                # # self.print_current_result_4(result)
+                #
+                # # df'nin son elemanını write_optimization_results_to_file_3 ile dosyaya yaz
+                # # write_optimization_results_to_file_3() içinde First iteration ise headeri da dosyaya yaz...
+                #
+                current_result.clear()
+                self.write_optimization_results_to_file_4(f, df, current_result)
 
+
+                # ==========================================
+                # === BEST RESULT UPDATE (EN DOĞRUSU)
+                # ==========================================
+                bfn = current_result.get("BakiyeFiyatNet", None)
+
+                if bfn is not None:
+                    # Eğer daha önce best seçilmemişse → current best olur
+                    if best_result is None:
+                        best_result = current_result.copy()
+
+                        # BEST PARAMS SET
+                        best_iteration = current_result.get("current_iteration")
+                        best_period    = current_result.get("period")
+                        best_percent   = current_result.get("percent")
+
+                    else:
+                        best_bfn = best_result.get("BakiyeFiyatNet", None)
+
+                        # Eğer best_result'taki değer None ise veya current daha iyiyse → güncelle
+                        if best_bfn is None or bfn > best_bfn:
+                            best_result = current_result.copy()
+
+                            # BEST PARAMS SET (GÜNCELLE)
+                            best_iteration = current_result.get("current_iteration")
+                            best_period    = current_result.get("period")
+                            best_percent   = current_result.get("percent")
 
         # --------------------------------------------------------------
         print(f"\nOptimization completed!")
-        print(f"Best parameters: period={best_period}, percent={best_percent}")
-        print(f"Best result: {best_result}")
+        print(f"Best parameters: iteration={best_iteration}, period={best_period}, percent={best_percent}")
 
         # Write optimization results to file
         # self.write_optimization_results_to_file(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
-        self.write_optimization_results_to_file_4(self.mySystem.OutputsDir, df, best_result, best_period, best_percent)
+        f.close()
+
+        filename = os.path.join(self.mySystem.OutputsDir, "optimization_results_tabular2.txt")
+        f = open(filename, 'w', encoding='utf-8')
+        self.write_detailed_optimization_summary_to_file(f, df)
 
         # # Use best parameters for final run and plotting
         # # self.Most, self.ExMov = self.calculate_most(period=best_period, percent=best_percent)
         # self.Most, self.ExMov = self.indicatorManager.calculate_most(period=best_period, percent=best_percent)        
 
+        # --------------------------------------------------------------
+        f.close()
 
 
         """         
@@ -3446,9 +3664,10 @@ class AlgoTrader:
         min_bakiye_fiyat_yuzde = trader.Statistics.MinBakiyeFiyatYuzde
         max_bakiye_fiyat_yuzde = trader.Statistics.MaxBakiyeFiyatYuzde
         min_bakiye_fiyatNet_yuzde = trader.Statistics.MinBakiyeFiyatNetYuzde
-        max_bakiye_fiyatNet_yuzde = trader.Statistics.MaxBakiyeFiyatNetYuzde   
+        max_bakiye_fiyatNet_yuzde = trader.Statistics.MaxBakiyeFiyatNetYuzde
 
-        initial_balance2 = trader.Statistics.IstatistiklerNew["IlkBakiyeFiyat"].strip()
+        initial_balance2  = 0
+        # initial_balance2 = trader.Statistics.IstatistiklerNew["IlkBakiyeFiyat"].strip()
 
         # self.IstatistiklerNew["GrafikSembol"] = self.GrafikSembol
         # self.IstatistiklerNew["GrafikPeriyot"] = self.GrafikPeriyot
@@ -3710,8 +3929,8 @@ class AlgoTrader:
             "min_bakiye_fiyatNet_yuzde": min_bakiye_fiyatNet_yuzde,
             "max_bakiye_fiyatNet_yuzde": max_bakiye_fiyatNet_yuzde,
 
-            "initial_balance2": initial_balance2
-            
+            "initial_balance2": initial_balance2,
+            "statistics" : trader.Statistics.IstatistiklerNew
         }
 
     def calculate_performance_metrics(self, trader):
