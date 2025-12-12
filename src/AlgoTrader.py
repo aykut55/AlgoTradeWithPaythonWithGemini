@@ -269,349 +269,6 @@ class AlgoTrader:
             'getiri_kz_net': getiri_kz_net
         }
 
-    def write_optimization_results_to_file(self, output_dir, optimization_results, best_result, best_period, best_percent):
-        """
-        Write optimization results to multiple file formats
-        
-        Args:
-            output_dir: Directory to save the files
-            optimization_results: List of all optimization results
-            best_result: Best optimization result
-            best_period: Best period parameter
-            best_percent: Best percent parameter
-        """
-        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        # Ensure output directory exists
-        os.makedirs(output_dir, exist_ok=True)
-        
-        # Create DataFrame from results
-        import pandas as pd
-        df = pd.DataFrame(optimization_results)
-        
-        # Sort by final_balance descending to show best results first
-        df = df.sort_values('final_balance', ascending=False)
-        
-        # Add ranking column
-        df['rank'] = range(1, len(df) + 1)
-        
-        # Reorder columns
-        df = df[['rank', 'period', 'percent', 'final_balance', 'total_trades', 'profit_trades', 'loss_trades', 'win_rate']]
-        
-        # Write to CSV
-        csv_filename = os.path.join(output_dir, f"optimization_results_{current_time}.csv")
-        df.to_csv(csv_filename, index=False)
-        print(f"Optimization results saved to: {csv_filename}")
-        
-        # Write to Excel with formatting
-        try:
-            excel_filename = os.path.join(output_dir, f"optimization_results_{current_time}.xlsx")
-            with pd.ExcelWriter(excel_filename, engine='openpyxl') as writer:
-                df.to_excel(writer, sheet_name='Optimization_Results', index=False)
-                
-                # Add summary sheet
-                summary_data = {
-                    'Metric': ['Best Period', 'Best Percent', 'Best Final Balance', 'Best Total Trades', 'Best Win Rate', 
-                               'Total Tests Run', 'Worst Final Balance', 'Average Final Balance'],
-                    'Value': [best_period, best_percent, best_result['final_balance'], best_result['total_trades'], 
-                             f"{best_result['win_rate']:.2%}", len(optimization_results), df['final_balance'].min(),
-                             df['final_balance'].mean()]
-                }
-                summary_df = pd.DataFrame(summary_data)
-                summary_df.to_excel(writer, sheet_name='Summary', index=False)
-            
-            print(f"Optimization results saved to: {excel_filename}")
-        except ImportError:
-            print("openpyxl not available, Excel file not created")
-        
-        # Write detailed text report
-        txt_filename = os.path.join(output_dir, f"optimization_report_{current_time}.txt")
-        with open(txt_filename, 'w', encoding='utf-8') as f:
-            f.write("=== OPTIMIZATION REPORT ===\n")
-            f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-            
-            f.write("=== BEST RESULT ===\n")
-            f.write(f"Period: {best_period}\n")
-            f.write(f"Percent: {best_percent}\n")
-            f.write(f"Final Balance: {best_result['final_balance']:.2f}\n")
-            f.write(f"Total Trades: {best_result['total_trades']}\n")
-            f.write(f"Profit Trades: {best_result['profit_trades']}\n")
-            f.write(f"Loss Trades: {best_result['loss_trades']}\n")
-            f.write(f"Win Rate: {best_result['win_rate']:.2%}\n\n")
-            
-            f.write("=== TOP 10 RESULTS ===\n")
-            f.write(f"{'Rank':<4} {'Period':<6} {'Percent':<7} {'Balance':<12} {'Trades':<6} {'Win Rate':<8}\n")
-            f.write("-" * 50 + "\n")
-            
-            for i, row in df.head(10).iterrows():
-                f.write(f"{row['rank']:<4} {row['period']:<6} {row['percent']:<7} "
-                       f"{row['final_balance']:<12.2f} {row['total_trades']:<6} {row['win_rate']:<8.2%}\n")
-            
-            f.write(f"\n=== STATISTICS ===\n")
-            f.write(f"Total tests run: {len(optimization_results)}\n")
-            f.write(f"Best balance: {df['final_balance'].max():.2f}\n")
-            f.write(f"Worst balance: {df['final_balance'].min():.2f}\n")
-            f.write(f"Average balance: {df['final_balance'].mean():.2f}\n")
-            f.write(f"Standard deviation: {df['final_balance'].std():.2f}\n")
-            
-            f.write(f"\n=== ALL RESULTS ===\n")
-            f.write(f"{'Rank':<4} {'Period':<6} {'Percent':<7} {'Balance':<12} {'Trades':<6} {'P.Trades':<8} {'L.Trades':<8} {'Win Rate':<8}\n")
-            f.write("-" * 70 + "\n")
-            
-            for i, row in df.iterrows():
-                f.write(f"{row['rank']:<4} {row['period']:<6} {row['percent']:<7} "
-                       f"{row['final_balance']:<12.2f} {row['total_trades']:<6} {row['profit_trades']:<8} "
-                       f"{row['loss_trades']:<8} {row['win_rate']:<8.2%}\n")
-        
-        print(f"Detailed report saved to: {txt_filename}")
-
-    def write_optimization_results_to_file_2(self, output_dir, optimization_results, best_result, best_period, best_percent):
-        """
-        Write optimization results with all 23 metrics to multiple file formats
-        
-        Args:
-            output_dir: Directory to save the files
-            optimization_results: List of all optimization results with 23 metrics
-            best_result: Best optimization result
-            best_period: Best period parameter
-            best_percent: Best percent parameter
-        """
-        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        # Ensure output directory exists
-        os.makedirs(output_dir, exist_ok=True)
-        
-        # Create DataFrame from results
-        import pandas as pd
-        df = pd.DataFrame(optimization_results)
-        
-        # Sort by final_balance descending to show best results first
-        df = df.sort_values('final_balance', ascending=False)
-        
-        # Add ranking column
-        df['rank'] = range(1, len(df) + 1)
-        
-        # Reorder columns - put key metrics first
-        key_columns = ['rank', 'period', 'percent', 'final_balance', 'total_trades', 'profit_trades', 'loss_trades', 'win_rate']
-        other_columns = [col for col in df.columns if col not in key_columns]
-        df = df[key_columns + other_columns]
-        
-        # Write to CSV
-        csv_filename = os.path.join(output_dir, f"optimization_results_detailed_{current_time}.csv")
-        df.to_csv(csv_filename, index=False)
-        print(f"Detailed optimization results saved to: {csv_filename}")
-        
-        # Write to Excel with formatting
-        try:
-            excel_filename = os.path.join(output_dir, f"optimization_results_detailed_{current_time}.xlsx")
-            with pd.ExcelWriter(excel_filename, engine='openpyxl') as writer:
-                df.to_excel(writer, sheet_name='Detailed_Results', index=False)
-                
-                # Add summary sheet with more metrics
-                summary_data = {
-                    'Metric': ['Best Period', 'Best Percent', 'Best Final Balance', 'Best Total Trades', 'Best Win Rate', 
-                               'Best Profit Trades', 'Best Loss Trades', 'Best İslem Sayisi', 'Best Alis Sayisi',
-                               'Total Tests Run', 'Worst Final Balance', 'Average Final Balance'],
-                    'Value': [best_period, best_percent, best_result['final_balance'], best_result['total_trades'], 
-                             f"{best_result['win_rate']:.2%}", best_result.get('profit_trades', 'N/A'), 
-                             best_result.get('loss_trades', 'N/A'), best_result.get('islem_sayisi', 'N/A'),
-                             best_result.get('alis_sayisi', 'N/A'), len(optimization_results), 
-                             df['final_balance'].min(), df['final_balance'].mean()]
-                }
-                summary_df = pd.DataFrame(summary_data)
-                summary_df.to_excel(writer, sheet_name='Summary', index=False)
-            
-            print(f"Detailed optimization results saved to: {excel_filename}")
-        except ImportError:
-            print("openpyxl not available, Excel file not created")
-        
-        # Write comprehensive text report
-        txt_filename = os.path.join(output_dir, f"optimization_report_detailed_{current_time}.txt")
-        with open(txt_filename, 'w', encoding='utf-8') as f:
-            f.write("=== DETAILED OPTIMIZATION REPORT (23 Metrics) ===\n")
-            f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-            
-            f.write("=== BEST RESULT (All Metrics) ===\n")
-            for key, value in best_result.items():
-                if isinstance(value, float):
-                    if 'rate' in key.lower() or 'ratio' in key.lower():
-                        f.write(f"{key}: {value:.2%}\n")
-                    else:
-                        f.write(f"{key}: {value:.2f}\n")
-                else:
-                    f.write(f"{key}: {value}\n")
-            f.write("\n")
-            
-            f.write("=== TOP 10 RESULTS (Key Metrics) ===\n")
-            f.write(f"{'Rank':<4} {'Period':<6} {'Percent':<7} {'Balance':<12} {'Trades':<6} {'Win Rate':<8} {'İslem':<6} {'Alış':<6}\n")
-            f.write("-" * 65 + "\n")
-            
-            for i, row in df.head(10).iterrows():
-                islem = row.get('islem_sayisi', 'N/A')
-                alis = row.get('alis_sayisi', 'N/A')
-                f.write(f"{row['rank']:<4} {row['period']:<6} {row['percent']:<7} "
-                       f"{row['final_balance']:<12.2f} {row['total_trades']:<6} {row['win_rate']:<8.2%} "
-                       f"{islem:<6} {alis:<6}\n")
-            
-            f.write(f"\n=== STATISTICS ===\n")
-            f.write(f"Total tests run: {len(optimization_results)}\n")
-            f.write(f"Best balance: {df['final_balance'].max():.2f}\n")
-            f.write(f"Worst balance: {df['final_balance'].min():.2f}\n")
-            f.write(f"Average balance: {df['final_balance'].mean():.2f}\n")
-            f.write(f"Standard deviation: {df['final_balance'].std():.2f}\n")
-            
-            # Write all results with all columns
-            f.write(f"\n=== ALL RESULTS (All Metrics) ===\n")
-            f.write("Note: Due to large number of columns (23 metrics), see CSV/Excel files for complete tabular view\n")
-            f.write("-" * 80 + "\n")
-            
-            for i, row in df.head(20).iterrows():  # Limit to top 20 for readability
-                f.write(f"\nRank {row['rank']}: Period={row['period']}, Percent={row['percent']}\n")
-                f.write(f"  Final Balance: {row['final_balance']:.2f}\n")
-                f.write(f"  Total Trades: {row['total_trades']}, Win Rate: {row['win_rate']:.2%}\n")
-                if 'islem_sayisi' in row:
-                    f.write(f"  İslem Sayisi: {row.get('islem_sayisi', 'N/A')}, Alış Sayisi: {row.get('alis_sayisi', 'N/A')}\n")
-        
-        print(f"Detailed optimization report saved to: {txt_filename}")
-        
-        print(f"\n=== DETAILED OPTIMIZATION SUMMARY ===")
-        print(f"Best Period: {best_period}")
-        print(f"Best Percent: {best_percent}")
-        print(f"Best Final Balance: {best_result['final_balance']:.2f}")
-        print(f"Total Tests: {len(optimization_results)}")
-        print(f"Average Balance: {df['final_balance'].mean():.2f}")
-        print(f"Results saved to: {output_dir}")
-
-    def write_optimization_results_to_file_3(self, output_dir, df : 'DataFrame'):
-        """
-        Write single optimization result to file in tabular format.
-        First call creates file with header, subsequent calls append data rows.
-        Each iteration appends one row to the same file with fixed column widths.
-
-        Args:
-            output_dir: Directory to save the file
-            df: DataFrame containing optimization results
-        """
-        if df.empty:
-            return
-
-        import os
-        import json
-
-        # Ensure output directory exists
-        os.makedirs(output_dir, exist_ok=True)
-
-        # Define filename (same file for entire optimization run)
-        filename = os.path.join(output_dir, "optimization_results_tabular.txt")
-        widths_filename = os.path.join(output_dir, ".column_widths.json")
-
-        # Check if file exists - if not, write header first
-        file_exists = os.path.exists(filename)
-
-        # Helper function to format values based on column name and type
-        def format_value(col, val):
-            """Format a value based on column name and type"""
-            if isinstance(val, float):
-                if 'percent' in col.lower() or 'rate' in col.lower() or 'yuzde' in col.lower():
-                    # Values are already in percent format (e.g., 2.5 = 2.5%), no need to multiply by 100
-                    return f"{val:.2f}"
-                elif 'ratio' in col.lower():
-                    return f"{val:.3f}"
-                else:
-                    return f"{val:.2f}"
-            elif isinstance(val, int):
-                return f"{val}"
-            else:
-                return f"{val}"
-
-        # Get headers from DataFrame columns (convert snake_case to PascalCase)
-        headers = []
-        for col in df.columns:
-            # Convert snake_case to PascalCase
-            header = ''.join(word.capitalize() for word in col.split('_'))
-            # Special cases for display
-            if header == 'WinRate':
-                header = 'WinRate%'
-            elif header == 'MaxDdPercent':
-                header = 'MaxDD%'
-            elif header == 'GetiriFiyatYuzde':
-                header = 'GetiriFiyatYuzde%'
-            elif header == 'GetiriFiyatYuzdeNet':
-                header = 'GetiriFiyatYuzdeNet%'
-            headers.append(header)
-
-        # Load or calculate column widths
-        if not file_exists:
-            # First iteration - calculate column widths based on header + estimated max value length
-            column_widths = []
-            for i, col in enumerate(df.columns):
-                # Start with header length
-                max_width = len(headers[i])
-
-                # Estimate max data width based on column type
-                # For safety, use generous estimates
-                if 'iteration' in col.lower():
-                    estimated_width = 8  # e.g., "10000"
-                elif 'period' in col.lower():
-                    estimated_width = 6  # e.g., "100"
-                elif 'percent' in col.lower() or 'rate' in col.lower() or 'yuzde' in col.lower():
-                    estimated_width = 8  # e.g., "100.00"
-                elif 'ratio' in col.lower():
-                    estimated_width = 8  # e.g., "10.000"
-                elif isinstance(df.iloc[-1][col], float):
-                    estimated_width = 12  # e.g., "100000.00"
-                elif isinstance(df.iloc[-1][col], int):
-                    estimated_width = 10  # e.g., "100000"
-                else:
-                    estimated_width = 15  # text columns
-
-                max_width = max(max_width, estimated_width)
-
-                # Add padding (3 spaces minimum)
-                column_widths.append(max_width + 10)
-
-            # Save column widths to file for consistency
-            with open(widths_filename, 'w') as f:
-                json.dump(column_widths, f)
-
-            # Write header
-            with open(filename, 'w', encoding='utf-8') as f:
-                # Write headers with calculated widths (left-aligned)
-                header_line = ""
-                for i, header in enumerate(headers):
-                    header_line += header.ljust(column_widths[i])
-                f.write(header_line.rstrip() + "\n")
-
-                # Write separator line
-                separator = ""
-                for width in column_widths:
-                    separator += "-" * width
-                f.write(separator.rstrip() + "\n")
-        else:
-            # Load column widths from file for consistency
-            try:
-                with open(widths_filename, 'r') as f:
-                    column_widths = json.load(f)
-            except:
-                # Fallback: recalculate if widths file is missing
-                column_widths = [max(len(headers[i]), 15) + 3 for i in range(len(headers))]
-
-        # Append last row of DataFrame (every iteration)
-        last_row = df.iloc[-1]
-        with open(filename, 'a', encoding='utf-8') as f:
-            data_line = ""
-            for i, col in enumerate(df.columns):
-                val = last_row[col]
-                formatted_val = format_value(col, val)
-                # Right-align numbers, left-align text for better readability
-                if isinstance(val, (int, float)):
-                    data_line += formatted_val.ljust(column_widths[i])
-                else:
-                    data_line += formatted_val.rjust(column_widths[i])
-
-            f.write(data_line.rstrip() + "\n")
-            f.flush()  # Force write to disk immediately
-
     def write_optimization_results_to_file_4(self, file_ptr,  df : 'DataFrame', current_result=None):
         """
         Write optimization results to file from DataFrame.
@@ -2083,38 +1740,7 @@ class AlgoTrader:
 
 
 
-    def print_current_result(self, result):
-        """Print current optimization result with basic metrics"""
-        print(f"  Result: Balance={result['final_balance']:.2f}, Trades={result['total_trades']}, Win Rate={result['win_rate']:.2%}")
 
-    def print_current_result_2(self, result):
-        """Print current optimization result with all 23 metrics"""
-        print(f"  Detailed Result:")
-        print(f"    Period={result['period']}, Percent={result['percent']}")
-        print(f"    Final Balance: {result['final_balance']:.2f}")
-        print(f"    Total Trades: {result['total_trades']}, Profit: {result['profit_trades']}, Loss: {result['loss_trades']}")
-        print(f"    Win Rate: {result['win_rate']:.2%}")
-        
-        # Print additional metrics if available
-        print(f"    İslem Sayisi: {result.get('islem_sayisi', 'N/A')}, Alış Sayisi: {result.get('alis_sayisi', 'N/A')}")
-        print(f"    Satış Sayisi: {result.get('satis_sayisi', 'N/A')}, Net Kar: {result.get('net_kar', 'N/A')}")
-        print(f"    Toplam Komisyon: {result.get('komisyon_fiyat', 'N/A'):.2f}")
-        print(f"    Max Kar: {result.get('max_kar', 'N/A'):.2f}")
-        print(f"    Max Zarar: {result.get('max_zarar', 'N/A'):.2f}")
-        print(f"    Max DD: {result.get('max_dd', 'N/A'):.2f}, Max DD %: {result.get('max_dd_percent', 'N/A'):.2%}")
-        print(f"    Sharpe Ratio: {result.get('sharpe_ratio', 'N/A'):.3f}, Sortino Ratio: {result.get('sortino_ratio', 'N/A'):.3f}")
-                    
-        # Print remaining metrics if they exist
-        metrics_to_skip = {'period', 'percent', 'final_balance', 'total_trades', 'profit_trades', 'loss_trades', 
-                          'win_rate', 'islem_sayisi', 'alis_sayisi', 'satis_sayisi', 'net_kar', 'toplam_komisyon',
-                          'max_kar', 'max_zarar', 'max_dd', 'max_dd_percent', 'sharpe_ratio', 'sortino_ratio'}
-        
-        other_metrics = {k: v for k, v in result.items() if k not in metrics_to_skip}
-        if other_metrics:
-            # print(f"    Other metrics: {other_metrics}")
-            pass
-
-    def print_current_result_3(self, result):
         """Print current optimization result in tabular format (DataFrame-like)"""
 
         # Header'ı sadece bir kere yazdır (ilk koşumda)
@@ -2166,9 +1792,6 @@ class AlgoTrader:
             f"{result.get('sortino_ratio', 0):.3f}"
         ]
         print("\t".join(values))
-
-    def print_current_result_4(self, result):
-        pass
 
     def loadMarketData(self):
 
@@ -4545,7 +4168,7 @@ class AlgoTrader:
         optimization_results = []
 
         skip_iteration_enabled = True   # if resume, this flag must be set
-        skip_iteration = 200            # up to this iteration, the execution will be skipped
+        skip_iteration = 0            # up to this iteration, the execution will be skipped
 
         # --------------------------------------------------------------
         df = pd.DataFrame() # Create DataFrame
@@ -4570,36 +4193,26 @@ class AlgoTrader:
                     f"({progress_percent:6.2f}%) "
                     f"Testing period={period:<3} percent={percent:<5}"
                 )
+                
+                console_msg = base_msg
 
                 # --- Simülasyonu çalıştır ---
                 result = self.run_single_optimization_internal(current_iteration, period, percent)
                 # statistics = result["statistics"]
-
+                """                 """
                 # --- DataFrame’e ekle ---
                 df = pd.concat([df, pd.DataFrame([result])], ignore_index=True)
 
                 # --- DataFrame çıktısını hazırla ---
                 _, data_line = self.print_data_frame(df)
-
-                # --- Gerekirse tek print ile yaz ---
-                console_msg = base_msg
                 if data_line:
                     console_msg = base_msg + " | " + data_line
-                    print(console_msg)
 
+                print(console_msg)
 
-
-                # # Print current result
-                # # self.print_current_result(result)
-                # # self.print_current_result_3(result)
-                # # self.print_current_result_4(result)
-                #
-                # # df'nin son elemanını write_optimization_results_to_file_3 ile dosyaya yaz
-                # # write_optimization_results_to_file_3() içinde First iteration ise headeri da dosyaya yaz...
-                #
+           
                 current_result.clear()
                 self.write_optimization_results_to_file_4(f, df, current_result)
-
 
                 # ==========================================
                 # === BEST RESULT UPDATE (EN DOĞRUSU)
@@ -5145,150 +4758,6 @@ class AlgoTrader:
             return 0.0
         return (mean_return - target_return) / downside_std
 
-
-
-
-
-    def run_optimization_with_single_trader_ESKISI(self):
-        # --------------------------------------------------------------
-        # Read market data (equivalent to .GrafikVerileri operations)
-        print("Loading market data...")
-        self.loadMarketData()
-        # self.loadMarketDataFromSqliteDB()
-
-        # --------------------------------------------------------------
-        # Create level series
-        self.LevelUp4 = self.create_level_series(self.BarCount, 6000)
-        self.LevelUp3 = self.create_level_series(self.BarCount, 5750)
-        self.LevelUp2 = self.create_level_series(self.BarCount, 5500)
-        self.LevelUp1 = self.create_level_series(self.BarCount, 5250)
-
-        self.Level = self.create_level_series(self.BarCount, 5000)
-
-        self.LevelDown1 = self.create_level_series(self.BarCount, 4750)
-        self.LevelDown2 = self.create_level_series(self.BarCount, 4500)
-        self.LevelDown3 = self.create_level_series(self.BarCount, 4250)
-        self.LevelDown4 = self.create_level_series(self.BarCount, 4000)
-
-        self.LevelZero = self.create_level_series(self.BarCount, 0)
-
-        # --------------------------------------------------------------
-        self.mySystem.create_modules().initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
-
-        self.mySystem.GrafikSembol = "BTCUSD"
-        self.mySystem.GrafikPeriyot = "01"
-        self.mySystem.SistemAdi = "my_sistem_01"
-
-        self.mySystem.reset()
-        self.mySystem.initialize_params_with_defaults()
-
-        # --------------------------------------------------------------
-        self.indicatorManager = self.mySystem.myIndicators
-
-        # --------------------------------------------------------------
-        # enable for single run
-        self.mySystem.set_params_for_single_run()
-        self.mySystem.clear_input_params()
-        self.mySystem.set_input_params(0, "Simple")
-        self.mySystem.set_input_params(1, "8")
-        self.mySystem.set_input_params(2, "13")
-        self.mySystem.set_input_params(3, "21")
-        self.mySystem.set_input_params(4, "50")
-        self.mySystem.set_input_params(5, "100")
-        self.mySystem.set_input_params(5, "200")
-
-        # enable for optimization
-        self.mySystem.set_params_for_optimizasyon()
-        self.mySystem.clear_input_params()
-        self.mySystem.set_input_params(0, "Simple")
-        self.mySystem.set_input_params(1, "8")
-        self.mySystem.set_input_params(2, "13")
-        self.mySystem.set_input_params(3, "21")
-        self.mySystem.set_input_params(4, "50")
-        self.mySystem.set_input_params(5, "100")
-        self.mySystem.set_input_params(5, "200")
-
-        persistentIndicatorManager = CIndicatorManager()
-        persistentIndicatorManager.reset()
-        persistentIndicatorManager.initialize(self.EpochTime, self.DateTime, self.Date, self.Time, self.Open, self.High, self.Low, self.Close, self.Volume, self.Lot)
-        self.Most, self.ExMov = persistentIndicatorManager.calculate_most(period=21, percent=2)
-
-        # # enable to create configFile (only once), then disable
-        # configFileName = "config.txt"
-        # configFilePath = os.path.join(self.mySystem.InputsDir, configFileName)
-        # self.create_config_file(configFilePath)
-        #
-        # # configFile must be prepared, already
-        # self.mySystem.read_params_from_file(configFilePath).update_sistem_parametreleri()
-
-        # Parameter scanning for period and percent
-        # period_values = [8, 13, 21, 34, 50]  # Different period values to test
-        # percent_values = [0.5, 1.0, 1.5, 2.0, 2.5]  # Different percent values to test
-        #         veya asagidaki gibi kullanim
-        # Parameter scanning for period and percent
-        period_start = 8
-        period_end = 50
-        period_increment = 1
-        
-        percent_start = 0.5
-        percent_end = 2.5
-        percent_increment = 0.5
-        
-        best_result = None
-        best_period = None
-        best_percent = None
-        optimization_results = []
-        
-        # Generate period values using range
-        period_values = list(range(period_start, period_end + 1, period_increment))
-        
-        # Generate percent values using increment
-        percent_values = []
-        current_percent = percent_start
-        while current_percent <= percent_end:
-            percent_values.append(round(current_percent, 1))  # Round to avoid floating point issues
-            current_percent += percent_increment
-        
-        print(f"Period values to test: {period_values}")
-        print(f"Percent values to test: {percent_values}")
-        total_combinations = len(period_values) * len(percent_values)
-        print(f"Total combinations: {total_combinations}")
-        print("=" * 50)
-
-        current_iteration = 0
-        for period in period_values:
-            for percent in percent_values:
-                current_iteration += 1
-                progress_percent = (current_iteration / total_combinations) * 100
-                print(f"[{current_iteration}/{total_combinations}] ({progress_percent:.1f}%) Testing period={period}, percent={percent}")
-                
-                # Run trading simulation for this parameter combination
-                result = self.run_single_optimization_test(period, percent)
-                optimization_results.append(result)
-                
-                # Print current result
-                # self.print_current_result(result)
-                self.print_current_result_3(result)
-                
-                # Track best result (example: highest final balance)
-                if best_result is None or result['final_balance'] > best_result['final_balance']:
-                    best_result = result
-                    best_period = period
-                    best_percent = percent
-        
-        print(f"\nOptimization completed!")
-        print(f"Best parameters: period={best_period}, percent={best_percent}")
-        print(f"Best result: {best_result}")
-        
-        # Write optimization results to file
-        # self.write_optimization_results_to_file(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
-        self.write_optimization_results_to_file_2(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
-
-        # Use best parameters for final run and plotting
-        # self.Most, self.ExMov = self.calculate_most(period=best_period, percent=best_percent)
-        self.Most, self.ExMov = self.indicatorManager.calculate_most(period=best_period, percent=best_percent)
-
-        return 0 
 
     def get_horizontal_levels(self):
         """
