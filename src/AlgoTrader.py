@@ -1200,22 +1200,25 @@ class AlgoTrader:
         current_result["current_iteration"] = last_row.get("current_iteration", None)
         current_result["row_data"] = last_row
 
-    def write_detailed_optimization_summary_to_file(self, file_ptr, df: 'DataFrame'):
+    def write_detailed_optimization_summary_to_file(self, file_ptr, df: 'DataFrame', sort_column: str = "bakiye_fiyat_net"):
         """
         Writes the FULL optimization table + summary statistics.
         Uses same formatting rules as write_optimization_results_to_file_4.
+
+        Args:
+            file_ptr: File pointer to write to
+            df: DataFrame containing optimization results
+            sort_column: Column name to sort by (descending). Default is "bakiye_fiyat_net"
         """
 
         if df.empty:
             return
 
-        # TODO 1523 : "bakiye_fiyat_net" arg olarak geçir...Farklı colonları da sıralamak isteyebilirim.,
-        # Fonksiyonu cağırıken kullanıcı bunu setler..
         # ============================================================
-        # === 1) DF'yi bakiye_fiyat_net e göre sırala (descending)
+        # === 1) DF'yi belirlenen kolona göre sırala (descending)
         # ============================================================
-        if "bakiye_fiyat_net" in df.columns:
-            df_sorted = df.sort_values(by="bakiye_fiyat_net", ascending=False)
+        if sort_column in df.columns:
+            df_sorted = df.sort_values(by=sort_column, ascending=False)
         else:
             df_sorted = df.copy()
 
