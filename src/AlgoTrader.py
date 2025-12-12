@@ -1209,11 +1209,13 @@ class AlgoTrader:
         if df.empty:
             return
 
+        # TODO 1523 : "bakiye_fiyat_net" arg olarak geçir...Farklı colonları da sıralamak isteyebilirim.,
+        # Fonksiyonu cağırıken kullanıcı bunu setler..
         # ============================================================
-        # === 1) DF'yi BakiyeFiyatNet e göre sırala (descending)
+        # === 1) DF'yi bakiye_fiyat_net e göre sırala (descending)
         # ============================================================
-        if "BakiyeFiyatNet" in df.columns:
-            df_sorted = df.sort_values(by="BakiyeFiyatNet", ascending=False)
+        if "bakiye_fiyat_net" in df.columns:
+            df_sorted = df.sort_values(by="bakiye_fiyat_net", ascending=False)
         else:
             df_sorted = df.copy()
 
@@ -1346,23 +1348,59 @@ class AlgoTrader:
         # === 8) SUMMARY STATISTICS (en alta yaz)
         # ============================================================
         file_ptr.write("\n=== SUMMARY ===\n")
-        # ==========================================
-        # === PUT RESULT INTO EXTERNAL HOLDER
-        # ==========================================
-        current_result["BakiyeFiyatNet"] = last_row.get("bakiye_fiyat_net", None)
-        current_result["period"] = last_row.get("period", None)
-        current_result["percent"] = last_row.get("percent", None)
-        current_result["current_iteration"] = last_row.get("current_iteration", None)
-        current_result["row_data"] = last_row
+        file_ptr.write(f"Total Tests: {len(df_sorted)}\n")
 
+        # Best params (TODO 1524 - DONE)
+        if len(df_sorted) > 0:
+            best_row = df_sorted.iloc[0]
+            file_ptr.write("\n--- Best Params ---\n")
 
-        if "BakiyeFiyatNet" in df.columns:
-            file_ptr.write(f"Best BakiyeFiyatNet : {df['bakiye_fiyat_net'].max()}\n")
-            file_ptr.write(f"Worst BakiyeFiyatNet: {df['BakiyeFiyatNet'].min()}\n")
-            file_ptr.write(f"Average: {df['BakiyeFiyatNet'].mean():.2f}\n")
-            file_ptr.write(f"StdDev : {df['BakiyeFiyatNet'].std():.2f}\n")
+            if "current_iteration" in best_row:
+                file_ptr.write(f"Current Iteration: {best_row['current_iteration']}\n")
+            if "period" in best_row:
+                file_ptr.write(f"Period           : {best_row['period']}\n")
+            if "percent" in best_row:
+                file_ptr.write(f"Percent          : {best_row['percent']}\n")
 
-        file_ptr.write(f"Total Tests: {len(df)}\n")
+        if "bakiye_fiyat_net" in df_sorted.columns:
+            # NaN değerleri çıkar ve istatistikleri hesapla
+            bakiye_net_values = df_sorted['bakiye_fiyat_net'].dropna()
+
+            if len(bakiye_net_values) > 0:
+                file_ptr.write(f"Best BakiyeFiyatNet   : {bakiye_net_values.max():.2f}\n")
+                file_ptr.write(f"Worst BakiyeFiyatNet  : {bakiye_net_values.min():.2f}\n")
+                file_ptr.write(f"Average BakiyeFiyatNet: {bakiye_net_values.mean():.2f}\n")
+
+                if len(bakiye_net_values) > 1:
+                    file_ptr.write(f"StdDev BakiyeFiyatNet : {bakiye_net_values.std():.2f}\n")
+                else:
+                    file_ptr.write(f"StdDev BakiyeFiyatNet : N/A (insufficient data)\n")
+            else:
+                file_ptr.write("No valid BakiyeFiyatNet values found\n")
+
+        # Best Result Details (TODO 1525 - DONE)
+        if len(df_sorted) > 0:
+            best_row = df_sorted.iloc[0]
+            file_ptr.write("\n--- Best Result Details ---\n")
+
+            # Main columns
+            for col_name in df_sorted.columns:
+                if col_name == "statistics":
+                    continue  # Skip statistics, we'll handle it separately
+
+                value = best_row[col_name]
+                formatted_value = get_formatted_value(col_name, value)
+                file_ptr.write(f"{col_name:30}: {formatted_value}\n")
+
+            # Statistics dictionary
+            stats_dict = best_row.get("statistics", {})
+            if stats_dict:
+                file_ptr.write("\n--- Best Result Statistics ---\n")
+                for stat_name, stat_value in stats_dict.items():
+                    formatted_value = get_formatted_value(stat_name, stat_value)
+                    file_ptr.write(f"{stat_name:30}: {formatted_value}\n")
+
+        file_ptr.write("\n")
         file_ptr.flush()
 
 
@@ -1457,8 +1495,8 @@ class AlgoTrader:
 
     def loadMarketData(self):
 
-        filePath             = "C:\\data\\VIP-X030-T\\VIP'VIP-X030-T_1.csv"
         filePath             = "C:\\data\\csvFiles\\VIP\\01\\VIP-X030-T.csv"
+        filePath             = "C:\\data\\VIP-X030-T\\VIP'VIP-X030-T_1.csv"
         dirName              = os.path.dirname(filePath)
         fileName             = os.path.basename(filePath)
         name_no_ext, ext     = os.path.splitext(fileName)
@@ -3900,12 +3938,22 @@ class AlgoTrader:
                             best_percent   = current_result.get("percent")
 
         # --------------------------------------------------------------
+        f.close()
+
+        # --------------------------------------------------------------
         print(f"\nOptimization completed!")
         print(f"Best parameters: iteration={best_iteration}, period={best_period}, percent={best_percent}")
 
+        # --------------------------------------------------------------
+        filename = os.path.join(self.mySystem.OutputsDir, "optimization_results_tabular2.txt")
+        f = open(filename, 'w', encoding='utf-8')
+
         # Write optimization results to file
         # self.write_optimization_results_to_file(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
-        # self.write_detailed_optimization_summary_to_file(f, df)
+        self.write_detailed_optimization_summary_to_file(f, df)
+
+        # --------------------------------------------------------------
+        f.close()
 
         # # Use best parameters for final run and plotting
         # # self.Most, self.ExMov = self.calculate_most(period=best_period, percent=best_percent)
@@ -4335,7 +4383,7 @@ class AlgoTrader:
             "max_bakiye_fiyatNet_yuzde": max_bakiye_fiyatNet_yuzde,
 
             "initial_balance2": initial_balance2,
-            "statistics" : trader.Statistics.IstatistiklerNew
+            "statistics" : trader.Statistics.IstatistiklerNew.copy()
         }
 
     def calculate_performance_metrics(self, trader):
