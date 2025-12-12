@@ -1406,7 +1406,94 @@ class AlgoTrader:
         file_ptr.write("\n")
         file_ptr.flush()
 
+    def write_data_frame_column_names_to_file(self, file_ptr, df: 'DataFrame'):
+        """
+        DataFrame'deki tüm kolon isimlerini ve nested dictionary'lerdeki key'leri dosyaya yazar.
+        Bu fonksiyon, write_detailed_optimization_summary_to_file() metoduna hangi sort_column
+        değerini geçirmek gerektiğini anlamak için kullanılır.
 
+        Args:
+            file_ptr: Açık dosya pointer'ı
+            df: Pandas DataFrame
+        """
+        if df.empty:
+            file_ptr.write("DataFrame is empty!\n")
+            return
+
+        file_ptr.write("=" * 80 + "\n")
+        file_ptr.write("DATAFRAME COLUMN NAMES AND STRUCTURE\n")
+        file_ptr.write("=" * 80 + "\n\n")
+
+        file_ptr.write(f"Total Columns: {len(df.columns)}\n")
+        file_ptr.write(f"Total Rows: {len(df)}\n\n")
+
+        file_ptr.write("-" * 80 + "\n")
+        file_ptr.write("TOP-LEVEL COLUMNS (can be used as sort_column parameter):\n")
+        file_ptr.write("-" * 80 + "\n")
+
+        # Top-level kolonları listele
+        for i, col_name in enumerate(df.columns, 1):
+            col_type = df[col_name].dtype
+
+            # İlk satırdan örnek değer al
+            sample_value = df[col_name].iloc[0] if len(df) > 0 else None
+
+            # Eğer kolondaki değer dictionary ise bunu belirt
+            is_dict = isinstance(sample_value, dict)
+
+            if is_dict:
+                file_ptr.write(f"{i:3d}. {col_name:40s} (type: {col_type}, contains: DICT)\n")
+            else:
+                file_ptr.write(f"{i:3d}. {col_name:40s} (type: {col_type})\n")
+
+        file_ptr.write("\n")
+
+        # Dictionary kolonları varsa, içeriklerini de listele
+        file_ptr.write("-" * 80 + "\n")
+        file_ptr.write("NESTED DICTIONARY KEYS (cannot be used directly as sort_column):\n")
+        file_ptr.write("-" * 80 + "\n")
+
+        dict_columns_found = False
+
+        for col_name in df.columns:
+            sample_value = df[col_name].iloc[0] if len(df) > 0 else None
+
+            if isinstance(sample_value, dict):
+                dict_columns_found = True
+                file_ptr.write(f"\nColumn: '{col_name}' contains {len(sample_value)} keys:\n")
+
+                for j, (key, value) in enumerate(sample_value.items(), 1):
+                    value_type = type(value).__name__
+                    # İlk 50 karakteri göster
+                    value_str = str(value)[:50]
+                    if len(str(value)) > 50:
+                        value_str += "..."
+
+                    file_ptr.write(f"  {j:3d}. {key:35s} = {value_str:50s} (type: {value_type})\n")
+
+        if not dict_columns_found:
+            file_ptr.write("\nNo nested dictionaries found in DataFrame columns.\n")
+
+        file_ptr.write("\n")
+        file_ptr.write("=" * 80 + "\n")
+        file_ptr.write("USAGE EXAMPLES:\n")
+        file_ptr.write("=" * 80 + "\n")
+        file_ptr.write("\n# Sort by top-level columns (recommended):\n")
+
+        # Numeric kolonları bul ve örnek göster
+        numeric_cols = []
+        for col_name in df.columns:
+            if df[col_name].dtype in ['int64', 'float64'] and not isinstance(df[col_name].iloc[0], dict):
+                numeric_cols.append(col_name)
+
+        for col_name in numeric_cols[:5]:  # İlk 5 numeric kolon
+            file_ptr.write(f'self.write_detailed_optimization_summary_to_file(f, df, sort_column="{col_name}")\n')
+
+        file_ptr.write("\n# Note: Dictionary keys (like 'statistics' contents) cannot be used directly.\n")
+        file_ptr.write("# You must first add them as top-level DataFrame columns.\n")
+
+        file_ptr.write("\n")
+        file_ptr.flush()
 
 
     def print_current_result(self, result):
@@ -3948,16 +4035,21 @@ class AlgoTrader:
         print(f"Best parameters: iteration={best_iteration}, period={best_period}, percent={best_percent}")
 
         # --------------------------------------------------------------
-        filename = os.path.join(self.mySystem.OutputsDir, "optimization_results_tabular2.txt")
+        # Write data frame column names to file
+        filename = os.path.join(self.mySystem.OutputsDir, "data_frame_column_names.txt")
         f = open(filename, 'w', encoding='utf-8')
-
-        # Write optimization results to file
-        # self.write_optimization_results_to_file(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
-        self.write_detailed_optimization_summary_to_file(f, df)
-
-        # --------------------------------------------------------------
+        self.write_data_frame_column_names_to_file(f, df)
         f.close()
 
+        # --------------------------------------------------------------
+        # Write optimization results to file
+        filename = os.path.join(self.mySystem.OutputsDir, "optimization_results_tabular2.txt")
+        f = open(filename, 'w', encoding='utf-8')
+        self.write_detailed_optimization_summary_to_file(f, df)
+        # self.write_optimization_results_to_file(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
+        f.close()
+        
+        # --------------------------------------------------------------
         # # Use best parameters for final run and plotting
         # # self.Most, self.ExMov = self.calculate_most(period=best_period, percent=best_percent)
         # self.Most, self.ExMov = self.indicatorManager.calculate_most(period=best_period, percent=best_percent)        
