@@ -1,0 +1,18 @@
+# Optimization Log Visualizer ve Dashboard için gerekli paketler
+
+# Veri işleme
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Görselleştirme - Temel
+plotly>=5.18.0
+
+# Dashboard - Web arayüzü
+dash>=2.14.0
+dash-bootstrap-components>=1.5.0
+
+# Opsiyonel - Statik görüntü export için
+# kaleido>=0.2.1
+
+# Opsiyonel - SQL sorguları için
+# pandasql>=0.7.3
