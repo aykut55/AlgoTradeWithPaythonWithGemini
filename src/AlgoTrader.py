@@ -1795,8 +1795,8 @@ class AlgoTrader:
 
     def loadMarketData(self):
 
-        filePath             = "C:\\data\\csvFiles\\VIP\\01\\VIP-X030-T.csv"
         filePath             = "C:\\data\\VIP-X030-T\\VIP'VIP-X030-T_1.csv"
+        filePath             = "C:\\data\\csvFiles\\VIP\\01\\VIP-X030-T.csv"
         dirName              = os.path.dirname(filePath)
         fileName             = os.path.basename(filePath)
         name_no_ext, ext     = os.path.splitext(fileName)
@@ -1804,8 +1804,8 @@ class AlgoTrader:
         norm                 = os.path.normpath(filePath)
 
         dataCount = 100_000
-        # self.dataManager.set_read_mode_all_data()
-        self.dataManager.set_read_mode_last_n(dataCount)
+        self.dataManager.set_read_mode_all_data()
+        # self.dataManager.set_read_mode_last_n(dataCount)
         # self.dataManager.set_read_mode_first_n(dataCount)
         # self.dataManager.set_read_mode_range(10000, 20000)
         # self.dataManager.set_read_mode_after_date("2024.01.01")
@@ -1815,7 +1815,7 @@ class AlgoTrader:
 
         start_time = time.time()
         self.dataManager.load_prices_from_csv_with_bar_data_reader(filePath)
-        self.dataManager.print_sample_bars(5)
+        # self.dataManager.print_sample_bars(5)
         end_time = time.time()
         elapsed_ms = (end_time - start_time) * 1000  # Saniyeyi 1000 ile çarpıp ms'ye çeviriyoruz
         # print(f"Geçen süre: {elapsed_ms:.2f} ms")
@@ -4196,129 +4196,91 @@ class AlgoTrader:
                 
                 console_msg = base_msg
 
+
                 # --- Simülasyonu çalıştır ---
+
+                start_time = time.time()
                 result = self.run_single_optimization_internal(current_iteration, period, percent)
+                end_time = time.time()
+                elapsed_ms = (end_time - start_time) * 1000  # Saniyeyi 1000 ile çarpıp ms'ye çeviriyoruz
+                # print(f"Geçen süre: {elapsed_ms:.2f} ms")
                 # statistics = result["statistics"]
-                """                 """
-                # --- DataFrame’e ekle ---
-                df = pd.concat([df, pd.DataFrame([result])], ignore_index=True)
 
-                # --- DataFrame çıktısını hazırla ---
-                _, data_line = self.print_data_frame(df)
-                if data_line:
-                    console_msg = base_msg + " | " + data_line
-
+                console_msg = base_msg + " | " + f"Geçen süre: {elapsed_ms:.2f} ms"
                 print(console_msg)
 
-           
-                current_result.clear()
-                self.write_optimization_results_to_file_4(f, df, current_result)
+                """                 """
+                # --- DataFrame’e ekle ---
+                # df = pd.concat([df, pd.DataFrame([result])], ignore_index=True)
 
-                # ==========================================
-                # === BEST RESULT UPDATE (EN DOĞRUSU)
-                # ==========================================
-                bfn = current_result.get("BakiyeFiyatNet", None)
-
-                if bfn is not None:
-                    # Eğer daha önce best seçilmemişse → current best olur
-                    if best_result is None:
-                        best_result = current_result.copy()
-
-                        # BEST PARAMS SET
-                        best_iteration = current_result.get("current_iteration")
-                        best_period    = current_result.get("period")
-                        best_percent   = current_result.get("percent")
-
-                    else:
-                        best_bfn = best_result.get("BakiyeFiyatNet", None)
-
-                        # Eğer best_result'taki değer None ise veya current daha iyiyse → güncelle
-                        if best_bfn is None or bfn > best_bfn:
-                            best_result = current_result.copy()
-
-                            # BEST PARAMS SET (GÜNCELLE)
-                            best_iteration = current_result.get("current_iteration")
-                            best_period    = current_result.get("period")
-                            best_percent   = current_result.get("percent")
-
-        # --------------------------------------------------------------
-        f.close()
-
-        # --------------------------------------------------------------
-        print(f"\nOptimization completed!")
-        print(f"Best parameters: iteration={best_iteration}, period={best_period}, percent={best_percent}")
-
-        # --------------------------------------------------------------
-        # Write data frame column names to file
-        filename = os.path.join(self.mySystem.OutputsDir, "data_frame_column_names.txt")
-        f = open(filename, 'w', encoding='utf-8')
-        self.write_data_frame_column_names_to_file(f, df)
-        f.close()
-
-        # --------------------------------------------------------------
-        # Write optimization results to file
-        filename = os.path.join(self.mySystem.OutputsDir, "optimization_results_tabular2.txt")
-        f = open(filename, 'w', encoding='utf-8')
-        self.write_detailed_optimization_summary_to_file(f, df)
-        # self.write_optimization_results_to_file(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
-        f.close()
-        
-        # --------------------------------------------------------------
-        # # Use best parameters for final run and plotting
-        # # self.Most, self.ExMov = self.calculate_most(period=best_period, percent=best_percent)
-        # self.Most, self.ExMov = self.indicatorManager.calculate_most(period=best_period, percent=best_percent)        
+                # # --- DataFrame çıktısını hazırla ---
+                # _, data_line = self.print_data_frame(df)
+                # if data_line:
+                #     console_msg = base_msg + " | " + data_line
+                #
+                # print(console_msg)
+                #
+                #
+                # current_result.clear()
+                # self.write_optimization_results_to_file_4(f, df, current_result)
+                #
+                # # ==========================================
+                # # === BEST RESULT UPDATE (EN DOĞRUSU)
+                # # ==========================================
+                # bfn = current_result.get("BakiyeFiyatNet", None)
+                #
+                # if bfn is not None:
+                #     # Eğer daha önce best seçilmemişse → current best olur
+                #     if best_result is None:
+                #         best_result = current_result.copy()
+                #
+                #         # BEST PARAMS SET
+                #         best_iteration = current_result.get("current_iteration")
+                #         best_period    = current_result.get("period")
+                #         best_percent   = current_result.get("percent")
+                #
+                #     else:
+                #         best_bfn = best_result.get("BakiyeFiyatNet", None)
+                #
+                #         # Eğer best_result'taki değer None ise veya current daha iyiyse → güncelle
+                #         if best_bfn is None or bfn > best_bfn:
+                #             best_result = current_result.copy()
+                #
+                #             # BEST PARAMS SET (GÜNCELLE)
+                #             best_iteration = current_result.get("current_iteration")
+                #             best_period    = current_result.get("period")
+                #             best_percent   = current_result.get("percent")
 
         # --------------------------------------------------------------
         f.close()
+        #
+        # # --------------------------------------------------------------
+        # print(f"\nOptimization completed!")
+        # print(f"Best parameters: iteration={best_iteration}, period={best_period}, percent={best_percent}")
+        #
+        # # --------------------------------------------------------------
+        # # Write data frame column names to file
+        # filename = os.path.join(self.mySystem.OutputsDir, "data_frame_column_names.txt")
+        # f = open(filename, 'w', encoding='utf-8')
+        # self.write_data_frame_column_names_to_file(f, df)
+        # f.close()
+        #
+        # # --------------------------------------------------------------
+        # # Write optimization results to file
+        # filename = os.path.join(self.mySystem.OutputsDir, "optimization_results_tabular2.txt")
+        # f = open(filename, 'w', encoding='utf-8')
+        # self.write_detailed_optimization_summary_to_file(f, df)
+        # # self.write_optimization_results_to_file(self.mySystem.OutputsDir, optimization_results, best_result, best_period, best_percent)
+        # f.close()
+        #
+        # # --------------------------------------------------------------
+        # # # Use best parameters for final run and plotting
+        # # # self.Most, self.ExMov = self.calculate_most(period=best_period, percent=best_percent)
+        # # self.Most, self.ExMov = self.indicatorManager.calculate_most(period=best_period, percent=best_percent)
+        #
+        # # --------------------------------------------------------------
+        # f.close()
 
-
-        """         
-        # --------------------------------------------------------------
-        print("\nInitializing strategy params...")        
-        for i in range(self.mySystem.get_trader_count()):
-            trader = self.mySystem.get_trader(i)
-            self.initialize_strategy(i, trader)
-
-        # --------------------------------------------------------------
-        print("\nRunning strategy...")                
-        self.mySystem.start()
-        for i in range(self.BarCount):
-            for j in range(self.mySystem.get_trader_count()):
-                trader = self.mySystem.get_trader(j)
-                self.run_strategy(i, trader)
-        self.mySystem.stop()
-
-        # --------------------------------------------------------------
-        print("\nGetting strategy results...")             
-        for i in range(self.mySystem.get_trader_count()):
-            trader = self.mySystem.get_trader(i)
-            self.finalize_strategy(i, trader)
-
-        # --------------------------------------------------------------
-        for i in range(self.mySystem.get_trader_count()):
-            # --------------------------------------------------------------
-            self.active_trader = self.mySystem.get_trader(i)
-            # --------------------------------------------------------------
-            print(f"\nTrader {self.active_trader.Id}...")
-            # --------------------------------------------------------------
-            print("\tGetting trade signals...")
-            self.create_trade_signals(self.active_trader)
-            # --------------------------------------------------------------
-            print("\tUpdating dataFrame...")
-            self.update_data_frame(self.active_trader)
-            # --------------------------------------------------------------
-            print("\tSaving data to files...")
-            dstDir = "."
-            # self.SavePlotData(self.active_trader, dstDir)
-            # --------------------------------------------------------------
-            print("\tPlotting market data...")
-            self.plotDataImgBundle(self.active_trader)
-
-        # --------------------------------------------------------------
-        # Show timing reports
-        self.dataManager.reportTimes()
-        self.mySystem.reportTimes() 
-        """
         return 0 
 
     def run_single_optimization_internal(self, current_iteration, period, percent):
