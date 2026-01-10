@@ -8,6 +8,9 @@ from pathlib import Path
 import shutil
 import gc  # Garbage collection için
 
+# ConfigFileConverter'ı import et
+from create_config_files_from_ideal_files import ConfigFileConverter
+
 class CsvFileConverter:
     """
     TXT dosyalarını CSV formatına dönüştüren sınıf.
@@ -495,24 +498,156 @@ class CsvFileConverter:
         self.write_final_statistics(all_symbol_groups, len(txt_files), files_created, files_skipped)
 
 
-if __name__ == "__main__":
-    # Main seviyesinde path tanımları
-    source_dir = r"D:\iDeal\ChartData\_Exports"
-    target_base_dir_csv = r"D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\data\csvFiles"
-    target_base_dir_txt = r"D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\data\txtFiles"
-    config_dir = r"D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\config"
+def show_menu():
+    """Menüyü göster"""
+    print("\n" + "="*80)
+    print("   DATA CONVERSION & CONFIG FILE MANAGER")
+    print("="*80)
+    print("\n[0] CSV Dosyalarını Oluştur (TXT -> CSV Dönüşümü)")
+    print("    TXT dosyalarını CSV formatına dönüştürür + Sembol istatistiklerini otomatik oluşturur")
+    print("\n[1] Config Dosyalarını Oluştur (iDeal Config Klasöründen)")
+    print("    parse_semboller_txt, parse_imkb_endeksler_txt,")
+    print("    parse_imkb_endeks_senetler_txt, parse_teminatlar_txt")
+    print("    (Menü 0'a bağımlı DEĞİL - iDeal/Config klasöründen okur)")
+    print("\n[2] Sembol İstatistikleri Oluştur (iDeal TXT Dosyalarından)")
+    print("    iDeal ChartData/_Exports klasöründeki TXT dosyalarından")
+    print("    (Menü 0'a bağımlı DEĞİL - iDeal TXT'lerden okur)")
+    print("\n[3] Sembol İstatistikleri Oluştur (Dönüştürülmüş CSV'lerden)")
+    print("    data/csvFiles klasöründeki CSV dosyalarından")
+    print("    (Menü 0 çalıştıktan SONRA kullanılır)")
+    print("\n[4] Sembol İstatistiklerini Göster (Menü 0'ın Otomatik Oluşturduğu)")
+    print("    En son Menü 0 çalışınca otomatik oluşan istatistik dosyalarını gösterir")
+    print("\n[5] TÜM İŞLEMLER (Menü 0 + Menü 1)")
+    print("    CSV dönüşümü + Config dosyaları oluştur")
+    print("\n[q] Çıkış")
+    print("="*80)
 
-    # CsvFileConverter instance'ı oluştur - main seviyesindeki path'leri geç
-    converter = CsvFileConverter(
-        source_dir=source_dir,
-        target_base_dir_csv=target_base_dir_csv,
-        target_base_dir_txt=target_base_dir_txt,
-        config_dir=config_dir
+
+def main():
+    """Ana menü fonksiyonu"""
+    # Path tanımları
+    csv_source_dir = r"D:\iDeal\ChartData\_Exports"
+    csv_target_base_dir_csv = r"D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\data\csvFiles"
+    csv_target_base_dir_txt = r"D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\data\txtFiles"
+    csv_config_dir = r"D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\config"
+
+    config_source_dir = r"D:\iDeal\Config"
+    config_target_dir = r"D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\config"
+    config_symbols_dir_txt_files = r"D:\iDeal\ChartData\_Exports"
+    config_symbols_dir_csv_files = r"D:\Aykut\Projects\AlgoTradeWithPaythonWithGemini\data\csvFiles"
+
+    # Converter instance'ları oluştur
+    csv_converter = CsvFileConverter(
+        source_dir=csv_source_dir,
+        target_base_dir_csv=csv_target_base_dir_csv,
+        target_base_dir_txt=csv_target_base_dir_txt,
+        config_dir=csv_config_dir
     )
 
-    # Seçenek 1: CSV dosyalarının yanına txt kopyala (None veya parametresiz)
-    # converter.convert_files(flagCopySrcFilesToDest=True)
+    config_converter = ConfigFileConverter(
+        source_dir=config_source_dir,
+        target_dir=config_target_dir,
+        symbols_dir_txt_files=config_symbols_dir_txt_files,
+        symbols_dir_csv_files=config_symbols_dir_csv_files
+    )
 
-    # Seçenek 2: Ayrı bir dizin yapısına txt kopyala
-    converter.convert_files(flagCopySrcFilesToDest=True, destDir=target_base_dir_txt)
+    while True:
+        show_menu()
+        choice = input("\nSeçiminiz: ").strip().lower()
+
+        if choice == 'q':
+            print("\nÇıkılıyor...")
+            break
+
+        elif choice == '0':
+            print("\n[0] CSV Dosyalarını Oluşturuluyor...")
+            print("-" * 80)
+            csv_converter.convert_files(
+                flagCopySrcFilesToDest=True,
+                destDir=csv_target_base_dir_txt
+            )
+            print("\n✓ CSV dönüşümü tamamlandı!")
+            input("\nDevam etmek için Enter'a basın...")
+
+        elif choice == '1':
+            print("\n[2] Config Dosyalarını Oluşturuluyor...")
+            print("-" * 80)
+            print("İşlemler:")
+            print("  1. parse_semboller_txt()")
+            print("  2. parse_imkb_endeksler_txt()")
+            print("  3. parse_imkb_endeks_senetler_txt()")
+            print("  4. parse_teminatlar_txt()")
+            print()
+
+            config_converter.parse_semboller_txt()
+            print()
+            config_converter.parse_imkb_endeksler_txt()
+            print()
+            config_converter.parse_imkb_endeks_senetler_txt()
+            print()
+            config_converter.parse_teminatlar_txt()
+
+            print("\n✓ Config dosyaları oluşturuldu!")
+            input("\nDevam etmek için Enter'a basın...")
+
+        elif choice == '2':
+            print("\n[3] Sembol İstatistikleri Oluşturuluyor (TXT Dosyalarından)...")
+            print("-" * 80)
+            config_converter.build_sembol_istatiskleri_from_txt_files()
+            print("\n✓ Sembol istatistikleri (TXT'den) oluşturuldu!")
+            input("\nDevam etmek için Enter'a basın...")
+
+        elif choice == '3':
+            print("\n[4] Sembol İstatistikleri Oluşturuluyor (CSV Dosyalarından)...")
+            print("-" * 80)
+            config_converter.build_sembol_istatiskleri_from_csv_files()
+            print("\n✓ Sembol istatistikleri (CSV'den) oluşturuldu!")
+            input("\nDevam etmek için Enter'a basın...")
+
+        elif choice == '4':
+            print("\n[1] Sembol İstatistikleri (Son CSV dönüşümünden)")
+            print("-" * 80)
+            print("Bu seçenek, en son yapılan CSV dönüşümü sırasında")
+            print("otomatik olarak oluşturulan istatistikleri gösterir.")
+            print("\nSembol istatistikleri dosyaları:")
+            print(f"  - {csv_config_dir}\\sembolIstatistikleri.csv")
+            print(f"  - {csv_config_dir}\\sembolIstatistikleri.json")
+            input("\nDevam etmek için Enter'a basın...")
+
+        elif choice == '5':
+            print("\n[5] TÜM İŞLEMLER YAPILIYOR...")
+            print("=" * 80)
+
+            # 0. CSV Dönüşümü
+            print("\n>>> [1/2] CSV Dosyaları Oluşturuluyor...")
+            print("-" * 80)
+            csv_converter.convert_files(
+                flagCopySrcFilesToDest=True,
+                destDir=csv_target_base_dir_txt
+            )
+            print("\n✓ CSV dönüşümü tamamlandı!")
+
+            # 2. Config Dosyaları
+            print("\n>>> [2/2] Config Dosyaları Oluşturuluyor...")
+            print("-" * 80)
+            config_converter.parse_semboller_txt()
+            print()
+            config_converter.parse_imkb_endeksler_txt()
+            print()
+            config_converter.parse_imkb_endeks_senetler_txt()
+            print()
+            config_converter.parse_teminatlar_txt()
+
+            print("\n" + "=" * 80)
+            print("✓ TÜM İŞLEMLER TAMAMLANDI!")
+            print("=" * 80)
+            input("\nDevam etmek için Enter'a basın...")
+
+        else:
+            print("\n⚠ Geçersiz seçim! Lütfen 0-5 arası veya 'q' girin.")
+            input("\nDevam etmek için Enter'a basın...")
+
+
+if __name__ == "__main__":
+    main()
 
