@@ -580,6 +580,56 @@ class MyCustomVisualizer:
 
         return fig
 
+    def plot_x_y(self,
+                 x: str,
+                 y: str,
+                 title: str = None,
+                 hover_cols: list = None,
+                 show: bool = True,
+                 save: bool = True):
+        """
+        Basit 2 boyutlu scatter plot (renk ve boyut olmadan)
+
+        Args:
+            x: X ekseni sütunu
+            y: Y ekseni sütunu
+            title: Grafik başlığı
+            hover_cols: Hover'da gösterilecek sütunlar (opsiyonel)
+            show: Tarayıcıda göster
+            save: HTML olarak kaydet
+
+        Returns:
+            Plotly Figure objesi
+
+        Örnekler:
+            # Örnek 1: Basit 2D plot
+            viz.plot_x_y('CombNo', 'OR_GetFyNet')
+
+            # Örnek 2: Özel başlık ile
+            viz.plot_x_y('CombNo', 'OR_GetFyNet', title='Getiri vs Kombinasyon')
+
+            # Örnek 3: Özel hover sütunları ile
+            viz.plot_x_y('CombNo', 'OR_GetFyNet',
+                        hover_cols=['CombNo', 'period', 'OR_GetFyNet', 'OR_KomFiyat'])
+        """
+        print(f"\n[MyCustomVisualizer] 2D Plot: {y} vs {x}...")
+
+        # Başlık oluştur
+        if title is None:
+            title = f"{y} vs {x}"
+
+        # plot_custom'ı çağır (color=None, size=None ile 2D plot olur)
+        return self.plot_custom(
+            x=x,
+            y=y,
+            color=None,  # Renk yok - 2D plot
+            size=None,   # Boyut yok - sabit nokta boyutu
+            hover_cols=hover_cols,
+            title=title,
+            show=show,
+            save=save
+        )
+
     def plot_x_y_z_dashboard(self,
                              plots: list,
                              title: str = "X-Y-Z Dashboard",
@@ -641,6 +691,15 @@ class MyCustomVisualizer:
             z_col = plot_info['z']
             size_ref = plot_info.get('size_ref', x_col)
 
+            # Her plot için color bar pozisyonu hesapla
+            # Subplot grid'de pozisyona göre x konumu ayarla
+            colorbar_x = 1.02 if col == cols else (col / cols) - 0.02
+
+            # Y pozisyonu: her satır için ayrı ayarla
+            subplot_height = 1.0 / rows
+            colorbar_y = 1.0 - (row - 0.5) * subplot_height
+            colorbar_len = subplot_height * 0.8  # Subplot yüksekliğinin %80'i
+
             # Scatter trace oluştur
             trace = go.Scatter(
                 x=self.df[x_col],
@@ -649,16 +708,18 @@ class MyCustomVisualizer:
                 marker=dict(
                     color=self.df[z_col],
                     colorscale='Viridis',
-                    showscale=(col == cols),  # Sadece en sağdaki plotlarda color bar göster
+                    showscale=True,  # Her plotun kendi color bar'ı
                     size=self.df[size_ref] / self.df[size_ref].max() * 20,  # Normalize size
                     opacity=0.7,
                     line=dict(width=1, color='white'),
                     colorbar=dict(
                         title=z_col,
                         thickness=10,
-                        len=0.7,
-                        x=1.0 + (col - 1) * 0.05  # Her subplot için farklı x pozisyonu
-                    ) if col == cols else None
+                        len=colorbar_len,
+                        x=colorbar_x,
+                        y=colorbar_y,
+                        yanchor='middle'
+                    )
                 ),
                 name=f"{y_col} vs {x_col}",
                 showlegend=False,

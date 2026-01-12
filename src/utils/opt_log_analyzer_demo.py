@@ -1,8 +1,10 @@
 """
 OptLogAnalyzer Örnek Kullanım ve Test Dosyası
 """
+from imgui_bundle.notebook_patch_runners import notebook_do_patch_runners_if_needed
 
 from opt_log_analyzer import OptLogAnalyzer
+from my_custom_visualizer import MyCustomVisualizer
 import os
 import pandas as pd
 
@@ -293,6 +295,125 @@ def advanced_examples():
     print(pivot_sorted)
 
     print("\n" + "=" * 80)
+
+def plot_graphs(viz : MyCustomVisualizer):
+
+    # 8.2: OR_GetFyt (x), period (y), percent (renk)
+    print("\n[8.1] X=OR_GetFiyat, Y=period, Color=percent")
+    viz.plot_x_y_z(
+        x='OR_GetFiyat',
+        y='period',
+        z='percent',
+        title='Getiri vs Period (Percent ile renkli)',
+        size_ref='OR_GetFiyat',
+        show=True,
+        save=True
+    )
+
+    # 8.3: OR_GetFyt (x), period (y), percent (renk)
+    print("\n[8.3] X=CombNo, Y=OR_GetFyNet, Color=OR_KomFiyat")
+    viz.plot_x_y_z(
+        x='CombNo',
+        y='OR_GetFyNet',
+        z='OR_KomFiyat',
+        title='CombNo vs Getiri (Komisyon ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    # 8.3: OR_GetFyt (x), period (y), percent (renk)
+    print("\n[8.3] X=CombNo, Y=OR_Islem, Color=OR_GetFyNet")
+    viz.plot_x_y_z(
+        x='OR_GetFyNet',
+        y='OR_Islem',
+        z='OR_KomFiyat',
+        title='Getiri vs İslem (Komisyon ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    # 8.3: OR_GetFyt (x), period (y), percent (renk)
+    print("\n[8.3] X=CombNo, Y=OR_Islem, Color=OR_GetFyNet")
+    viz.plot_x_y_z(
+        x='OR_GetFyNet',
+        y='OR_KomFiyat',
+        z='OR_Islem',
+        title='Getiri vs Komisyon (İslem ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    # 8.3: OR_GetFyt (x), period (y), percent (renk)
+    print("\n[8.3] X=CombNo, Y=OR_Islem, Color=OR_GetFyNet")
+    viz.plot_x_y_z(
+        x='CombNo',
+        y='OR_Islem',
+        z='OR_GetFyNet',
+        title='CombNo  vs İslem (Getiri ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    """
+    Tüm grafikleri tek bir HTML sayfasında alt alta gösterir
+    """
+    print("\n" + "=" * 80)
+    print("Grafikleri tek HTML'de alt alta çizdiriliyor...")
+    print("=" * 80)
+
+    # Grafik konfigürasyonları
+    plots = [
+        {
+            'x': 'OR_GetFiyat',
+            'y': 'period',
+            'z': 'percent',
+            'title': 'Getiri vs Period (Percent ile renkli)',
+            'size_ref': 'OR_GetFiyat'
+        },
+        {
+            'x': 'CombNo',
+            'y': 'OR_GetFyNet',
+            'z': 'OR_KomFiyat',
+            'title': 'CombNo vs Getiri (Komisyon ile renkli)',
+            'size_ref': 'OR_GetFyNet'
+        },
+        {
+            'x': 'OR_GetFyNet',
+            'y': 'OR_Islem',
+            'z': 'OR_KomFiyat',
+            'title': 'Getiri vs İslem (Komisyon ile renkli)',
+            'size_ref': 'OR_GetFyNet'
+        },
+        {
+            'x': 'OR_GetFyNet',
+            'y': 'OR_KomFiyat',
+            'z': 'OR_Islem',
+            'title': 'Getiri vs Komisyon (İslem ile renkli)',
+            'size_ref': 'OR_GetFyNet'
+        },
+        {
+            'x': 'CombNo',
+            'y': 'OR_Islem',
+            'z': 'OR_GetFyNet',
+            'title': 'CombNo vs İşlem (Getiri ile renkli)',
+            'size_ref': 'OR_GetFyNet'
+        }
+    ]
+
+    # Tek bir HTML'de alt alta (cols=1)
+    viz.plot_x_y_z_dashboard(
+        plots=plots,
+        cols=1,  # Alt alta çizdirmek için 1 sütun
+        title="Tüm Grafikler - Alt Alta",
+        width=1600,
+        height=7*800,  # 3 grafik için yeterli yükseklik
+        show=True,
+        save=True
+    )
 
 def main():
     """
@@ -652,61 +773,70 @@ def main():
             # print("\n[7] OR_GetFyt% vs Period & Percent (Combined)...")
             # viz.plot_period_percent_combined(show=True, save=True)
 
-            # 8. ESNEK X-Y-Z PLOT - İstediğiniz kombinasyonlar
-            print("\n[8] Esnek X-Y-Z Plotlar...")
+            # # 8. ESNEK X-Y-Z PLOT - İstediğiniz kombinasyonlar
+            # print("\n[8] Esnek X-Y-Z Plotlar...")
+            #
+            # # 8.1: OR_GetFyt% (x), period (y), percent (renk)
+            # print("\n[8.1] X=OR_GetFyt%, Y=period, Color=percent")
+            # viz.plot_x_y_z(
+            #     x='OR_GetFyt%',
+            #     y='period',
+            #     z='percent',
+            #     title='Getiri % vs Period (Percent ile renkli)',
+            #     size_ref='OR_GetFyt%',
+            #     show=True,
+            #     save=True
+            # )
+            #
+            # # 8.2: OR_GetFyt (x), period (y), percent (renk)
+            # print("\n[8.2] X=OR_GetFiyat, Y=period, Color=percent")
+            # viz.plot_x_y_z(
+            #     x='OR_GetFiyat',
+            #     y='period',
+            #     z='percent',
+            #     title='Getiri  vs Period (Percent ile renkli)',
+            #     size_ref='OR_GetFiyat',
+            #     show=True,
+            #     save=True
+            # )
+            #
+            #
+            # # 8.3: OR_GetFyt (x), period (y), percent (renk)
+            # print("\n[8.3] X=OR_GetFyNet, Y=CombNo, Color=OR_KomFiyat")
+            # viz.plot_x_y_z(
+            #     x='OR_GetFyNet',
+            #     y='OR_Islem',
+            #     z='OR_KomFiyat',
+            #     title='Getiri  vs Period (Percent ile renkli)',
+            #     size_ref='OR_GetFyNet',
+            #     show=True,
+            #     save=True
+            # )
+            #
+            #
+            # # 8.3: OR_GetFyt (x), period (y), percent (renk)
+            # print("\n[8.3] X=OR_GetFyNet, Y=CombNo, Color=OR_KomFiyat")
+            # viz.plot_x_y_z(
+            #     x='CombNo',
+            #     y='OR_GetFyNet',
+            #     z='OR_KomFiyat',
+            #     title='Getiri  vs Period (Percent ile renkli)',
+            #     size_ref='OR_GetFyNet',
+            #     show=True,
+            #     save=True
+            # )
 
-            # 8.1: OR_GetFyt% (x), period (y), percent (renk)
-            print("\n[8.1] X=OR_GetFyt%, Y=period, Color=percent")
-            viz.plot_x_y_z(
-                x='OR_GetFyt%',
-                y='period',
-                z='percent',
-                title='Getiri % vs Period (Percent ile renkli)',
-                size_ref='OR_GetFyt%',
-                show=True,
-                save=True
-            )
+            # # 3. Özel hover sütunları ile
+            # viz.plot_x_y(
+            #     x='CombNo',
+            #     y='OR_GetFyNet',
+            #     hover_cols=['CombNo', 'period', 'OR_GetFyNet', 'OR_KomFiyat', 'OR_Islem'],
+            #     title='Net Getiri Analizi1',
+            #     show=True,
+            #     save=True
+            # )
 
-            # 8.2: OR_GetFyt (x), period (y), percent (renk)
-            print("\n[8.2] X=OR_GetFiyat, Y=period, Color=percent")
-            viz.plot_x_y_z(
-                x='OR_GetFiyat',
-                y='period',
-                z='percent',
-                title='Getiri  vs Period (Percent ile renkli)',
-                size_ref='OR_GetFiyat',
-                show=True,
-                save=True
-            )
-
-
-            # 8.3: OR_GetFyt (x), period (y), percent (renk)
-            print("\n[8.3] X=OR_GetFyNet, Y=CombNo, Color=OR_KomFiyat")
-            viz.plot_x_y_z(
-                x='OR_GetFyNet',
-                y='OR_Islem',
-                z='OR_KomFiyat',
-                title='Getiri  vs Period (Percent ile renkli)',
-                size_ref='OR_GetFyNet',
-                show=True,
-                save=True
-            )
-
-
-            # 8.3: OR_GetFyt (x), period (y), percent (renk)
-            print("\n[8.3] X=OR_GetFyNet, Y=CombNo, Color=OR_KomFiyat")
-            viz.plot_x_y_z(
-                x='CombNo',
-                y='OR_GetFyNet',
-                z='OR_KomFiyat',
-                title='Getiri  vs Period (Percent ile renkli)',
-                size_ref='OR_GetFyNet',
-                show=True,
-                save=True
-            )
-
-
-
+            plot_graphs(viz)
 
 
 
