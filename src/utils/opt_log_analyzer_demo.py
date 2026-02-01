@@ -325,6 +325,81 @@ def plot_graphs(viz : MyCustomVisualizer):
     # 8.3: OR_GetFyt (x), period (y), percent (renk)
     print("\n[8.3] X=CombNo, Y=OR_Islem, Color=OR_GetFyNet")
     viz.plot_x_y_z(
+        x='CombNo',
+        y='OR_KomFiyat',
+        z='OR_GetFyNet',
+        title='CombNo vs Komisyon (etFyNet ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    # 8.3: OR_GetFyt (x), period (y), percent (renk)
+    print("\n[8.3] X=CombNo, Y=OR_Islem, Color=OR_GetFyNet")
+    viz.plot_x_y_z(
+        x='CombNo',
+        y='OR_Islem',
+        z='OR_GetFyNet',
+        title='CombNo  vs İslem (Getiri ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    # 8.3: OR_GetFyt (x), period (y), percent (renk)
+    print("\n[8.3] X=CombNo, Y=OR_Kazand, Color=OR_GetFyNet")
+    viz.plot_x_y_z(
+        x='CombNo',
+        y='OR_Kazand',
+        z='OR_GetFyNet',
+        title='CombNo  vs Kazand (Getiri ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    # 8.3: OR_GetFyt (x), period (y), percent (renk)
+    print("\n[8.3] X=CombNo, Y=OR_Kaybett, Color=OR_GetFyNet")
+    viz.plot_x_y_z(
+        x='CombNo',
+        y='OR_Kaybett',
+        z='OR_GetFyNet',
+        title='CombNo  vs Kaybett (Getiri ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    print("\n[8.3] X=CombNo, Y=OR_MinBakNt, Color=OR_GetFyNet")
+    viz.plot_x_y_z(
+        x='CombNo',
+        y='OR_MinBakNt',
+        z='OR_GetFyNet',
+        title='CombNo  vs MinBakNt (Getiri ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    print("\n[8.3] X=CombNo, Y=OR_MaxBakNt, Color=OR_GetFyNet")
+    viz.plot_x_y_z(
+        x='CombNo',
+        y='OR_MaxBakNt',
+        z='OR_GetFyNet',
+        title='CombNo  vs MaxBakNt (Getiri ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+
+
+
+
+
+    # 8.3: OR_GetFyt (x), period (y), percent (renk)
+    print("\n[8.3] X=CombNo, Y=OR_Islem, Color=OR_GetFyNet")
+    viz.plot_x_y_z(
         x='OR_GetFyNet',
         y='OR_Islem',
         z='OR_KomFiyat',
@@ -341,18 +416,6 @@ def plot_graphs(viz : MyCustomVisualizer):
         y='OR_KomFiyat',
         z='OR_Islem',
         title='Getiri vs Komisyon (İslem ile renkli)',
-        size_ref='OR_GetFyNet',
-        show=True,
-        save=True
-    )
-
-    # 8.3: OR_GetFyt (x), period (y), percent (renk)
-    print("\n[8.3] X=CombNo, Y=OR_Islem, Color=OR_GetFyNet")
-    viz.plot_x_y_z(
-        x='CombNo',
-        y='OR_Islem',
-        z='OR_GetFyNet',
-        title='CombNo  vs İslem (Getiri ile renkli)',
         size_ref='OR_GetFyNet',
         show=True,
         save=True
@@ -414,6 +477,98 @@ def plot_graphs(viz : MyCustomVisualizer):
         show=True,
         save=True
     )
+
+def plot_graphs_2(viz: MyCustomVisualizer):
+    """
+    Risk-Adjusted ve Performans Analiz Grafikleri
+    Kombinasyon seçimi için kritik metrikler
+    """
+    print("\n" + "=" * 80)
+    print("RISK-ADJUSTED PERFORMANS ANALİZİ")
+    print("=" * 80)
+
+    # 1. Risk-Adjusted Return (EN KRİTİK)
+    # Yüksek getiri + Düşük drawdown = İdeal kombinasyon
+    print("\n[1] Getiri vs MaxDrawdown (ProfitFactor renkli)")
+    print("    -> Sağ-alt köşe = En iyi (yüksek getiri + düşük DD)")
+    viz.plot_x_y_z(
+        x='OR_GetFyNet',
+        y='OR_MaxDD',
+        z='OR_ProfFact',
+        title='Getiri vs MaxDrawdown (ProfitFactor renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    # 2. Profit Factor vs Risk
+    # ProfFact > 1.5 ve düşük DD = tutarlı sistem
+    print("\n[2] ProfitFactor vs MaxDD (Getiri renkli)")
+    print("    -> Sağ-alt köşe + parlak renk = En iyi")
+    viz.plot_x_y_z(
+        x='OR_ProfFact',
+        y='OR_MaxDD',
+        z='OR_GetFyNet',
+        title='ProfitFactor vs MaxDD (Getiri renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    # 3. Win Rate vs Profit Factor
+    # Yüksek winrate + yüksek PF = tutarlı karlılık
+    print("\n[3] WinRate vs ProfitFactor (Getiri renkli)")
+    print("    -> Sağ-üst köşe = İdeal")
+    viz.plot_x_y_z(
+        x='OR_KarliOra',
+        y='OR_ProfFact',
+        z='OR_GetFyNet',
+        title='WinRate vs ProfitFactor (Getiri renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    # 4. Kazanan vs Kaybeden İşlem
+    # Kazanan/Kaybeden oranı görsel
+    print("\n[4] Kazanan vs Kaybeden İşlem (Getiri renkli)")
+    print("    -> Diagonal üstü = Kazand > Kaybett")
+    viz.plot_x_y_z(
+        x='OR_Kazand',
+        y='OR_Kaybett',
+        z='OR_GetFyNet',
+        title='Kazanan vs Kaybeden (Getiri renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    # 5. Toplam Kar vs Toplam Zarar
+    print("\n[5] ToplamKar vs ToplamZarar (ProfitFactor renkli)")
+    viz.plot_x_y_z(
+        x='OR_TopKarFy',
+        y='OR_TopZarFy',
+        z='OR_ProfFact',
+        title='ToplamKar vs ToplamZarar (ProfFact renkli)',
+        size_ref='OR_NetKarFy',
+        show=True,
+        save=True
+    )
+
+    # 6. Bakiye Dalgalanması (Tutarlılık)
+    # MinBak yüksek (az batmış) + MaxBak yüksek = tutarlı
+    print("\n[6] MinBakiye vs MaxBakiye (Getiri renkli)")
+    print("    -> MinBak yüksek = Daha az batmış")
+    viz.plot_x_y_z(
+        x='OR_MinBakNt',
+        y='OR_MaxBakNt',
+        z='OR_GetFyNet',
+        title='MinBakiye vs MaxBakiye (Getiri renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
 
 def main():
     """
@@ -660,183 +815,8 @@ def main():
             # İstatistikleri göster
             viz.get_stats()
 
-            # Orijinal plot_getfyt_percent metodu
-            # viz.plot_getfyt_percent(show=True, save=True)
-
-            # # Diğer hazır metodlar
-            # viz.plot_net_profit(show=True, save=True)
-            # viz.plot_win_rate(show=True, save=True)
-            # viz.plot_total_trades(show=True, save=True)
-            #
-            # # Özel parametrelerle plot_custom
-            # viz.plot_custom(
-            #     x='CombNo',
-            #     y='OR_NetProf',
-            #     color='period',
-            #     size='OR_TotTrade',
-            #     hover_cols=['period', 'percent', 'OR_WinRate']
-            # )
-            #
-            # # Çoklu metrik plot_multiple
-            # viz.plot_multiple(
-            #     y_cols=['OR_GetFyt%', 'OR_GetFy%N', 'OR_NetProf', 'OR_WinRate'],
-            #     x_col='CombNo',
-            #     color_col='period'
-            # )
-            #
-            # # OR_GetFyt% analizleri - X ekseninde OR_GetFyt% kullanarak ilişki analizi
-            #
-            # # 1. OR_GetFyt% vs OR_NetProf - En önemli ilişki!
-            # print("\n[1] OR_GetFyt% vs OR_NetProf ilişkisi...")
-            # viz.plot_custom(
-            #     x='OR_GetFyt%',
-            #     y='OR_NetProf',
-            #     color='period',
-            #     size='OR_TotTrade',
-            #     title='Getiri Yüzdesi vs Net Kar İlişkisi',
-            #     hover_cols=['CombNo', 'period', 'percent', 'OR_GetFyt%', 'OR_NetProf',
-            #                'OR_WinRate', 'OR_TotTrade', 'OR_ProfFact'],
-            #     show=True,
-            #     save=True
-            # )
-            #
-            # # 2. OR_GetFyt% vs OR_WinRate
-            # print("\n[2] OR_GetFyt% vs OR_WinRate ilişkisi...")
-            # viz.plot_custom(
-            #     x='OR_GetFyt%',
-            #     y='OR_WinRate',
-            #     color='OR_ProfFact',
-            #     size='OR_TotTrade',
-            #     title='Getiri Yüzdesi vs Kazanma Oranı İlişkisi',
-            #     hover_cols=['CombNo', 'period', 'OR_GetFyt%', 'OR_WinRate',
-            #                'OR_ProfFact', 'OR_NetProf'],
-            #     show=True,
-            #     save=True
-            # )
-            #
-            # # 3. OR_GetFyt% vs OR_TotTrade
-            # print("\n[3] OR_GetFyt% vs OR_TotTrade ilişkisi...")
-            # viz.plot_custom(
-            #     x='OR_GetFyt%',
-            #     y='OR_TotTrade',
-            #     color='period',
-            #     size='OR_NetProf',
-            #     title='Getiri Yüzdesi vs İşlem Sayısı İlişkisi',
-            #     hover_cols=['CombNo', 'period', 'OR_GetFyt%', 'OR_TotTrade',
-            #                'OR_NetProf', 'OR_WinRate'],
-            #     show=True,
-            #     save=True
-            # )
-            #
-            # # 4. OR_GetFyt% vs OR_MaxDD (Risk-Getiri analizi)
-            # print("\n[4] OR_GetFyt% vs OR_MaxDD (Risk-Getiri) ilişkisi...")
-            # viz.plot_custom(
-            #     x='OR_GetFyt%',
-            #     y='OR_MaxDD',
-            #     color='OR_NetProf',
-            #     size='OR_TotTrade',
-            #     title='Getiri Yüzdesi vs Max Drawdown (Risk) İlişkisi',
-            #     hover_cols=['CombNo', 'period', 'OR_GetFyt%', 'OR_MaxDD',
-            #                'OR_NetProf', 'OR_WinRate'],
-            #     show=True,
-            #     save=True
-            # )
-            # 5. OR_GetFyt% vs period (size parametresi YOK - sabit boyut)
-            # print("\n[5] OR_GetFyt% vs period ilişkisi...")
-            # viz.plot_custom(
-            #     x='OR_GetFyt%',
-            #     y='period',
-            #     color='OR_NetProf',
-            #     size=None,  # Sabit nokta boyutu
-            #     title='Getiri Yüzdesi vs Period İlişkisi',
-            #     hover_cols=['CombNo', 'period', 'percent', 'OR_GetFyt%',
-            #                'OR_NetProf', 'OR_WinRate', 'OR_TotTrade'],
-            #     show=True,
-            #     save=True
-            # )
-            #
-            # # 6. OR_GetFyt% vs percent (size parametresi YOK - sabit boyut)
-            # print("\n[6] OR_GetFyt% vs percent ilişkisi...")
-            # viz.plot_custom(
-            #     x='OR_GetFyt%',
-            #     y='percent',
-            #     color='period',
-            #     size=None,  # Sabit nokta boyutu
-            #     title='Getiri Yüzdesi vs Percent İlişkisi',
-            #     hover_cols=['CombNo', 'period', 'percent', 'OR_GetFyt%',
-            #                'OR_NetProf', 'OR_WinRate', 'OR_TotTrade'],
-            #     show=True,
-            #     save=True
-            # )
-            #
-            # # 7. COMBINED: OR_GetFyt% vs Period & Percent (Tek grafikte!)
-            # print("\n[7] OR_GetFyt% vs Period & Percent (Combined)...")
-            # viz.plot_period_percent_combined(show=True, save=True)
-
-            # # 8. ESNEK X-Y-Z PLOT - İstediğiniz kombinasyonlar
-            # print("\n[8] Esnek X-Y-Z Plotlar...")
-            #
-            # # 8.1: OR_GetFyt% (x), period (y), percent (renk)
-            # print("\n[8.1] X=OR_GetFyt%, Y=period, Color=percent")
-            # viz.plot_x_y_z(
-            #     x='OR_GetFyt%',
-            #     y='period',
-            #     z='percent',
-            #     title='Getiri % vs Period (Percent ile renkli)',
-            #     size_ref='OR_GetFyt%',
-            #     show=True,
-            #     save=True
-            # )
-            #
-            # # 8.2: OR_GetFyt (x), period (y), percent (renk)
-            # print("\n[8.2] X=OR_GetFiyat, Y=period, Color=percent")
-            # viz.plot_x_y_z(
-            #     x='OR_GetFiyat',
-            #     y='period',
-            #     z='percent',
-            #     title='Getiri  vs Period (Percent ile renkli)',
-            #     size_ref='OR_GetFiyat',
-            #     show=True,
-            #     save=True
-            # )
-            #
-            #
-            # # 8.3: OR_GetFyt (x), period (y), percent (renk)
-            # print("\n[8.3] X=OR_GetFyNet, Y=CombNo, Color=OR_KomFiyat")
-            # viz.plot_x_y_z(
-            #     x='OR_GetFyNet',
-            #     y='OR_Islem',
-            #     z='OR_KomFiyat',
-            #     title='Getiri  vs Period (Percent ile renkli)',
-            #     size_ref='OR_GetFyNet',
-            #     show=True,
-            #     save=True
-            # )
-            #
-            #
-            # # 8.3: OR_GetFyt (x), period (y), percent (renk)
-            # print("\n[8.3] X=OR_GetFyNet, Y=CombNo, Color=OR_KomFiyat")
-            # viz.plot_x_y_z(
-            #     x='CombNo',
-            #     y='OR_GetFyNet',
-            #     z='OR_KomFiyat',
-            #     title='Getiri  vs Period (Percent ile renkli)',
-            #     size_ref='OR_GetFyNet',
-            #     show=True,
-            #     save=True
-            # )
-
-            # # 3. Özel hover sütunları ile
-            # viz.plot_x_y(
-            #     x='CombNo',
-            #     y='OR_GetFyNet',
-            #     hover_cols=['CombNo', 'period', 'OR_GetFyNet', 'OR_KomFiyat', 'OR_Islem'],
-            #     title='Net Getiri Analizi1',
-            #     show=True,
-            #     save=True
-            # )
-
             plot_graphs(viz)
+            # plot_graphs_2(viz)
 
 
 
@@ -906,3 +886,15 @@ if __name__ == "__main__":
 
     # Gelişmiş örnekler için yorum satırını kaldırın
     # advanced_examples()
+
+#   # Filtreleme kriterleri
+#   df_filtered = df[
+#       (df['OR_MaxDD'] > -5000) &      # Drawdown makul
+#       (df['OR_ProfFact'] > 1.2) &      # Profit factor pozitif
+#       (df['OR_KarliOra'] > 25) &       # Win rate %25+
+#       (df['OR_GetFyNet'] > 0)          # Net getiri pozitif
+#   ]
+
+#   # Sonra GetFyNet / abs(MaxDD) oranına göre sırala
+#   df_filtered['risk_adj_return'] = df_filtered['OR_GetFyNet'] / abs(df_filtered['OR_MaxDD'])
+#   df_filtered.sort_values('risk_adj_return', ascending=False).head(10)    
