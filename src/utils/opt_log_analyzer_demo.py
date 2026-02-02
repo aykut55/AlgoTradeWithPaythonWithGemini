@@ -1288,6 +1288,42 @@ def main():
         # paramMax = 99000
         # result_1 = result_1[(result_1['OR_MaxBakNt'] >= paramMin) & (result_1['OR_MaxBakNt'] <= paramMax)]
 
+
+        # ChatGPT asagidaki gibi kullanmayı önerdi, yukarıdakileri asagaıya ozetledi say...
+        # ChatGPT asagidaki gibi kullanmayı önerdi, yukarıdakileri asagaıya ozetledi say...
+        # ChatGPT asagidaki gibi kullanmayı önerdi, yukarıdakileri asagaıya ozetledi say...
+        # ChatGPT asagidaki gibi kullanmayı önerdi, yukarıdakileri asagaıya ozetledi say...
+        # ChatGPT asagidaki gibi kullanmayı önerdi, yukarıdakileri asagaıya ozetledi say...
+        #
+        #
+        #
+        #
+        # # ADIM 1: Grafiklere bakarak belirlediğin değerler
+        # # ================================================
+        # paramMinGetiri = 3000000  # Grafikten gördüğün değer
+        # paramMaxDD = 300  # Grafikten gördüğün değer
+        # paramMinIslem = 1000  # Az işlem olmasın
+        # paramMinKarliOra = 24  # Minimum win rate
+        #
+        # # ADIM 2: Filtreleri uygula
+        # result_filtered = result_1[
+        #     (result_1['OR_GetFyNet'] >= paramMinGetiri) &
+        #     (result_1['OR_MaxDD'] <= paramMaxDD) &
+        #     (result_1['OR_Islem'] >= paramMinIslem) &
+        #     (result_1['OR_KarliOra'] >= paramMinKarliOra)
+        #     ]
+        #
+        # find_best_combination KULLANMA - sadece skorlama yap
+        # scored_df = calculate_composite_score(result, top_n=len(result))
+        #
+        #
+        # ChatGPT asagidaki gibi kullanmayı önerdi, yukarıdakileri asagaıya ozetledi say...
+        # ChatGPT asagidaki gibi kullanmayı önerdi, yukarıdakileri asagaıya ozetledi say...
+        # ChatGPT asagidaki gibi kullanmayı önerdi, yukarıdakileri asagaıya ozetledi say...
+        # ChatGPT asagidaki gibi kullanmayı önerdi, yukarıdakileri asagaıya ozetledi say...
+        # ChatGPT asagidaki gibi kullanmayı önerdi, yukarıdakileri asagaıya ozetledi say...
+
+
         result = result_1
 
 
