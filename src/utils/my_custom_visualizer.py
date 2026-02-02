@@ -507,7 +507,7 @@ class MyCustomVisualizer:
             # Örnek 3: Özel boyut referansı
             viz.plot_x_y_z('OR_GetFyt%', 'period', 'percent', size_ref='OR_NetProf')
         """
-        print(f"\n[MyCustomVisualizer] X-Y-Z Plot: {x} vs {y} (color: {z})...")
+        # print(f"\n[MyCustomVisualizer] X-Y-Z Plot: {x} vs {y} (color: {z})...")
 
         # Başlık oluştur
         if title is None:
@@ -572,7 +572,7 @@ class MyCustomVisualizer:
             filename = f"custom_plot_{self.plot_counter}_x{safe_x}_y{safe_y}_z{safe_z}.html"
             filepath = self.output_dir / filename
             fig.write_html(str(filepath))
-            print(f"[OK] X-Y-Z grafik kaydedildi: {filepath}")
+            # print(f"[OK] X-Y-Z grafik kaydedildi: {filepath}")
 
         # Göster
         if show:

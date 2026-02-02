@@ -298,8 +298,7 @@ def advanced_examples():
 
 def plot_graphs(viz : MyCustomVisualizer):
 
-    # 8.2: OR_GetFyt (x), period (y), percent (renk)
-    print("\n[8.1] X=OR_GetFiyat, Y=period, Color=percent")
+    #########################################################################
     viz.plot_x_y_z(
         x='OR_GetFiyat',
         y='period',
@@ -310,95 +309,16 @@ def plot_graphs(viz : MyCustomVisualizer):
         save=True
     )
 
-    # 8.3: OR_GetFyt (x), period (y), percent (renk)
-    print("\n[8.3] X=CombNo, Y=OR_GetFyNet, Color=OR_KomFiyat")
     viz.plot_x_y_z(
-        x='CombNo',
-        y='OR_GetFyNet',
-        z='OR_KomFiyat',
-        title='CombNo vs Getiri (Komisyon ile renkli)',
-        size_ref='OR_GetFyNet',
+        x='OR_GetFiyat',
+        y='percent',
+        z='period',
+        title='Getiri vs Percent (Period ile renkli)',
+        size_ref='OR_GetFiyat',
         show=True,
         save=True
     )
 
-    # 8.3: OR_GetFyt (x), period (y), percent (renk)
-    print("\n[8.3] X=CombNo, Y=OR_Islem, Color=OR_GetFyNet")
-    viz.plot_x_y_z(
-        x='CombNo',
-        y='OR_KomFiyat',
-        z='OR_GetFyNet',
-        title='CombNo vs Komisyon (etFyNet ile renkli)',
-        size_ref='OR_GetFyNet',
-        show=True,
-        save=True
-    )
-
-    # 8.3: OR_GetFyt (x), period (y), percent (renk)
-    print("\n[8.3] X=CombNo, Y=OR_Islem, Color=OR_GetFyNet")
-    viz.plot_x_y_z(
-        x='CombNo',
-        y='OR_Islem',
-        z='OR_GetFyNet',
-        title='CombNo  vs İslem (Getiri ile renkli)',
-        size_ref='OR_GetFyNet',
-        show=True,
-        save=True
-    )
-
-    # 8.3: OR_GetFyt (x), period (y), percent (renk)
-    print("\n[8.3] X=CombNo, Y=OR_Kazand, Color=OR_GetFyNet")
-    viz.plot_x_y_z(
-        x='CombNo',
-        y='OR_Kazand',
-        z='OR_GetFyNet',
-        title='CombNo  vs Kazand (Getiri ile renkli)',
-        size_ref='OR_GetFyNet',
-        show=True,
-        save=True
-    )
-
-    # 8.3: OR_GetFyt (x), period (y), percent (renk)
-    print("\n[8.3] X=CombNo, Y=OR_Kaybett, Color=OR_GetFyNet")
-    viz.plot_x_y_z(
-        x='CombNo',
-        y='OR_Kaybett',
-        z='OR_GetFyNet',
-        title='CombNo  vs Kaybett (Getiri ile renkli)',
-        size_ref='OR_GetFyNet',
-        show=True,
-        save=True
-    )
-
-    print("\n[8.3] X=CombNo, Y=OR_MinBakNt, Color=OR_GetFyNet")
-    viz.plot_x_y_z(
-        x='CombNo',
-        y='OR_MinBakNt',
-        z='OR_GetFyNet',
-        title='CombNo  vs MinBakNt (Getiri ile renkli)',
-        size_ref='OR_GetFyNet',
-        show=True,
-        save=True
-    )
-
-    print("\n[8.3] X=CombNo, Y=OR_MaxBakNt, Color=OR_GetFyNet")
-    viz.plot_x_y_z(
-        x='CombNo',
-        y='OR_MaxBakNt',
-        z='OR_GetFyNet',
-        title='CombNo  vs MaxBakNt (Getiri ile renkli)',
-        size_ref='OR_GetFyNet',
-        show=True,
-        save=True
-    )
-
-
-
-
-
-
-    # 8.3: OR_GetFyt (x), period (y), percent (renk)
-    print("\n[8.3] X=CombNo, Y=OR_Islem, Color=OR_GetFyNet")
     viz.plot_x_y_z(
         x='OR_GetFyNet',
         y='OR_Islem',
@@ -409,8 +329,6 @@ def plot_graphs(viz : MyCustomVisualizer):
         save=True
     )
 
-    # 8.3: OR_GetFyt (x), period (y), percent (renk)
-    print("\n[8.3] X=CombNo, Y=OR_Islem, Color=OR_GetFyNet")
     viz.plot_x_y_z(
         x='OR_GetFyNet',
         y='OR_KomFiyat',
@@ -421,62 +339,761 @@ def plot_graphs(viz : MyCustomVisualizer):
         save=True
     )
 
-    """
-    Tüm grafikleri tek bir HTML sayfasında alt alta gösterir
-    """
-    print("\n" + "=" * 80)
-    print("Grafikleri tek HTML'de alt alta çizdiriliyor...")
-    print("=" * 80)
+    # viz.plot_x_y_z(
+    #     x='OR_GetFyNet',
+    #     y='OR_MinBakFy',
+    #     z='OR_GetFyNet',
+    #     title='Getiri vs MinBakFy (Getiri ile renkli)',
+    #     size_ref='OR_GetFyNet',
+    #     show=True,
+    #     save=True
+    # )
+    #
+    # viz.plot_x_y_z(
+    #     x='OR_GetFyNet',
+    #     y='OR_MaxBakFy',
+    #     z='OR_GetFyNet',
+    #     title='Getiri vs MaxBakFy (Getiri ile renkli)',
+    #     size_ref='OR_GetFyNet',
+    #     show=True,
+    #     save=True
+    # )
 
-    # Grafik konfigürasyonları
-    plots = [
-        {
-            'x': 'OR_GetFiyat',
-            'y': 'period',
-            'z': 'percent',
-            'title': 'Getiri vs Period (Percent ile renkli)',
-            'size_ref': 'OR_GetFiyat'
-        },
-        {
-            'x': 'CombNo',
-            'y': 'OR_GetFyNet',
-            'z': 'OR_KomFiyat',
-            'title': 'CombNo vs Getiri (Komisyon ile renkli)',
-            'size_ref': 'OR_GetFyNet'
-        },
-        {
-            'x': 'OR_GetFyNet',
-            'y': 'OR_Islem',
-            'z': 'OR_KomFiyat',
-            'title': 'Getiri vs İslem (Komisyon ile renkli)',
-            'size_ref': 'OR_GetFyNet'
-        },
-        {
-            'x': 'OR_GetFyNet',
-            'y': 'OR_KomFiyat',
-            'z': 'OR_Islem',
-            'title': 'Getiri vs Komisyon (İslem ile renkli)',
-            'size_ref': 'OR_GetFyNet'
-        },
-        {
-            'x': 'CombNo',
-            'y': 'OR_Islem',
-            'z': 'OR_GetFyNet',
-            'title': 'CombNo vs İşlem (Getiri ile renkli)',
-            'size_ref': 'OR_GetFyNet'
-        }
-    ]
-
-    # Tek bir HTML'de alt alta (cols=1)
-    viz.plot_x_y_z_dashboard(
-        plots=plots,
-        cols=1,  # Alt alta çizdirmek için 1 sütun
-        title="Tüm Grafikler - Alt Alta",
-        width=1600,
-        height=7*800,  # 3 grafik için yeterli yükseklik
+    viz.plot_x_y_z(
+        x='OR_GetFyNet',
+        y='OR_MinBakNt',
+        z='OR_GetFyNet',
+        title='Getiri vs MinBakNt (Getiri ile renkli)',
+        size_ref='OR_GetFyNet',
         show=True,
         save=True
     )
+
+    viz.plot_x_y_z(
+        x='OR_GetFyNet',
+        y='OR_MaxBakNt',
+        z='OR_GetFyNet',
+        title='Getiri vs MaxBakNt (Getiri ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    #########################################################################
+    viz.plot_x_y_z(
+        x='CombNo',
+        y='OR_GetFy%N',
+        z='OR_KomFiyat',
+        title='CombNo vs Getiri% (Komisyon ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    viz.plot_x_y_z(
+        x='CombNo',
+        y='OR_GetFyNet',
+        z='OR_KomFiyat',
+        title='CombNo vs Getiri (Komisyon ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    viz.plot_x_y_z(
+        x='CombNo',
+        y='OR_KomFiyat',
+        z='OR_GetFyNet',
+        title='CombNo vs Komisyon (etFyNet ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    viz.plot_x_y_z(
+        x='CombNo',
+        y='OR_Islem',
+        z='OR_GetFyNet',
+        title='CombNo vs İslem (Getiri ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    viz.plot_x_y_z(
+        x='CombNo',
+        y='OR_MinBakNt',
+        z='OR_GetFyNet',
+        title='CombNo vs MinBakNt (Getiri ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    viz.plot_x_y_z(
+        x='CombNo',
+        y='OR_MaxBakNt',
+        z='OR_GetFyNet',
+        title='CombNo vs MaxBakNt (Getiri ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    viz.plot_x_y_z(
+        x='CombNo',
+        y='OR_MaxDD',
+        z='OR_GetFyNet',
+        title='CombNo vs MaxDD (Getiri ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    viz.plot_x_y_z(
+        x='CombNo',
+        y='OR_NetProf',
+        z='OR_GetFyNet',
+        title='CombNo vs NetProfit (Getiri ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    viz.plot_x_y_z(
+        x='CombNo',
+        y='OR_KarliOra',
+        z='OR_GetFyNet',
+        title='CombNo vs KarliOrani (Getiri ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    #########################################################################
+    viz.plot_x_y_z(
+        x='OR_MinBakNt',
+        y='OR_MaxBakNt',
+        z='OR_GetFyNet',
+        title='MinBakiye vs MaxBakiye (Getiri renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    viz.plot_x_y_z(
+        x='OR_GetFyNet',
+        y='OR_MaxDD',
+        z='OR_GetFyNet',
+        title='Getiri vs MaxDD (Getiri ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    viz.plot_x_y_z(
+        x='OR_GetFyNet',
+        y='OR_NetProf',    # OR_NetProf, OR_ProfFact
+        z='OR_GetFyNet',
+        title='Getiri vs ProfFactNet (Getiri ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+    viz.plot_x_y_z(
+        x='OR_GetFyNet',
+        y='OR_KarliOra',
+        z='OR_GetFyNet',
+        title='Getiri vs KarliOra (Getiri ile renkli)',
+        size_ref='OR_GetFyNet',
+        show=True,
+        save=True
+    )
+
+
+    # """
+    # Tüm grafikleri tek bir HTML sayfasında alt alta gösterir
+    # """
+    # print("\n" + "=" * 80)
+    # print("Grafikleri tek HTML'de alt alta çizdiriliyor...")
+    # print("=" * 80)
+    #
+    # # Grafik konfigürasyonları
+    # plots = [
+    #     {
+    #         'x': 'OR_GetFiyat',
+    #         'y': 'period',
+    #         'z': 'percent',
+    #         'title': 'Getiri vs Period (Percent ile renkli)',
+    #         'size_ref': 'OR_GetFiyat'
+    #     },
+    #     {
+    #         'x': 'CombNo',
+    #         'y': 'OR_GetFyNet',
+    #         'z': 'OR_KomFiyat',
+    #         'title': 'CombNo vs Getiri (Komisyon ile renkli)',
+    #         'size_ref': 'OR_GetFyNet'
+    #     },
+    #     {
+    #         'x': 'OR_GetFyNet',
+    #         'y': 'OR_Islem',
+    #         'z': 'OR_KomFiyat',
+    #         'title': 'Getiri vs İslem (Komisyon ile renkli)',
+    #         'size_ref': 'OR_GetFyNet'
+    #     },
+    #     {
+    #         'x': 'OR_GetFyNet',
+    #         'y': 'OR_KomFiyat',
+    #         'z': 'OR_Islem',
+    #         'title': 'Getiri vs Komisyon (İslem ile renkli)',
+    #         'size_ref': 'OR_GetFyNet'
+    #     },
+    #     {
+    #         'x': 'CombNo',
+    #         'y': 'OR_Islem',
+    #         'z': 'OR_GetFyNet',
+    #         'title': 'CombNo vs İşlem (Getiri ile renkli)',
+    #         'size_ref': 'OR_GetFyNet'
+    #     }
+    # ]
+    #
+    # # Tek bir HTML'de alt alta (cols=1)
+    # viz.plot_x_y_z_dashboard(
+    #     plots=plots,
+    #     cols=1,  # Alt alta çizdirmek için 1 sütun
+    #     title="Tüm Grafikler - Alt Alta",
+    #     width=1600,
+    #     height=7*800,  # 3 grafik için yeterli yükseklik
+    #     show=True,
+    #     save=True
+    # )
+
+def calculate_composite_score(df: pd.DataFrame, top_n: int = 20, weights: dict = None) -> pd.DataFrame:
+    """
+    İlk N kayıt içinden composite score hesaplar ve en iyisini bulur.
+
+    Metrikler:
+    - OR_GetFyNet: Net Getiri (yüksek = iyi)
+    - OR_MaxDD: Maximum Drawdown (düşük = iyi, dikkat: pozitif değer)
+    - OR_ProfFact: Profit Factor (yüksek = iyi)
+    - OR_KarliOra: Win Rate % (yüksek = iyi)
+    - OR_MinBakNt: Minimum Bakiye (yüksek = iyi, daha az batmış)
+    - OR_KomFiyat: Komisyon (düşük = iyi)
+
+    Args:
+        df: DataFrame (zaten sıralanmış olmalı)
+        top_n: İlk kaç kayıt içinden seçim yapılacak
+        weights: Ağırlıklar dict'i (varsayılan kullanılır)
+
+    Returns:
+        Skorlanmış ve sıralanmış DataFrame
+    """
+    import numpy as np
+
+    # Varsayılan ağırlıklar (toplamı 1.0 olmalı)
+    # AYARLANABILIR: Risk-ağırlıklı profil için getiri düşür, maxdd/minbak artır
+    if weights is None:
+        weights = {
+            'getiri': 0.15,      # Net getiri (düşürüldü - sadece getiriye bakma!)
+            'maxdd': 0.30,       # Maximum Drawdown - EN ÖNEMLİ RİSK METRİĞİ
+            'profact': 0.20,     # Profit Factor (tutarlılık)
+            'karliora': 0.15,    # Win Rate
+            'minbak': 0.15,      # Minimum Bakiye (ne kadar batmış) - artırıldı
+            'komisyon': 0.05     # Komisyon maliyeti
+        }
+
+    print(f"\n{'='*80}")
+    print(f"COMPOSITE SCORE HESAPLAMA (İlk {top_n} kayıt)")
+    print(f"{'='*80}")
+    print(f"Ağırlıklar: {weights}")
+
+    # İlk N kaydı al
+    df_top = df.head(top_n).copy()
+
+    if len(df_top) == 0:
+        print("HATA: DataFrame boş!")
+        return df_top
+
+    # Min-Max normalizasyon fonksiyonu (0-100 arası)
+    def normalize(series, reverse=False):
+        min_val = series.min()
+        max_val = series.max()
+        if max_val == min_val:
+            return pd.Series([50] * len(series), index=series.index)
+        normalized = (series - min_val) / (max_val - min_val) * 100
+        if reverse:
+            normalized = 100 - normalized
+        return normalized
+
+    # Her metrik için normalize skor hesapla
+    df_top['_score_getiri'] = normalize(df_top['OR_GetFyNet'], reverse=False)
+    df_top['_score_maxdd'] = normalize(df_top['OR_MaxDD'], reverse=True)  # Düşük DD = yüksek skor
+    df_top['_score_profact'] = normalize(df_top['OR_ProfFact'], reverse=False)
+    df_top['_score_karliora'] = normalize(df_top['OR_KarliOra'], reverse=False)
+    df_top['_score_minbak'] = normalize(df_top['OR_MinBakNt'], reverse=False)  # Yüksek = iyi
+    df_top['_score_komisyon'] = normalize(df_top['OR_KomFiyat'], reverse=True)  # Düşük = iyi
+
+    # Risk-Adjusted Return (bonus metrik)
+    df_top['_risk_adj_return'] = df_top['OR_GetFyNet'] / (df_top['OR_MaxDD'].abs() + 1)
+    df_top['_score_risk_adj'] = normalize(df_top['_risk_adj_return'], reverse=False)
+
+    # Composite Score hesapla
+    df_top['CompositeScore'] = (
+        df_top['_score_getiri'] * weights['getiri'] +
+        df_top['_score_maxdd'] * weights['maxdd'] +
+        df_top['_score_profact'] * weights['profact'] +
+        df_top['_score_karliora'] * weights['karliora'] +
+        df_top['_score_minbak'] * weights['minbak'] +
+        df_top['_score_komisyon'] * weights['komisyon']
+    )
+
+    # Skor sütunlarını temizle (isteğe bağlı gösterim için tut)
+    score_cols = ['_score_getiri', '_score_maxdd', '_score_profact',
+                  '_score_karliora', '_score_minbak', '_score_komisyon',
+                  '_risk_adj_return', '_score_risk_adj']
+
+    # Composite Score'a göre sırala
+    df_sorted = df_top.sort_values('CompositeScore', ascending=False)
+
+    # Sonuçları göster
+    print(f"\n{'='*80}")
+    print("EN İYİ 10 KOMBİNASYON (Composite Score'a göre)")
+    print(f"{'='*80}")
+
+    display_cols = ['CombNo', 'period', 'percent', 'OR_GetFyNet', 'OR_MaxDD',
+                    'OR_ProfFact', 'OR_KarliOra', 'OR_MinBakNt', 'OR_KomFiyat', 'CompositeScore']
+
+    # Mevcut sütunları filtrele
+    available_cols = [c for c in display_cols if c in df_sorted.columns]
+
+    print(df_sorted[available_cols].head(10).to_string(index=False))
+
+    # DEBUG: Her metriğin skorunu göster
+    print(f"\n{'='*80}")
+    print("DETAYLI SKOR ANALİZİ (Normalize edilmiş 0-100)")
+    print(f"{'='*80}")
+    print("Skor = (Metrik normalize edilmiş) × Ağırlık")
+    print(f"Ağırlıklar: getiri={weights['getiri']}, maxdd={weights['maxdd']}, profact={weights['profact']}, karliora={weights['karliora']}, minbak={weights['minbak']}, kom={weights['komisyon']}")
+    print("-" * 120)
+
+    debug_cols = ['CombNo', '_score_getiri', '_score_maxdd', '_score_profact',
+                  '_score_karliora', '_score_minbak', '_score_komisyon', 'CompositeScore']
+    debug_available = [c for c in debug_cols if c in df_sorted.columns]
+
+    # Formatla ve göster
+    debug_df = df_sorted[debug_available].head(10).copy()
+    for col in debug_df.columns:
+        if col.startswith('_score') or col == 'CompositeScore':
+            debug_df[col] = debug_df[col].apply(lambda x: f"{x:.1f}")
+    print(debug_df.to_string(index=False))
+
+    # En iyi kombinasyonu vurgula
+    best = df_sorted.iloc[0]
+    print(f"\n{'='*80}")
+    print("🏆 EN İYİ KOMBİNASYON")
+    print(f"{'='*80}")
+    print(f"  CombNo      : {best['CombNo']}")
+    print(f"  Period      : {best['period']}")
+    print(f"  Percent     : {best['percent']}")
+    print(f"  Net Getiri  : {best['OR_GetFyNet']:,.0f}")
+    print(f"  Max DD      : {best['OR_MaxDD']:.2f}")
+    print(f"  Profit Fact : {best['OR_ProfFact']:.2f}")
+    print(f"  Win Rate    : {best['OR_KarliOra']:.2f}%")
+    print(f"  Min Bakiye  : {best['OR_MinBakNt']:,.0f}")
+    print(f"  Komisyon    : {best['OR_KomFiyat']:,.0f}")
+    print(f"  SKOR        : {best['CompositeScore']:.2f}/100")
+    print(f"{'='*80}")
+
+    # Karşılaştırma: 1. sıra vs En iyi skor
+    first_row = df.iloc[0]
+    if best['CombNo'] != first_row['CombNo']:
+        print(f"\n⚠️  DİKKAT: En yüksek getirili (1. sıra) ile en iyi skor farklı!")
+        print(f"    1. Sıra  : CombNo={first_row['CombNo']}, Getiri={first_row['OR_GetFyNet']:,.0f}, MaxDD={first_row['OR_MaxDD']:.2f}")
+        print(f"    En İyi   : CombNo={best['CombNo']}, Getiri={best['OR_GetFyNet']:,.0f}, MaxDD={best['OR_MaxDD']:.2f}")
+
+        # Fark analizi
+        getiri_fark = (best['OR_GetFyNet'] - first_row['OR_GetFyNet']) / first_row['OR_GetFyNet'] * 100
+        dd_fark = (first_row['OR_MaxDD'] - best['OR_MaxDD']) / first_row['OR_MaxDD'] * 100
+        print(f"\n    Getiri farkı: {getiri_fark:+.2f}%")
+        print(f"    DD iyileşme : {dd_fark:+.2f}% (düşük DD daha iyi)")
+    else:
+        print(f"\n✅ En yüksek getirili kombinasyon aynı zamanda en iyi skorlu!")
+
+    # Skor sütunlarını kaldır (opsiyonel - yorumu kaldırarak tutabilirsiniz)
+    # df_sorted = df_sorted.drop(columns=score_cols, errors='ignore')
+
+    return df_sorted
+
+
+def analyze_combination_diversity(df: pd.DataFrame, top_n: int = 20) -> pd.DataFrame:
+    """
+    Kombinasyonların birbirinden ne kadar farklı olduğunu analiz eder.
+    Diversifikasyon için FARKLI davranan kombinasyonlar seçilmeli.
+
+    Args:
+        df: DataFrame
+        top_n: Analiz edilecek kayıt sayısı
+    """
+    import numpy as np
+
+    print(f"\n{'='*80}")
+    print("KOMBİNASYON DİVERSİFİKASYON ANALİZİ")
+    print("Hangi kombinasyonlar birbirinden FARKLI davranıyor?")
+    print(f"{'='*80}")
+
+    df_top = df.head(top_n).copy()
+
+    # Normalize edilmiş metrikler (karşılaştırma için)
+    metrics = ['OR_GetFyNet', 'OR_MaxDD', 'OR_ProfFact', 'OR_KarliOra',
+               'OR_MinBakNt', 'OR_KomFiyat', 'OR_Islem']
+
+    available_metrics = [m for m in metrics if m in df_top.columns]
+
+    # Her kombinasyon için profil oluştur
+    from sklearn.preprocessing import MinMaxScaler
+
+    try:
+        scaler = MinMaxScaler()
+        df_scaled = pd.DataFrame(
+            scaler.fit_transform(df_top[available_metrics]),
+            columns=available_metrics,
+            index=df_top.index
+        )
+    except ImportError:
+        # sklearn yoksa manuel normalize
+        def normalize(series):
+            return (series - series.min()) / (series.max() - series.min() + 0.0001)
+        df_scaled = df_top[available_metrics].apply(normalize)
+
+    # Kombinasyonlar arası mesafe hesapla (Euclidean)
+    n = len(df_top)
+    distance_matrix = np.zeros((n, n))
+
+    for i in range(n):
+        for j in range(n):
+            diff = df_scaled.iloc[i].values - df_scaled.iloc[j].values
+            distance_matrix[i, j] = np.sqrt(np.sum(diff ** 2))
+
+    # Her kombinasyon için ortalama mesafe (diğerlerinden ne kadar farklı)
+    df_top['Diversity_Score'] = distance_matrix.mean(axis=1)
+
+    # Period ve Percent gruplarını analiz et
+    print(f"\n{'='*80}")
+    print("PERIOD GRUPLARI")
+    print(f"{'='*80}")
+    period_groups = df_top.groupby('period').agg({
+        'CombNo': 'count',
+        'OR_GetFyNet': 'mean',
+        'OR_MaxDD': 'mean'
+    }).rename(columns={'CombNo': 'Adet'})
+    print(period_groups.to_string())
+
+    # En farklı kombinasyonları bul
+    print(f"\n{'='*80}")
+    print("EN FARKLI DAVRANAN KOMBİNASYONLAR (Yüksek Diversity = İyi)")
+    print(f"{'='*80}")
+
+    df_diverse = df_top.sort_values('Diversity_Score', ascending=False)
+
+    display_cols = ['CombNo', 'period', 'percent', 'OR_GetFyNet', 'OR_MaxDD',
+                    'OR_ProfFact', 'Diversity_Score']
+    print(df_diverse[display_cols].head(10).to_string(index=False))
+
+    # Önerilen portföy: Farklı period'lardan seçim
+    print(f"\n{'='*80}")
+    print("ÖNERİLEN PORTFÖY (Farklı Period'lardan)")
+    print(f"{'='*80}")
+
+    # Her unique period'dan en iyi getiriliyi seç
+    unique_periods = df_top['period'].unique()
+    portfolio = []
+
+    for period in sorted(unique_periods)[:5]:  # İlk 5 farklı period
+        period_best = df_top[df_top['period'] == period].nlargest(1, 'OR_GetFyNet')
+        if len(period_best) > 0:
+            portfolio.append(period_best.iloc[0])
+
+    if portfolio:
+        portfolio_df = pd.DataFrame(portfolio)
+        print(portfolio_df[['CombNo', 'period', 'percent', 'OR_GetFyNet', 'OR_MaxDD']].to_string(index=False))
+
+        # Portföy özeti
+        print(f"\n📊 PORTFÖY ÖZETİ (eşit ağırlıklı)")
+        print(f"   Toplam kombinasyon: {len(portfolio)}")
+        print(f"   Ortalama Getiri   : {portfolio_df['OR_GetFyNet'].mean():,.0f}")
+        print(f"   Ortalama MaxDD    : {portfolio_df['OR_MaxDD'].mean():.2f}")
+        print(f"   Period aralığı    : {portfolio_df['period'].min()} - {portfolio_df['period'].max()}")
+
+    return df_diverse
+
+
+def calculate_dd_quality(df: pd.DataFrame, top_n: int = 20) -> pd.DataFrame:
+    """
+    MaxDD kalitesini analiz eder - sadece MaxDD değerine değil,
+    nasıl oluştuğuna da bakar.
+
+    Hesaplanan Metrikler:
+    - DD_per_Trade: MaxDD / Toplam İşlem (işlem başına DD)
+    - Trade_Density: Günlük işlem sayısı
+    - DD_Duration_Est: Tahmini DD süresi (gün)
+    - DD_Quality_Score: Düşük = ani çöküş, Yüksek = yavaş erozyon
+
+    Args:
+        df: DataFrame
+        top_n: Analiz edilecek kayıt sayısı
+    """
+    print(f"\n{'='*80}")
+    print("DRAWDOWN KALİTE ANALİZİ")
+    print("MaxDD'nin NASIL oluştuğunu inceler")
+    print(f"{'='*80}")
+
+    df_top = df.head(top_n).copy()
+
+    # Test süresi hesapla (gün olarak)
+    # OR_IlkBarDT ve OR_SonBarDT varsa kullan
+    if 'OR_IlkBarDT' in df_top.columns and 'OR_SonBarDT' in df_top.columns:
+        try:
+            df_top['_ilk_tarih'] = pd.to_datetime(df_top['OR_IlkBarDT'], errors='coerce')
+            df_top['_son_tarih'] = pd.to_datetime(df_top['OR_SonBarDT'], errors='coerce')
+            df_top['Test_Gun'] = (df_top['_son_tarih'] - df_top['_ilk_tarih']).dt.days
+        except:
+            df_top['Test_Gun'] = 3650  # Varsayılan 10 yıl
+    else:
+        df_top['Test_Gun'] = 3650
+
+    # Temel hesaplamalar
+    df_top['DD_per_Trade'] = df_top['OR_MaxDD'] / df_top['OR_Islem'].replace(0, 1)
+    df_top['Trades_per_Day'] = df_top['OR_Islem'] / df_top['Test_Gun'].replace(0, 1)
+    df_top['DD_per_Day'] = df_top['OR_MaxDD'] / df_top['Test_Gun'].replace(0, 1)
+
+    # DD Kalite Skoru (yüksek = daha iyi, daha yavaş/yayılmış DD)
+    # Çok işlem + düşük DD/işlem = iyi
+    # Az işlem + yüksek DD/işlem = kötü (ani çöküş)
+
+    def normalize(series, reverse=False):
+        min_val, max_val = series.min(), series.max()
+        if max_val == min_val:
+            return 50.0
+        norm = (series - min_val) / (max_val - min_val) * 100
+        return 100 - norm if reverse else norm
+
+    # DD per Trade düşük olmalı (reverse=True)
+    df_top['_score_dd_per_trade'] = normalize(df_top['DD_per_Trade'], reverse=True)
+
+    # Trades per Day yüksek olmalı (aktif sistem)
+    df_top['_score_trade_density'] = normalize(df_top['Trades_per_Day'], reverse=False)
+
+    # MaxDD düşük olmalı
+    df_top['_score_maxdd'] = normalize(df_top['OR_MaxDD'], reverse=True)
+
+    # DD Kalite Skoru
+    df_top['DD_Quality'] = (
+        df_top['_score_dd_per_trade'] * 0.40 +   # İşlem başına DD düşük mü?
+        df_top['_score_trade_density'] * 0.30 +  # Aktif mi? (çok işlem)
+        df_top['_score_maxdd'] * 0.30            # Toplam DD düşük mü?
+    )
+
+    # Sırala
+    df_sorted = df_top.sort_values('DD_Quality', ascending=False)
+
+    # Sonuçları göster
+    print(f"\n{'='*80}")
+    print("EN İYİ DD KALİTESİNE SAHİP KOMBİNASYONLAR")
+    print(f"{'='*80}")
+    print("DD_Quality = Yüksek ise DD 'kabul edilebilir' şekilde oluşmuş")
+    print("           = Düşük ise DD 'ani çöküş' şeklinde oluşmuş")
+    print("-" * 100)
+
+    display_cols = ['CombNo', 'period', 'percent', 'OR_GetFyNet', 'OR_MaxDD',
+                    'OR_Islem', 'DD_per_Trade', 'Trades_per_Day', 'DD_Quality']
+
+    # Formatla
+    display_df = df_sorted[display_cols].head(15).copy()
+    display_df['OR_GetFyNet'] = display_df['OR_GetFyNet'].apply(lambda x: f"{x:,.0f}")
+    display_df['DD_per_Trade'] = display_df['DD_per_Trade'].apply(lambda x: f"{x:.4f}")
+    display_df['Trades_per_Day'] = display_df['Trades_per_Day'].apply(lambda x: f"{x:.2f}")
+    display_df['DD_Quality'] = display_df['DD_Quality'].apply(lambda x: f"{x:.1f}")
+
+    print(display_df.to_string(index=False))
+
+    # En iyi ve en kötü karşılaştırması
+    best = df_sorted.iloc[0]
+    worst = df_sorted.iloc[-1]
+
+    print(f"\n{'='*80}")
+    print("KARŞILAŞTIRMA: En İyi vs En Kötü DD Kalitesi")
+    print(f"{'='*80}")
+    print(f"{'Metrik':<20} {'En İyi (CombNo=' + str(int(best['CombNo'])) + ')':<25} {'En Kötü (CombNo=' + str(int(worst['CombNo'])) + ')':<25}")
+    print("-" * 70)
+    print(f"{'MaxDD':<20} {best['OR_MaxDD']:<25.2f} {worst['OR_MaxDD']:<25.2f}")
+    print(f"{'Toplam İşlem':<20} {best['OR_Islem']:<25.0f} {worst['OR_Islem']:<25.0f}")
+    print(f"{'DD / İşlem':<20} {best['DD_per_Trade']:<25.4f} {worst['DD_per_Trade']:<25.4f}")
+    print(f"{'İşlem / Gün':<20} {best['Trades_per_Day']:<25.2f} {worst['Trades_per_Day']:<25.2f}")
+    print(f"{'DD Kalite Skoru':<20} {best['DD_Quality']:<25.1f} {worst['DD_Quality']:<25.1f}")
+
+    # Yorum
+    print(f"\n💡 YORUM:")
+    if best['DD_per_Trade'] < worst['DD_per_Trade']:
+        print(f"   CombNo={int(best['CombNo'])}: İşlem başına DD düşük → DD yavaş/dağınık oluşmuş (iyi)")
+        print(f"   CombNo={int(worst['CombNo'])}: İşlem başına DD yüksek → DD ani/yoğun oluşmuş (kötü)")
+
+    return df_sorted
+
+
+def find_best_risk_adjusted(df: pd.DataFrame,
+                            top_n: int = 50,
+                            min_getiri_pct: float = 50) -> pd.DataFrame:
+    """
+    "Yeterli getiri + En düşük risk" yaklaşımı.
+
+    1. İlk N kayıttan, getiri skoru >= min_getiri_pct olanları filtrele
+    2. Bu filtrelenmiş grup içinde SADECE RİSK metriklerine göre sırala
+
+    Args:
+        df: Sıralanmış DataFrame
+        top_n: İlk kaç kayıt içinden seçim
+        min_getiri_pct: Minimum getiri yüzdesi (0-100).
+                        50 = en yüksek getirinin %50'sinden fazla olanlar
+    """
+    print(f"\n{'='*80}")
+    print("YETERLİ GETİRİ + EN DÜŞÜK RİSK ANALİZİ")
+    print(f"{'='*80}")
+
+    df_top = df.head(top_n).copy()
+
+    # Getiriyi normalize et
+    max_getiri = df_top['OR_GetFyNet'].max()
+    min_getiri = df_top['OR_GetFyNet'].min()
+    df_top['_getiri_pct'] = (df_top['OR_GetFyNet'] - min_getiri) / (max_getiri - min_getiri) * 100
+
+    # Minimum getiri eşiğini geçenleri filtrele
+    df_filtered = df_top[df_top['_getiri_pct'] >= min_getiri_pct].copy()
+    print(f"Getiri skoru >= {min_getiri_pct} olanlar: {len(df_filtered)} kayıt")
+
+    if len(df_filtered) == 0:
+        print("UYARI: Filtreleme sonrası kayıt kalmadı!")
+        return df_filtered
+
+    # SADECE RİSK metriklerini normalize et
+    def normalize(series, reverse=False):
+        min_val, max_val = series.min(), series.max()
+        if max_val == min_val:
+            return 50.0
+        norm = (series - min_val) / (max_val - min_val) * 100
+        return 100 - norm if reverse else norm
+
+    # Risk skorları (getiri YOK!)
+    df_filtered['_risk_maxdd'] = normalize(df_filtered['OR_MaxDD'], reverse=True)
+    df_filtered['_risk_minbak'] = normalize(df_filtered['OR_MinBakNt'], reverse=False)
+    df_filtered['_risk_profact'] = normalize(df_filtered['OR_ProfFact'], reverse=False)
+    df_filtered['_risk_karliora'] = normalize(df_filtered['OR_KarliOra'], reverse=False)
+
+    # RİSK SKORU (getiri dahil değil!)
+    df_filtered['RiskScore'] = (
+        df_filtered['_risk_maxdd'] * 0.40 +      # MaxDD en önemli
+        df_filtered['_risk_minbak'] * 0.25 +     # MinBak ikinci
+        df_filtered['_risk_profact'] * 0.20 +    # ProfFact
+        df_filtered['_risk_karliora'] * 0.15     # WinRate
+    )
+
+    # Risk skoruna göre sırala (yüksek = düşük risk)
+    df_sorted = df_filtered.sort_values('RiskScore', ascending=False)
+
+    print(f"\n{'='*80}")
+    print(f"EN DÜŞÜK RİSKLİ KOMBİNASYONLAR (Getiri >= {min_getiri_pct}% eşiğini geçenler)")
+    print(f"{'='*80}")
+    print("RiskScore = MaxDD×0.40 + MinBak×0.25 + ProfFact×0.20 + WinRate×0.15")
+    print("-" * 100)
+
+    display_cols = ['CombNo', 'period', 'percent', 'OR_GetFyNet', 'OR_MaxDD',
+                    'OR_MinBakNt', 'OR_ProfFact', 'OR_KarliOra', '_getiri_pct', 'RiskScore']
+    print(df_sorted[display_cols].head(10).to_string(index=False))
+
+    # En iyi
+    best = df_sorted.iloc[0]
+    print(f"\n{'='*80}")
+    print("🏆 EN DÜŞÜK RİSKLİ (Yeterli Getirili) KOMBİNASYON")
+    print(f"{'='*80}")
+    print(f"  CombNo      : {best['CombNo']}")
+    print(f"  Period      : {best['period']}")
+    print(f"  Percent     : {best['percent']}")
+    print(f"  Net Getiri  : {best['OR_GetFyNet']:,.0f} (skor: {best['_getiri_pct']:.1f}%)")
+    print(f"  Max DD      : {best['OR_MaxDD']:.2f}")
+    print(f"  Min Bakiye  : {best['OR_MinBakNt']:,.0f}")
+    print(f"  RİSK SKORU  : {best['RiskScore']:.1f}/100 (yüksek = düşük risk)")
+    print(f"{'='*80}")
+
+    return df_sorted
+
+
+def find_best_combination(df: pd.DataFrame,
+                          top_n: int = 20,
+                          min_getiri: float = None,
+                          max_dd: float = None,
+                          min_winrate: float = None,
+                          min_profact: float = None,
+                          min_islem: int = None,
+                          min_komisyon: float = None) -> pd.DataFrame:
+    """
+    Filtreleme + Composite Score ile en iyi kombinasyonu bulur.
+
+    Args:
+        df: Sıralanmış DataFrame
+        top_n: İlk kaç kayıt içinden seçim
+        min_getiri: Minimum net getiri filtresi
+        max_dd: Maximum drawdown filtresi (bu değerden küçük olanlar)
+        min_winrate: Minimum win rate %
+        min_profact: Minimum profit factor
+        min_islem: Minimum işlem sayısı (önemli! az işlem = güvenilmez)
+        min_komisyon: Minimum komisyon (az komisyon = az işlem)
+
+    Returns:
+        Filtrelenmiş ve skorlanmış DataFrame
+    """
+    print(f"\n{'='*80}")
+    print("FİLTRELEME + COMPOSITE SCORE")
+    print(f"{'='*80}")
+
+    df_filtered = df.head(top_n).copy()
+    initial_count = len(df_filtered)
+
+    # Filtreleri uygula
+    if min_getiri is not None:
+        df_filtered = df_filtered[df_filtered['OR_GetFyNet'] >= min_getiri]
+        print(f"  Min Getiri >= {min_getiri:,.0f}: {len(df_filtered)} kayıt kaldı")
+
+    if max_dd is not None:
+        df_filtered = df_filtered[df_filtered['OR_MaxDD'] <= max_dd]
+        print(f"  Max DD <= {max_dd}: {len(df_filtered)} kayıt kaldı")
+
+    if min_winrate is not None:
+        df_filtered = df_filtered[df_filtered['OR_KarliOra'] >= min_winrate]
+        print(f"  Win Rate >= {min_winrate}%: {len(df_filtered)} kayıt kaldı")
+
+    if min_profact is not None:
+        df_filtered = df_filtered[df_filtered['OR_ProfFact'] >= min_profact]
+        print(f"  Profit Factor >= {min_profact}: {len(df_filtered)} kayıt kaldı")
+
+    # ÖNEMLİ: İşlem sayısı filtresi (az işlem = istatistiksel olarak güvenilmez)
+    if min_islem is not None:
+        df_filtered = df_filtered[df_filtered['OR_Islem'] >= min_islem]
+        print(f"  Min İşlem >= {min_islem}: {len(df_filtered)} kayıt kaldı")
+
+    # Komisyon filtresi (az komisyon = az işlem)
+    if min_komisyon is not None:
+        df_filtered = df_filtered[df_filtered['OR_KomFiyat'] >= min_komisyon]
+        print(f"  Min Komisyon >= {min_komisyon:,.0f}: {len(df_filtered)} kayıt kaldı")
+
+    print(f"\n  Toplam: {initial_count} -> {len(df_filtered)} kayıt")
+
+    if len(df_filtered) == 0:
+        print("UYARI: Filtreleme sonrası kayıt kalmadı! Kriterleri gevşetin.")
+        return df_filtered
+
+    # Composite score hesapla
+    return calculate_composite_score(df_filtered, top_n=len(df_filtered))
+
 
 def plot_graphs_2(viz: MyCustomVisualizer):
     """
@@ -559,15 +1176,7 @@ def plot_graphs_2(viz: MyCustomVisualizer):
     # MinBak yüksek (az batmış) + MaxBak yüksek = tutarlı
     print("\n[6] MinBakiye vs MaxBakiye (Getiri renkli)")
     print("    -> MinBak yüksek = Daha az batmış")
-    viz.plot_x_y_z(
-        x='OR_MinBakNt',
-        y='OR_MaxBakNt',
-        z='OR_GetFyNet',
-        title='MinBakiye vs MaxBakiye (Getiri renkli)',
-        size_ref='OR_GetFyNet',
-        show=True,
-        save=True
-    )
+
 
 
 def main():
@@ -625,135 +1234,63 @@ def main():
         """
 
         result_1 = sqldf(sql_1, locals())
-        result = result_1
 
-        # # Ekrana yazdır
-        # display_result(result_1, n_cols=DISPLAY_COLS, n_rows=DISPLAY_ROWS,
-        #               title="Sorgu 1 - OR_GetFy%N'e gore siralanmis")
+        # SORGU 1.1: Result_1'i OR_GetFyNet'a gore azalan sirala
+        # result_1 = result_1.sort_values(by='OR_GetFyNet', ascending=False)
 
+        # SORGU 1.2: Result_1'i OR_GetFy%N'a gore azalan sirala
+        # result_1 = result_1.sort_values(by='OR_GetFy%N', ascending=False)
 
-        # # SORGU 1.1: Result_1'i OR_KomFiyat'a gore azalan sirala
+        # SORGU 1.3: Result_1'i OR_KomFiyat'a gore azalan sirala
         # result_1 = result_1.sort_values(by='OR_KomFiyat', ascending=False)
-        # result = result_1
 
-        # SORGU 1.2: Once OR_GetFy%N (azalan), sonra OR_KomFiyat (azalan)
+        # SORGU 1.4: Once OR_GetFy%N (azalan), sonra OR_KomFiyat (azalan)
         # Bu sayede ana siralama bozulmadan ikincil kriter ile siralama yapilir
-        result_1 = result_1.sort_values(by=['OR_GetFy%N', 'OR_KomFiyat'], ascending=[False, False])
+        result_1 = result_1.sort_values(by=['OR_GetFyNet', 'OR_KomFiyat'], ascending=[False, False])
+
+        # paramMin = 1000
+        # paramMax = 2000
+        # result_1 = result_1[(result_1['OR_GetFy%N'] >= paramMin) & (result_1['OR_GetFy%N'] <= paramMax)]
+        #
+        # paramMin = 1000
+        # paramMax = 2000
+        # result_1 = result_1[(result_1['OR_GetFyNet'] >= paramMin) & (result_1['OR_GetFyNet'] <= paramMax)]
+        #
+        # paramMin = 50000
+        # paramMax = 99000
+        # result_1 = result_1[(result_1['OR_KomFiyat'] >= paramMin) & (result_1['OR_KomFiyat'] <= paramMax)]
+        #
+        # paramMin = 50000
+        # paramMax = 99000
+        # result_1 = result_1[(result_1['OR_Islem'] >= paramMin) & (result_1['OR_Islem'] <= paramMax)]
+        #
+        # paramMin = 50000
+        # paramMax = 99000
+        # result_1 = result_1[(result_1['OR_KarliOra'] >= paramMin) & (result_1['OR_KarliOra'] <= paramMax)]
+        #
+        # paramMin = 50000
+        # paramMax = 99000
+        # result_1 = result_1[(result_1['OR_MaxDD'] >= paramMin) & (result_1['OR_MaxDD'] <= paramMax)]
+        #
+        # paramMin = 50000
+        # paramMax = 99000
+        # result_1 = result_1[(result_1['OR_ProfFact'] >= paramMin) & (result_1['OR_ProfFact'] <= paramMax)]
+        #
+        # paramMin = 50000
+        # paramMax = 99000
+        # result_1 = result_1[(result_1['OR_NetProf'] >= paramMin) & (result_1['OR_NetProf'] <= paramMax)]
+        #
+        # paramMin = 50000
+        # paramMax = 99000
+        # result_1 = result_1[(result_1['OR_MinBakNt'] >= paramMin) & (result_1['OR_MinBakNt'] <= paramMax)]
+        #
+        # paramMin = 50000
+        # paramMax = 99000
+        # result_1 = result_1[(result_1['OR_MaxBakNt'] >= paramMin) & (result_1['OR_MaxBakNt'] <= paramMax)]
+
         result = result_1
 
-        # SORGU 1.3: OR_KomFiyat 100000 ile 500000 arasinda olanlari filtrele
-        min_kom = 50000
-        max_kom = 99000
-        # result_1 uzerinden filtreleme yapiyoruz, sirali listeden seciyoruz
-        result_1 = result_1[(result_1['OR_KomFiyat'] >= min_kom) & (result_1['OR_KomFiyat'] <= max_kom)]
-        result = result_1
 
-
-        # # SORGU 2: Sıralama + Filtreleme - OR_KomFiyat aralığı
-        # print("\n\n3.2. Sorgu 2: SIRALAMA + FILTRELEME (OR_KomFiyat araligi)")
-        # print("-" * 80)
-        #
-        # # Örnek aralık değerleri
-        # min_kom = 100000
-        # max_kom = 500000
-        #
-        # sql_2 = f"""
-        # SELECT *
-        # FROM df
-        # WHERE OR_KomFiyat BETWEEN {min_kom} AND {max_kom}
-        # ORDER BY `OR_GetFy%N` DESC
-        # LIMIT 10
-        # """
-        #
-        # result_2 = sqldf(sql_2, locals())
-        #
-        # # # Ekrana yazdır
-        # # display_result(result_2, n_cols=DISPLAY_COLS, n_rows=DISPLAY_ROWS,
-        # #               title=f"Sorgu 2 - OR_KomFiyat [{min_kom:,} - {max_kom:,}] araliginda filtreli")
-        #
-        # result = result_2
-
-        # # SORGU 3: Çoklu koşul - İşlem sayısı + Kar filtresi
-        # print("\n\n3.3. Sorgu 3: COKLU KOSUL (Islem sayisi + NetProf filtresi)")
-        # print("-" * 80)
-        #
-        # min_islem = 1000
-        # min_netprof = 500000
-        #
-        # sql_3 = f"""
-        # SELECT *
-        # FROM df
-        # WHERE OR_TotTrade >= {min_islem}
-        #   AND OR_NetProf >= {min_netprof}
-        # ORDER BY OR_NetProf DESC
-        # LIMIT 15
-        # """
-        #
-        # result_3 = sqldf(sql_3)
-        # print(f"Sonuc: OR_TotTrade >= {min_islem:,} VE OR_NetProf >= {min_netprof:,} olan {len(result_3)} kayit")
-        # display_cols_3 = ['CombNo', 'period', 'OR_TotTrade', 'OR_NetProf', 'OR_WinRate', 'OR_ProfFact']
-        # print(result_3[display_cols_3].head(15))
-        #
-        # # SORGU 4: Min/Max kar kriterleri
-        # print("\n\n3.4. Sorgu 4: MIN/MAX KAR KRITERLERI")
-        # print("-" * 80)
-        #
-        # min_maxkar = 500000  # Maksimum kar en az bu kadar olmalı
-        # max_maxzar = -300000  # Maksimum zarar bu değerden büyük olmalı (daha az zarar)
-        #
-        # sql_4 = f"""
-        # SELECT *
-        # FROM df
-        # WHERE OR_MaxKarFy >= {min_maxkar}
-        #   AND OR_MaxZarFy >= {max_maxzar}
-        # ORDER BY OR_MaxKarFy DESC
-        # LIMIT 10
-        # """
-        #
-        # result_4 = sqldf(sql_4)
-        # print(f"Sonuc: MaxKar >= {min_maxkar:,} VE MaxZarar >= {max_maxzar:,} olan {len(result_4)} kayit")
-        # display_cols_4 = ['CombNo', 'period', 'OR_MaxKarFy', 'OR_MaxZarFy', 'OR_NetProf', 'OR_ProfFact']
-        # print(result_4[display_cols_4].head(10))
-        #
-        # # SORGU 5: Kazanan/Kaybeden oran analizi
-        # print("\n\n3.5. Sorgu 5: KAZANAN/KAYBEDEN ORAN ANALIZI")
-        # print("-" * 80)
-        #
-        # min_kazand = 100
-        # min_kar_oran = 0.4  # Kazanan/Toplam işlem oranı
-        #
-        # sql_5 = f"""
-        # SELECT *,
-        #        (CAST(OR_Kazand AS FLOAT) / CAST(OR_Islem AS FLOAT)) as KazananOran
-        # FROM df
-        # WHERE OR_Kazand >= {min_kazand}
-        #   AND OR_Islem > 0
-        # ORDER BY KazananOran DESC
-        # LIMIT 10
-        # """
-        #
-        # result_5 = sqldf(sql_5)
-        # print(f"Sonuc: OR_Kazand >= {min_kazand} olan {len(result_5)} kayit")
-        # display_cols_5 = ['CombNo', 'period', 'OR_Islem', 'OR_Kazand', 'KazananOran', 'OR_NetProf']
-        # print(result_5[display_cols_5].head(10))
-        #
-        # # SORGU 6: Kompleks - Tüm kriterleri birleştir
-        # print("\n\n3.6. Sorgu 6: KOMPLEKS - TUM KRITERLERI BIRLESTIR")
-        # print("-" * 80)
-        #
-        # sql_6 = f"""
-        # SELECT *,
-        #        (CAST(OR_Kazand AS FLOAT) / CAST(OR_Islem AS FLOAT)) as KazananOran,
-        #        (OR_NetProf / OR_MaxDD) as RiskReward
-        # FROM df
-        # WHERE OR_TotTrade >= 500
-        #   AND OR_NetProf >= 1000000
-        #   AND OR_ProfFact >= 1.2
-        #   AND OR_MaxDD > 0
-        # ORDER BY RiskReward DESC
-        # LIMIT 20
-        # """
-        #
         # result_6 = sqldf(sql_6)
         # print(f"Sonuc: Tum kriterleri saglayan {len(result_6)} kayit bulundu")
         # display_cols_6 = ['CombNo', 'period', 'OR_NetProf', 'OR_ProfFact', 'OR_MaxDD', 'RiskReward']
@@ -815,58 +1352,65 @@ def main():
             # İstatistikleri göster
             viz.get_stats()
 
+            # ============================================================
+            # COMPOSITE SCORE - İLK 20'DEN EN İYİSİNİ BUL
+            # ============================================================
+            print("\n" + "=" * 80)
+            print("COMPOSITE SCORE ANALİZİ")
+            print("=" * 80)
+
+            # Yöntem 1: Sadece composite score (filtresiz) - DEVRE DIŞI
+            # scored_df = calculate_composite_score(result, top_n=20)
+
+            # Yöntem 2: Filtreli composite score
+            # min_islem ve min_komisyon ÖNEMLİ: Az işlem = istatistiksel olarak güvenilmez!
+            scored_df = find_best_combination(
+                result,
+                top_n=100,             # İlk 100 içinden ara
+                min_getiri=3000000,    # Minimum 3M getiri
+                max_dd=350,            # Maximum 350 drawdown
+                min_winrate=24,        # Minimum %24 win rate
+                min_profact=1.1,       # Minimum 1.1 profit factor
+                min_islem=1000,        # ÖNEMLİ: Minimum 1000 işlem
+                min_komisyon=30000     # ÖNEMLİ: Minimum 30K komisyon
+            )
+
+            # ============================================================
+            # YENİ YÖNTEM: Yeterli Getiri + En Düşük Risk
+            # ============================================================
+            # Getiriyi skor hesabına KATMADAN, sadece minimum eşiği geçenleri al
+            # ve bunlar arasından EN DÜŞÜK RİSKLİYİ seç
+            risk_df = find_best_risk_adjusted(
+                result,
+                top_n=100,           # İlk 100 içinden ara
+                min_getiri_pct=50    # En yüksek getirinin %50'sinden fazla olanlar
+            )
+
+            # ============================================================
+            # DRAWDOWN KALİTE ANALİZİ
+            # ============================================================
+            # MaxDD sadece "ne kadar düştün" der
+            # DD Kalite ise "nasıl düştün" e bakar:
+            # - Az işlemle büyük DD = ANİ ÇÖKÜŞ (kötü)
+            # - Çok işlemle aynı DD = YAVAŞ EROZYON (daha kabul edilebilir)
+            dd_quality_df = calculate_dd_quality(result, top_n=20)
+
+            # ============================================================
+            # KOMBİNASYON DİVERSİFİKASYON ANALİZİ
+            # ============================================================
+            # Portföy oluştururken FARKLI davranan kombinasyonlar seç
+            # Benzer kombinasyonlar = Aynı anda kazanır/kaybeder (kötü)
+            # Farklı kombinasyonlar = Biri kaybederken diğeri kazanır (iyi)
+            diversity_df = analyze_combination_diversity(result, top_n=20)
+
+            # Grafikleri çiz
             plot_graphs(viz)
-            # plot_graphs_2(viz)
 
-
-
-
-#         print("\n" + "=" * 80)
-#         print("SQL SORGU SABLONLARI - Kendi sorgulariniz icin:")
-#         print("=" * 80)
-#
-#         print("""
-# # SABLON 1: Siralama
-# sql = '''
-# SELECT * FROM df
-# ORDER BY SutunAdi DESC
-# LIMIT 10
-# '''
-#
-# # SABLON 2: Filtreleme + Siralama
-# sql = '''
-# SELECT * FROM df
-# WHERE Sutun1 >= Deger1
-#   AND Sutun2 BETWEEN Deger2 AND Deger3
-# ORDER BY Sutun1 DESC
-# LIMIT 20
-# '''
-#
-# # SABLON 3: Hesaplanmis sütun ekleme
-# sql = '''
-# SELECT *,
-#        (Sutun1 / Sutun2) as YeniSutun
-# FROM df
-# WHERE Sutun1 > 0 AND Sutun2 > 0
-# ORDER BY YeniSutun DESC
-# '''
-#
-# # SABLON 4: Gruplama ve Agregasyon
-# sql = '''
-# SELECT period,
-#        COUNT(*) as Sayi,
-#        AVG(OR_NetProf) as OrtalamaKar,
-#        MAX(OR_WinRate) as MaxWinRate
-# FROM df
-# GROUP BY period
-# ORDER BY OrtalamaKar DESC
-# '''
-#
-# # Ornek kullanim:
-# # result = sqldf(sql)
-# # analyzer.df = result  # Sonucu ana df'e yukle
-# # analyzer.save_both('output/sonuc')  # Kaydet
-# """)
+    # # Ornek kullanim:
+    # # result = sqldf(sql)
+    # # analyzer.df = result  # Sonucu ana df'e yukle
+    # # analyzer.save_both('output/sonuc')  # Kaydet
+    # """)
 
     except ImportError:
         print("\n[HATA] 'pandasql' kutuphanesi yuklu degil!")
@@ -882,6 +1426,7 @@ def main():
 
 if __name__ == "__main__":
     # Temel örnekler
+    # find_best_combination i kullan
     main()
 
     # Gelişmiş örnekler için yorum satırını kaldırın
